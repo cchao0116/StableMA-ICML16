@@ -3,6 +3,7 @@ package code.sma.main;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,31 +16,23 @@ import code.sma.recommender.ma.GroupSparsityMF;
 import code.sma.recommender.ma.MatrixFactorizationRecommender;
 import code.sma.recommender.ma.RegularizedSVD;
 import code.sma.recommender.ma.StableMA;
+import code.sma.util.ConfigureUtil;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixFileUtil;
 import code.sma.util.StringUtil;
 
-public class StableSVDMT {
+/**
+ * This class implemented MA-based methods.
+ * The parameters for algorithm and data is in src/java/resources/rcmd.properties
+ * 
+ * @author Chao Chen
+ * @version $Id: MABasedParallel.java, v 0.1 Feb 4, 2016 4:26:03 PM chench Exp $
+ */
+public class MABasedParallel {
 
-    /** file to store the original data and cocluster directory. 10M100K 1m*/
-    public static String[]      rootDirs     = { "C:/Users/chench/Desktop/Dataset/ml-10M100K/1/",
-                                                 "C:/Users/chench/Desktop/Dataset/ml-10M100K/2/",
-                                                 "C:/Users/chench/Desktop/Dataset/ml-10M100K/3/",
-                                                 "C:/Users/chench/Desktop/Dataset/ml-10M100K/4/",
-                                                 "C:/Users/chench/Desktop/Dataset/ml-10M100K/5/" };
-    /** The number of users. 943 6040 69878  480189*/
-    public final static int     userCount    = 69878;
-    /** The number of items. 1682 3706 10677 17770*/
-    public final static int     itemCount    = 10677;
-    public final static double  maxValue     = 5.0;
-    public final static double  minValue     = 0.5;
-    public final static double  lrate        = 0.001;
-    public final static double  regularized  = 0.06;
-    public final static int     maxIteration = 100;
-    public final static boolean showProgress = true;
-
+    /** the logger instance*/
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     /**
@@ -47,9 +40,29 @@ public class StableSVDMT {
      * @param args
      */
     public static void main(String[] args) {
+        //load dataset configure file
+        Properties properties = ConfigureUtil.read("src/main/resources/rcmd.properties");
+        String[] rootDirs = properties.getProperty("ROOT_DIR_ARR").split("\\,");
+        String[] subsetSizeArr = properties.getProperty("SUBSET_SIZE_ARR").split("\\,");
+        String[] featureCountArr = properties.getProperty("FEATURE_COUNT_ARR").split("\\,");
+
+        // parse subsetSize arry
+        int ssArrLen = subsetSizeArr.length;
+        int[] subsetSize = new int[ssArrLen];
+        for (int sIndx = 0; sIndx < ssArrLen; sIndx++) {
+            subsetSize[sIndx] = Integer.valueOf(subsetSizeArr[sIndx].trim());
+        }
+
+        // parse featureCount array
+        int fcArrLen = featureCountArr.length;
+        int[] featureCount = new int[fcArrLen];
+        for (int fcIndx = 0; fcIndx < fcArrLen; fcIndx++) {
+            featureCount[fcIndx] = Integer.valueOf(featureCountArr[fcIndx].trim());
+        }
+
         // draw console information
-        String consoleStr = "<1>. RMSE VS NUM_OF_PARTIONTION\n\t<11>. RSVD\n\t<12>. StableMA\t<13>. GroupSparsityMA\n"
-                            + "<2>. RMSE VS FEATURE_COUNT\n\t<21>. RSVD\n\t<22>. StableMA\t<23>. GroupSparsityMA\n"
+        String consoleStr = "<1>. RMSE VS NUM_OF_PARTIONTION\n\t<11>. StableMA\n\t<12>. GroupSparsityMA\n"
+                            + "<2>. RMSE VS FEATURE_COUNT\n\t<21>. StableMA\n\t<22>. GroupSparsityMA\n\t<23>. RSVD\n"
                             + "CHOSE: ";
         System.out.print(consoleStr);
 
@@ -66,49 +79,36 @@ public class StableSVDMT {
             switch (option) {
                 case 11: {
                     //RMSE VS NUM_OF_PARTIONTION
-                    int[] ks = { 2, 3, 4, 5 };
                     for (String rootDir : rootDirs) {
-                        rmseVSNumOfPartition(200, rootDir, ks, 1);
+                        rmseVSNumOfPartition(featureCount[0], rootDir, subsetSize, 1);
                     }
                     break;
                 }
                 case 12: {
                     //RMSE VS NUM_OF_PARTIONTION
-                    int[] ks = { 2, 3, 4, 5 };
                     for (String rootDir : rootDirs) {
-                        rmseVSNumOfPartition(200, rootDir, ks, 2);
-                    }
-                    break;
-                }
-                case 13: {
-                    //RMSE VS NUM_OF_PARTIONTION
-                    int[] ks = { 2, 3, 4, 5 };
-                    for (String rootDir : rootDirs) {
-                        rmseVSNumOfPartition(200, rootDir, ks, 3);
+                        rmseVSNumOfPartition(featureCount[0], rootDir, subsetSize, 3);
                     }
                     break;
                 }
                 case 21: {
                     //RMSE VS FEATURE_COUNT
-                    int[] featureCount = { 150, 200, 250 };
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, 2, 1);
+                        rmseVSRank(featureCount, rootDir, subsetSize[0], 1);
                     }
                     break;
                 }
                 case 22: {
                     //RMSE VS FEATURE_COUNT
-                    int[] featureCount = { 150, 200, 250 };
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, 2, 2);
+                        rmseVSRank(featureCount, rootDir, subsetSize[0], 3);
                     }
                     break;
                 }
                 case 23: {
                     //RMSE VS FEATURE_COUNT
-                    int[] featureCount = { 150, 200, 250 };
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, 2, 3);
+                        rmseVSRank(featureCount, rootDir, subsetSize[0], 2);
                     }
                     break;
                 }
@@ -167,19 +167,32 @@ public class StableSVDMT {
 
     }
 
+    /**
+     * The working thread
+     * 
+     * @author Chao Chen
+     * @version $Id: StableSVDMT.java, v 0.1 Feb 4, 2016 4:18:16 PM chench Exp $
+     */
     protected static class BiSVDWorker extends Thread {
+        /** the training set*/
         MatlabFasionSparseMatrix rateMatrix;
+        /**  the test set*/
         MatlabFasionSparseMatrix testMatrix;
+        /** the feature size*/
         int                      featureCount;
+        /** the clustering size*/
         int                      k;
+        /** the algorithm index*/
         int                      algorithmId;
 
         /**
-         * @param rateMatrix
-         * @param testMatrix
-         * @param featureCount
-         * @param clusterDir
-         * @param rootDir
+         * Construction
+         * 
+         * @param rateMatrix        the training set
+         * @param testMatrix        the test set
+         * @param featureCount      the feature size
+         * @param k                 the clustering size        
+         * @param algorithmId       the algorithm index           
          */
         public BiSVDWorker(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix testMatrix,
                            int featureCount, int k, int algorithmId) {
@@ -196,9 +209,20 @@ public class StableSVDMT {
          */
         @Override
         public void run() {
+            //load algorithm configure file
+            Properties properties = ConfigureUtil.read("src/main/resources/rcmd.properties");
+            int userCount = Integer.valueOf(properties.getProperty("USER_COUNT"));
+            int itemCount = Integer.valueOf(properties.getProperty("ITEM_COUNT"));
+            double maxValue = Double.valueOf(properties.getProperty("MAX_RATING_VALUE"));
+            double minValue = Double.valueOf(properties.getProperty("MIN_RATING_VALUE"));
+            double lrate = Double.valueOf(properties.getProperty("LEARNING_RATE"));
+            double regularized = Double.valueOf(properties.getProperty("REGULAIZED_PARAM"));
+            int maxIteration = Integer.valueOf(properties.getProperty("MAX_ITERATION"));
+            boolean showProgress = Boolean
+                .valueOf(properties.getProperty("SHOW_DETAIL_TRAIN_AND_TEST_ERROR"));
+
             //build model
             MatrixFactorizationRecommender recmmd = null;
-
             if (algorithmId == 1) {
                 recmmd = new StableMA(userCount, itemCount, maxValue, minValue, featureCount, lrate,
                     regularized, 0, maxIteration, k, showProgress, 7);
