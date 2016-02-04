@@ -12,6 +12,9 @@ import org.apache.log4j.Logger;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.parser.Ml10mParser;
+import code.sma.parser.Ml1mParser;
+import code.sma.parser.NetflixParser;
+import code.sma.parser.Parser;
 import code.sma.recommender.ma.GroupSparsityMF;
 import code.sma.recommender.ma.MatrixFactorizationRecommender;
 import code.sma.recommender.ma.RegularizedSVD;
@@ -43,10 +46,27 @@ public class MABasedParallel {
         //load dataset configure file
         Properties properties = ConfigureUtil.read("src/main/resources/rcmd.properties");
         String[] rootDirs = properties.getProperty("ROOT_DIR_ARR").split("\\,");
-        String[] subsetSizeArr = properties.getProperty("SUBSET_SIZE_ARR").split("\\,");
-        String[] featureCountArr = properties.getProperty("FEATURE_COUNT_ARR").split("\\,");
+
+        // parse dataset parser
+        String parserParser = properties.getProperty("DATASET_PARSER");
+        Parser parser = null;
+        switch (parserParser) {
+            case "NETFLIX":
+                parser = new NetflixParser();
+                break;
+            case "ML1M":
+                parser = new Ml1mParser();
+                break;
+            case "ML10M":
+                parser = new Ml10mParser();
+                break;
+            default:
+                parser = new Ml10mParser();
+                break;
+        }
 
         // parse subsetSize arry
+        String[] subsetSizeArr = properties.getProperty("SUBSET_SIZE_ARR").split("\\,");
         int ssArrLen = subsetSizeArr.length;
         int[] subsetSize = new int[ssArrLen];
         for (int sIndx = 0; sIndx < ssArrLen; sIndx++) {
@@ -54,6 +74,7 @@ public class MABasedParallel {
         }
 
         // parse featureCount array
+        String[] featureCountArr = properties.getProperty("FEATURE_COUNT_ARR").split("\\,");
         int fcArrLen = featureCountArr.length;
         int[] featureCount = new int[fcArrLen];
         for (int fcIndx = 0; fcIndx < fcArrLen; fcIndx++) {
@@ -80,35 +101,35 @@ public class MABasedParallel {
                 case 11: {
                     //RMSE VS NUM_OF_PARTIONTION
                     for (String rootDir : rootDirs) {
-                        rmseVSNumOfPartition(featureCount[0], rootDir, subsetSize, 1);
+                        rmseVSNumOfPartition(featureCount[0], rootDir, subsetSize, 1, parser);
                     }
                     break;
                 }
                 case 12: {
                     //RMSE VS NUM_OF_PARTIONTION
                     for (String rootDir : rootDirs) {
-                        rmseVSNumOfPartition(featureCount[0], rootDir, subsetSize, 3);
+                        rmseVSNumOfPartition(featureCount[0], rootDir, subsetSize, 3, parser);
                     }
                     break;
                 }
                 case 21: {
                     //RMSE VS FEATURE_COUNT
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, subsetSize[0], 1);
+                        rmseVSRank(featureCount, rootDir, subsetSize[0], 1, parser);
                     }
                     break;
                 }
                 case 22: {
                     //RMSE VS FEATURE_COUNT
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, subsetSize[0], 3);
+                        rmseVSRank(featureCount, rootDir, subsetSize[0], 3, parser);
                     }
                     break;
                 }
                 case 23: {
                     //RMSE VS FEATURE_COUNT
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, subsetSize[0], 2);
+                        rmseVSRank(featureCount, rootDir, subsetSize[0], 2, parser);
                     }
                     break;
                 }
@@ -122,15 +143,15 @@ public class MABasedParallel {
     }
 
     protected static void rmseVSNumOfPartition(int featureCount, String rootDir, int[] ks,
-                                               int algorithmId) {
+                                               int algorithmId, Parser parser) {
         //loading dataset
         LoggerUtil.info(logger, "Dataset: " + rootDir);
         String trainFile = rootDir + "trainingset";
         String testFile = rootDir + "testingset";
         MatlabFasionSparseMatrix rateMatrix = MatrixFileUtil.reads(trainFile, 20 * 1000 * 1000,
-            new Ml10mParser());
+            parser);
         MatlabFasionSparseMatrix testMatrix = MatrixFileUtil.reads(testFile, 20 * 1000 * 1000,
-            new Ml10mParser());
+            parser);
 
         try {
             ExecutorService exec = Executors.newCachedThreadPool();
@@ -144,15 +165,16 @@ public class MABasedParallel {
         }
     }
 
-    protected static void rmseVSRank(int[] featureCount, String rootDir, int k, int algorithmId) {
+    protected static void rmseVSRank(int[] featureCount, String rootDir, int k, int algorithmId,
+                                     Parser parser) {
         //loading dataset
         LoggerUtil.info(logger, "Dataset: " + rootDir);
         String trainFile = rootDir + "trainingset";
         String testFile = rootDir + "testingset";
         MatlabFasionSparseMatrix rateMatrix = MatrixFileUtil.reads(trainFile, 20 * 1000 * 1000,
-            null);
+            parser);
         MatlabFasionSparseMatrix testMatrix = MatrixFileUtil.reads(testFile, 20 * 1000 * 1000,
-            null);
+            parser);
 
         try {
             ExecutorService exec = Executors.newCachedThreadPool();
