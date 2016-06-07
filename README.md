@@ -19,6 +19,9 @@ This code implemented:
   
   <li>
     <strong>Stable Matrix Approximation</strong>.
+    Li, Dongsheng, Chen, Chao, Lv, Qin, Yan, Junchi, Shang, Li, and Chu, Stephen.
+    Low-Rank Matrix Approximation with Stability.
+    In ICML, 2016.
   </li>
   </ol>
 </p>
