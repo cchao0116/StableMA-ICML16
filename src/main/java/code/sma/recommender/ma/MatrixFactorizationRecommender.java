@@ -20,35 +20,35 @@ import code.sma.util.LoggerUtil;
  */
 public abstract class MatrixFactorizationRecommender extends Recommender implements Serializable {
     /** SerialVersionNum */
-    private static final long serialVersionUID = 1L;
+    private static final long     serialVersionUID = 1L;
 
     /** The number of features. */
-    public int       featureCount;
+    public int                    featureCount;
     /** Learning rate parameter. */
-    public double    learningRate;
+    public double                 learningRate;
     /** Regularization factor parameter. */
-    public double    regularizer;
+    public double                 regularizer;
     /** Momentum parameter. */
-    public double    momentum;
+    public double                 momentum;
     /** Maximum number of iteration. */
-    public int       maxIter;
+    public int                    maxIter;
     /** The best RMSE in test*/
-    protected double bestRMSE = Double.MAX_VALUE;
+    protected double              bestRMSE         = Double.MAX_VALUE;
 
     /** Indicator whether to show progress of iteration. */
-    public boolean   showProgress;
+    public boolean                showProgress;
     /** Offset to rating estimation. Usually this is the average of ratings. */
-    protected double offset;
+    protected double              offset;
 
     /** User profile in low-rank matrix form. */
-    public DenseMatrix userDenseFeatures;
+    public DenseMatrix            userDenseFeatures;
     /** Item profile in low-rank matrix form. */
-    public DenseMatrix itemDenseFeatures;
+    public DenseMatrix            itemDenseFeatures;
 
     /** logger */
-    protected final static Logger runningLogger = Logger
+    protected final static Logger runningLogger    = Logger
         .getLogger(LoggerDefineConstant.SERVICE_CORE);
-    protected final static Logger resultLogger  = Logger
+    protected final static Logger resultLogger     = Logger
         .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     /*========================================
@@ -149,6 +149,10 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
      * @param tMatrix
      */
     protected void finalizeLogger(MatlabFasionSparseMatrix tMatrix) {
+        if (tMatrix == null) {
+            return;
+        }
+
         double prmse = this.evaluate(tMatrix);
         bestRMSE = bestRMSE < prmse ? bestRMSE : prmse;
         LoggerUtil.info(resultLogger,

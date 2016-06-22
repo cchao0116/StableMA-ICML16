@@ -2,9 +2,7 @@ package code.sma.recommender.ma;
 
 import java.util.Arrays;
 
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.stat.StatUtils;
-
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.util.LoggerUtil;
 
@@ -18,22 +16,14 @@ public class StableMA extends MatrixFactorizationRecommender {
     private static final long serialVersionUID = 1L;
 
     /** number of user/item clusters */
-    protected int k;
-    protected int numSet = 0;
-
-    /** User profile in low-rank matrix form. */
-    public int rMode;
+    protected int             k;
+    protected int             numSet           = 0;
 
     /*========================================
      * Constructors
      *========================================*/
     /**
      * Construct a matrix-factorization model with the given data.<br/>
-     * 
-     * Mode = 1, assign ratings based on user partitions <br/>
-     * Mode = 2, split training data into k groups in uniformly <br/>
-     * Mode = 3, make a subset of the data which containing 1/k ratings <br/> 
-     * Mode = 4 or 104,, make k subsets where every subset contains 1 - 1\k data <br/> 
      * 
      * @param uc The number of users in the dataset.
      * @param ic The number of items in the dataset.
@@ -44,13 +34,11 @@ public class StableMA extends MatrixFactorizationRecommender {
      * @param r Controlling factor for the degree of regularization. 
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
-     * @param mode              the assignment mode
      */
     public StableMA(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                    int iter, int k, boolean verbose, int rMode) {
+                    int iter, int k, boolean verbose) {
         super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
         this.k = k;
-        this.rMode = rMode;
     }
 
     /** 
@@ -76,7 +64,7 @@ public class StableMA extends MatrixFactorizationRecommender {
         double[] errors = new double[rateCount];
         double[] seInSubset = new double[k];
         int[] numInSubset = new int[k];
-        double se = assignStable(rateMatrix, rMode, rAssigmnt, errors, seInSubset, numInSubset);
+        double se = assignStable(rateMatrix, rAssigmnt, errors, seInSubset, numInSubset);
 
         // update model
         boolean isCollaps = false;
@@ -160,145 +148,61 @@ public class StableMA extends MatrixFactorizationRecommender {
         bestRMSE = bestRMSE < prmse ? bestRMSE : prmse;
         LoggerUtil.info(resultLogger,
             "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer + "\tk: "
-                                      + k + "\tMODE: " + rMode + "\tnumSet: " + numSet + "\tRMSE: "
+                                      + k + "\tnumSet: " + numSet + "\tRMSE: "
                                       + String.format("%.6f", bestRMSE));
     }
 
     /**
      * Assign ratings to different groups <br/>
-     * Mode = 1, assign ratings based on user partitions <br/>
-     * Mode = 2, split training data into k groups in uniformly <br/>
-     * Mode = 3, make a subset of the data which containing 1/k ratings <br/> 
-     * Mode = 4 or 104, make k subsets where every subset contains 1 - 1\k data <br/> 
      * 
      * @param rateMatrix        the matrix containing training data
-     * @param mode              the assignment mode
      * @param rAssigmnt         rating assignment table
      * @param errors            the error for every ratings
      * @param seInSubset        the square sum of errors in different partitions
      * @param numInSubset       the number of ratings in different partitions
      * @return
      */
-    protected double assignStable(MatlabFasionSparseMatrix rateMatrix, int mode,
-                                  boolean[][] rAssigmnt, double[] errors, double[] seInSubset,
-                                  int[] numInSubset) {
+    protected double assignStable(MatlabFasionSparseMatrix rateMatrix, boolean[][] rAssigmnt,
+                                  double[] errors, double[] seInSubset, int[] numInSubset) {
         int rateCount = rateMatrix.getNnz();
 
-        if (mode == 2) {
-            // Mode = 2, split training data into k groups in uniformly
-            for (int kIndx = 0; kIndx < k; kIndx++) {
-                Arrays.fill(rAssigmnt[kIndx], false);
-            }
+        // build RSVD model
+        RegularizedSVD recmmd = new RegularizedSVD(userCount, itemCount, maxValue, minValue, 20,
+            0.01, 0.001, 0, 30, false);
+        recmmd.buildModel(rateMatrix, null);
+        double recRMSE = recmmd.evaluate(rateMatrix);
 
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                double ran = Math.random();
-                rAssigmnt[(int) (k * ran)][numSeq] = true;
-            }
-        } else if (mode == 3) {
-            // Mode = 3, make a subset of the data which containing 1/k ratings
-            for (int kIndx = 0; kIndx < k; kIndx++) {
-                Arrays.fill(rAssigmnt[kIndx], false);
-            }
+        // compute a probability for every rating
+        int[] uIndx = rateMatrix.getRowIndx();
+        int[] iIndx = rateMatrix.getColIndx();
+        double[] Auis = rateMatrix.getVals();
 
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                double ran = Math.random();
-                if (ran * k >= 1) {
-                    rAssigmnt[0][numSeq] = true;
-                }
-            }
-        } else if (mode == 5) {
-            // build RSVD model
-            RegularizedSVD recmmd = new RegularizedSVD(userCount, itemCount, maxValue, minValue, 20,
-                0.01, 0.001, 0, 30, false);
-            recmmd.buildModel(rateMatrix, null);
-            double recRMSE = recmmd.evaluate(rateMatrix);
+        double[] diffArr = new double[rateCount];
+        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
+            int u = uIndx[numSeq];
+            int i = iIndx[numSeq];
+            double AuiReal = Auis[numSeq];
+            double AuiEst = recmmd.predict(u, i);
 
-            // compute a probability for every rating
-            int[] uIndx = rateMatrix.getRowIndx();
-            int[] iIndx = rateMatrix.getColIndx();
-            double[] Auis = rateMatrix.getVals();
+            diffArr[numSeq] = Math.abs(AuiReal - AuiEst) - recRMSE;
+        }
 
-            double[] diffArr = new double[rateCount];
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                int u = uIndx[numSeq];
-                int i = iIndx[numSeq];
-                double AuiReal = Auis[numSeq];
-                double AuiEst = recmmd.predict(u, i);
+        double sampleMean = StatUtils.mean(diffArr);
 
-                diffArr[numSeq] = Math.abs(AuiReal - AuiEst) - recRMSE;
-            }
+        // make a partition
+        for (int kIndx = 0; kIndx < k; kIndx++) {
+            Arrays.fill(rAssigmnt[kIndx], true);
+        }
+        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
+            double rand = Math.random();
+            boolean isHardPredictableItem = diffArr[numSeq] > sampleMean;
 
-            double sampleMean = StatUtils.mean(diffArr);
-            double sampleSD = Math.sqrt(StatUtils.variance(diffArr));
-            NormalDistribution normal = new NormalDistribution(sampleMean, sampleSD);
-
-            // make a partition
-            for (int kIndx = 0; kIndx < k; kIndx++) {
-                Arrays.fill(rAssigmnt[kIndx], true);
-            }
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                // the threshold to chose this rating as a perfect item
-                double threshold = 1 - normal.cumulativeProbability(diffArr[numSeq]);
-                if (Math.random() < 20.0 * threshold) {
-                    rAssigmnt[(int) (k * Math.random())][numSeq] = false;
-                    numSet++;
-                }
-            }
-            System.out.println(numSet);
-        } else if (mode == 6) {
-            // build RSVD model
-            RegularizedSVD recmmd = new RegularizedSVD(userCount, itemCount, maxValue, minValue, 20,
-                0.01, 0.001, 0, 30, false);
-            recmmd.buildModel(rateMatrix, null);
-            double recRMSE = recmmd.evaluate(rateMatrix);
-
-            // compute a probability for every rating
-            int[] uIndx = rateMatrix.getRowIndx();
-            int[] iIndx = rateMatrix.getColIndx();
-            double[] Auis = rateMatrix.getVals();
-
-            double[] diffArr = new double[rateCount];
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                int u = uIndx[numSeq];
-                int i = iIndx[numSeq];
-                double AuiReal = Auis[numSeq];
-                double AuiEst = recmmd.predict(u, i);
-
-                diffArr[numSeq] = Math.abs(AuiReal - AuiEst) - recRMSE;
-            }
-
-            double sampleMean = StatUtils.mean(diffArr);
-            double sampleSD = Math.sqrt(StatUtils.variance(diffArr));
-            NormalDistribution normal = new NormalDistribution(sampleMean, sampleSD);
-
-            // make a partition
-            for (int kIndx = 0; kIndx < k; kIndx++) {
-                Arrays.fill(rAssigmnt[kIndx], false);
-            }
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                // the threshold to chose this rating as a perfect item
-                double threshold = 1 - normal.cumulativeProbability(diffArr[numSeq]);
-                if (Math.random() < threshold) {
-                    rAssigmnt[(int) (k * Math.random())][numSeq] = true;
-                    numSet++;
-                }
-            }
-            System.out.println(numSet);
-        } else if (mode == 7) {
-            // make a partition
-            for (int kIndx = 0; kIndx < k; kIndx++) {
-                Arrays.fill(rAssigmnt[kIndx], true);
-            }
-
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                if (Math.random() < 0.40d) {
-                    continue;
-                }
-
-                // the threshold to chose this rating as a perfect item
+            if ((isHardPredictableItem & (rand < 0.45)) | (!isHardPredictableItem & rand < 0.60)) {
                 rAssigmnt[(int) (k * Math.random())][numSeq] = false;
+                numSet++;
             }
         }
+        System.out.println(numSet);
 
         return initialStatParam(rateMatrix, rAssigmnt, errors, seInSubset, numInSubset);
     }

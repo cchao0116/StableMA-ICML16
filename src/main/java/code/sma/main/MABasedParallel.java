@@ -115,21 +115,21 @@ public class MABasedParallel {
                 case 21: {
                     //RMSE VS FEATURE_COUNT
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, subsetSize[0], 1, parser);
+                        rmseVSRank(featureCount, rootDir, 3, 1, parser);
                     }
                     break;
                 }
                 case 22: {
                     //RMSE VS FEATURE_COUNT
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, subsetSize[0], 3, parser);
+                        rmseVSRank(featureCount, rootDir, 3, 3, parser);
                     }
                     break;
                 }
                 case 23: {
                     //RMSE VS FEATURE_COUNT
                     for (String rootDir : rootDirs) {
-                        rmseVSRank(featureCount, rootDir, subsetSize[0], 2, parser);
+                        rmseVSRank(featureCount, rootDir, 3, 2, parser);
                     }
                     break;
                 }
@@ -247,7 +247,7 @@ public class MABasedParallel {
             MatrixFactorizationRecommender recmmd = null;
             if (algorithmId == 1) {
                 recmmd = new StableMA(userCount, itemCount, maxValue, minValue, featureCount, lrate,
-                    regularized, 0, maxIteration, k, showProgress, 7);
+                    regularized, 0, maxIteration, k, showProgress);
             } else if (algorithmId == 2) {
                 recmmd = new RegularizedSVD(userCount, itemCount, maxValue, minValue, featureCount,
                     lrate, regularized, 0, maxIteration, showProgress);

@@ -5,21 +5,21 @@ This code implemented:
   <ol type="1">
   <li>
     <strong>Group Sparsity Matrix Factorization</strong>.
-    Yuan, Ting, Cheng, Jian, Zhang, Xi, Qiu, Shuang, and Lu, Hanqing. 
+    Ting Yuan, Jian Cheng, Xi Zhang, Shuang Qiu, Hanqing Lu. 
     Recommendation by mining multiple user behaviors with group sparsity. 
     In AAAI, 2014.
   </li>
 
  <li>
     <strong>Regularized SVD</strong>.
-    Paterek, Arkadiusz. 
+    Arkadiusz Paterek. 
     Improving regularized singular value decompositionfor collaborativefiltering. 
     In KDD CUP, 2007.
   </li>
   
   <li>
     <strong>Stable Matrix Approximation</strong>.
-    Li, Dongsheng, Chen, Chao, Lv, Qin, Yan, Junchi, Shang, Li, and Chu, Stephen.
+    Dongsheng Li, Chao Chen, Qin Lv, Junchi Yan, Li Shang, Stephen Chu.
     Low-Rank Matrix Approximation with Stability.
     In ICML, 2016.
   </li>
@@ -36,5 +36,9 @@ This code implemented:
 
 <h3>[Running Suggestion]</h3>
 <p>
-  The main function is in the package: code.sma.main.
+  <ol type="1">
+  <li>We upload a MovieLens-10M data-set to this project, please check "dataset" branch.</li>
+  <li>If you put the dataset in the path "D:/", please set the variable "$ROOT_DIR_ARR=D:/".</li>
+  <li>Run the main function in the package: code.sma.main.</li>
+  </ol>
 </p>
