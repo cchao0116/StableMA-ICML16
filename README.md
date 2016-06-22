@@ -38,7 +38,7 @@ This code implemented:
 <p>
   <ol type="1">
   <li>We upload a MovieLens-10M data-set to this project, please check "dataset" branch.</li>
-  <li>If you put the dataset in the path "D:/", please set the variable "$ROOT_DIR_ARR=D:/".</li>
+  <li>If you put the dataset in the path "D:/", please set the variable "$ROOT_DIR_ARR=D:/" in src/main/resources.</li>
   <li>Run the main function in the package: code.sma.main.</li>
   </ol>
 </p>
