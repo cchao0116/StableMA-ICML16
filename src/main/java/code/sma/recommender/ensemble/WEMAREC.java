@@ -91,10 +91,10 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
                    int iter, boolean verbose, RecConfigEnv rce, Discretizer dr,
                    Queue<String> clusterDirs) {
         super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
-        beta0 = (Double) rce.get("BETA0");
-        beta1 = (Double) rce.get("BETA1");
-        beta2 = (Double) rce.get("BETA2");
-        threadNum = (Integer) rce.get("THREAD_NUMBER");
+        beta0 = (Double) rce.get("BETA0_VALUE");
+        beta1 = (Double) rce.get("BETA1_VALUE");
+        beta2 = (Double) rce.get("BETA2_VALUE");
+        threadNum = ((Double) rce.get("THREAD_NUMBER_VALUE")).intValue();
         dctzr = dr;
         clusterDirList = clusterDirs;
         recmmdsBuffer = new LinkedList<Recommender>();

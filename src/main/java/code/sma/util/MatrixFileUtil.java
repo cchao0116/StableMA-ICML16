@@ -111,4 +111,37 @@ public final class MatrixFileUtil {
         return null;
     }
 
+    /**
+     * Read matrix from file
+     * 
+     * @param file          file contain matrix data
+     * @param rowCount      the number of rows
+     * @param colCount      the number of columns
+     * @param parser        the parser to parse the data structure
+     * @return
+     */
+    public static SparseMatrix read(String filePath, int rowCount, int colCount) {
+
+        SparseMatrix result = new SparseMatrix(rowCount, colCount);
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(filePath));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                String[] elemnts = line.split("\\::");
+                result.setValue(Integer.valueOf(elemnts[0].trim()),
+                    Integer.valueOf(elemnts[1].trim()), Double.valueOf(elemnts[2].trim()));
+            }
+
+            return result;
+        } catch (FileNotFoundException e) {
+            ExceptionUtil.caught(e, "File Path: " + filePath);
+        } catch (IOException e) {
+            ExceptionUtil.caught(e, "Error In Reading");
+        } finally {
+            IOUtils.closeQuietly(reader);
+        }
+        return null;
+    }
+
 }

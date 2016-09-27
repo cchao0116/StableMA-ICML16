@@ -3,6 +3,8 @@ package code.sma.recommender;
 import java.util.HashMap;
 import java.util.Map;
 
+import code.sma.main.Configures;
+
 /**
  * A bean containing different hyper-parameters
  * 
@@ -18,6 +20,17 @@ public final class RecConfigEnv {
      */
     public RecConfigEnv() {
         parameters = new HashMap<String, Object>();
+    }
+
+    /**
+     * construction
+     */
+    public RecConfigEnv(Configures conf) {
+        parameters = new HashMap<String, Object>();
+        for (Object k : conf.keySet()) {
+            String key = (String) k;
+            put(key, conf.get(key));
+        }
     }
 
     /**

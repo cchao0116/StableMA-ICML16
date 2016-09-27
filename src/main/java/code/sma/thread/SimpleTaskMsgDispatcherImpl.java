@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.main.Configures;
-import code.sma.main.StandAloneRecommenderFactory;
+import code.sma.main.RecommenderFactory;
 import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
 import code.sma.util.LoggerDefineConstant;
@@ -59,7 +59,7 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
                                 rce.put(key, conf.get(key));
                             }
                         }
-                        recmmdsBuffer.add(StandAloneRecommenderFactory.instance(algName, rce));
+                        recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
                     }
                 }
             }

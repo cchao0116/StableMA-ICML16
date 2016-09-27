@@ -4,13 +4,6 @@ This code implemented:
 <p>
   <ol type="1">
   <li>
-    <strong>Group Sparsity Matrix Factorization</strong>.
-    Ting Yuan, Jian Cheng, Xi Zhang, Shuang Qiu, Hanqing Lu. 
-    Recommendation by mining multiple user behaviors with group sparsity. 
-    In AAAI, 2014.
-  </li>
-
- <li>
     <strong>Regularized SVD</strong>.
     Arkadiusz Paterek. 
     Improving regularized singular value decompositionfor collaborativefiltering. 
@@ -18,10 +11,24 @@ This code implemented:
   </li>
   
   <li>
+    <strong>Group Sparsity Matrix Factorization</strong>.
+    Ting Yuan, Jian Cheng, Xi Zhang, Shuang Qiu, Hanqing Lu. 
+    Recommendation by mining multiple user behaviors with group sparsity. 
+    In AAAI, 2014.
+  </li>
+
+  <li>
     <strong>Stable Matrix Approximation</strong>.
     Dongsheng Li, Chao Chen, Qin Lv, Junchi Yan, Li Shang, Stephen Chu.
     Low-Rank Matrix Approximation with Stability.
     In ICML, 2016.
+  </li>
+  
+  <li>
+    <strong>WEMAREC</strong>.
+    Chao Chen, Dongsheng Li, Yingying Zhao, Qin Lv, Li Shang.
+    WEMAREC: Accurate and Scalable Recommendation through Weighted and Ensemble Matrix Approximation.
+    In SIGIR, 2015.
   </li>
   </ol>
 </p>

@@ -1,16 +1,20 @@
 package code.sma.main;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.recommender.RecConfigEnv;
 import code.sma.thread.SimpleLearner;
 import code.sma.thread.SimpleTaskMsgDispatcherImpl;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.ExceptionUtil;
+import code.sma.util.FileUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixFileUtil;
@@ -48,7 +52,20 @@ public class Main {
             if (StringUtil.isBlank(algName)) {
                 continue;
             } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
+                Queue<String> clusterDirs = new LinkedList<String>();
+                String[] cDirStrs = ((String) conf.get("CLUSTERING_SET")).split("\\,");
+                for (String cDirStr : cDirStrs) {
+                    String clusterDir = rootDir + cDirStr;
+                    if (FileUtil.exists(clusterDir)) {
+                        clusterDirs.add(clusterDir);
+                    } else {
+                        throw new RuntimeException("Co-Clustering: " + cDirStr + " don't exist.");
+                    }
+                }
 
+                RecConfigEnv rce = new RecConfigEnv(conf);
+                rce.put("CLUSTERING_SET", clusterDirs);
+                RecommenderFactory.instance(algName, rce).buildModel(tnMatrix, tttMatrix);
             } else {
                 TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
                 int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
