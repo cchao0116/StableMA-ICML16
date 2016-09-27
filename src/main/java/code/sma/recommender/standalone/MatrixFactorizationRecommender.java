@@ -179,35 +179,14 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
         return false;
     }
 
-    /**
-     * Record final logs 
-     * 
-     * @param tMatrix
-     */
-    protected void finalizeLogger(MatlabFasionSparseMatrix tMatrix) {
-        if (tMatrix == null) {
-            return;
-        }
-
-        double prmse = this.evaluate(tMatrix);
-        bestRMSE = bestRMSE < prmse ? bestRMSE : prmse;
-        LoggerUtil.info(resultLogger,
-            "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer
-                                      + "\tRMSE: " + String.format("%.6f", bestRMSE));
-
-    }
-
     /*========================================
      * Prediction
      *========================================*/
 
     /**
-     * Evaluate the designated algorithm with the given test data.
-     * 
-     * @param testMatrix The rating matrix with test data.
-     * 
-     * @return The result of evaluation, such as MAE, RMSE, and rank-score.
+     * @see code.sma.recommender.Recommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
      */
+    @Override
     public double evaluate(MatlabFasionSparseMatrix testMatrix) {
         double RMSE = 0.0d;
 
@@ -235,7 +214,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
         // compute the prediction by using inner product 
         double prediction = this.offset;
         if (userDenseFeatures != null && itemDenseFeatures != null) {
-            prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures);
+            prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
         } else {
             throw new RuntimeException("features were not initialized.");
         }

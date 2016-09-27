@@ -1,6 +1,7 @@
 package code.sma.util;
 
-import java.util.Properties;
+import code.sma.datastructure.DenseVector;
+import code.sma.main.Configures;
 
 /**
  * 
@@ -23,8 +24,8 @@ public final class ConfigureUtil {
      * @param fileName
      * @return
      */
-    public static Properties read(String fileName) {
-        Properties properties = new Properties();
+    public static Configures read(String fileName) {
+        Configures conf = new Configures();
 
         // parsing files
         String[] lines = FileUtil.readLines(fileName);
@@ -35,16 +36,35 @@ public final class ConfigureUtil {
                 continue;
             } else if (line.startsWith("$")) {
                 String key = line.substring(1, line.indexOf('='));
-                String value = line.substring(line.indexOf('=') + 1);
-                properties.setProperty(key, value);
+                String val = line.substring(line.indexOf('=') + 1);
+
+                if (StringUtil.isBlank(val)) {
+                    continue;
+                } else if (key.endsWith("_ARR")) {
+                    String[] elmnts = val.split("\\,");
+
+                    int num = elmnts.length;
+                    DenseVector dv = new DenseVector(num);
+                    for (int n = 0; n < num; n++) {
+                        dv.setValue(n, Double.valueOf(elmnts[n].trim()));
+                    }
+                    conf.setVector(key, dv);
+                } else if (key.endsWith("_VALUE")) {
+                    conf.put(key, Double.valueOf(val.trim()));
+                } else if (key.endsWith("_BOOLEAN")) {
+                    conf.put(key, Boolean.valueOf(val.trim()));
+                } else {
+                    conf.setProperty(key, val);
+                }
+
             } else {
                 anonymousParam.append(line).append('\t');
             }
         }
 
         // add anonymous parameter
-        properties.setProperty("DUMP", anonymousParam.toString());
-        return properties;
+        conf.setProperty("DUMP", anonymousParam.toString());
+        return conf;
     }
 
 }

@@ -15,9 +15,6 @@ public final class LoggerDefineConstant {
     public final static String SERVICE_NORMAL = "SERVICE-NORMAL";
 
     /** [核心引擎]日志*/
-    public final static String SERVICE_CACHE  = "SERVICE-CACHE";
-
-    /** [核心引擎]日志*/
     public final static String SERVICE_CORE   = "SERVICE-CORE";
 
     /** [多线程部分]日志*/

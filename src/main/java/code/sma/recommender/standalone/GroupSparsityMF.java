@@ -129,9 +129,6 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
             isCollaps = recordLoggerAndDynamicStop(round, tMatrix, currErr);
         }
 
-        //4. evaluate model
-        finalizeLogger(tMatrix);
-
     }
 
     protected void initFeatures() {
@@ -293,4 +290,12 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
         }
     }
 
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
+               + " ALG[GSMF]";
+    }
 }

@@ -48,6 +48,14 @@ public abstract class Recommender {
     /*========================================
      * Prediction
      *========================================*/
+    /**
+     * Evaluate the designated algorithm with the given test data.
+     * 
+     * @param testMatrix The rating matrix with test data.
+     * 
+     * @return The result of evaluation, such as MAE, RMSE, and rank-score.
+     */
+    public abstract double evaluate(MatlabFasionSparseMatrix testMatrix);
 
     /**
      * return the predicted rating

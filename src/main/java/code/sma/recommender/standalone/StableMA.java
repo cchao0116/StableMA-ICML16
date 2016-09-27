@@ -80,7 +80,7 @@ public class StableMA extends MatrixFactorizationRecommender {
                 int i = iIndx[numSeq];
 
                 double AuiReal = Auis[numSeq];
-                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures);
+                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
                 double err = AuiReal - AuiEst;
 
                 // compute all rmse-s
@@ -150,9 +150,6 @@ public class StableMA extends MatrixFactorizationRecommender {
         // final result
         double prmse = this.evaluate(tMatrix);
         bestRMSE = bestRMSE < prmse ? bestRMSE : prmse;
-        LoggerUtil.info(resultLogger,
-            "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer + "\tk: "
-                                      + numOfHPSet + "\tRMSE: " + String.format("%.6f", bestRMSE));
     }
 
     /**
@@ -235,7 +232,7 @@ public class StableMA extends MatrixFactorizationRecommender {
             int i = iIndx[numSeq];
 
             double AuiReal = Auis[numSeq];
-            double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures);
+            double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
             double error = AuiReal - AuiEst;
 
             errors[numSeq] = Math.pow(error, 2.0d);

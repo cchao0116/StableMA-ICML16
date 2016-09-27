@@ -7,9 +7,9 @@ import code.sma.recommender.Recommender;
  * the general thread learner for recommender system
  * 
  * @author Chao.Chen
- * @version $Id: WeakLearner.java, v 0.1 2016年7月21日 下午1:05:21 Chao.Chen Exp $
+ * @version $Id: SimpleLearner.java, v 0.1 2016年7月21日 下午1:05:21 Chao.Chen Exp $
  */
-public class WeakLearner extends Thread {
+public class SimpleLearner extends Thread {
     /** learning task dispatcher*/
     private TaskMsgDispatcher        dispatcher;
     /** training data*/
@@ -22,8 +22,8 @@ public class WeakLearner extends Thread {
      * @param trainMatrix   training data
      * @param testMatrix    testing data
      */
-    public WeakLearner(TaskMsgDispatcher dispatcher, MatlabFasionSparseMatrix trainMatrix,
-                       MatlabFasionSparseMatrix testMatrix) {
+    public SimpleLearner(TaskMsgDispatcher dispatcher, MatlabFasionSparseMatrix trainMatrix,
+                         MatlabFasionSparseMatrix testMatrix) {
         super();
         this.dispatcher = dispatcher;
         this.trainMatrix = trainMatrix;
@@ -37,7 +37,7 @@ public class WeakLearner extends Thread {
     public void run() {
         Recommender recmmnd = null;
         while ((recmmnd = dispatcher.map()) != null) {
-            recmmnd.buildloclModel(trainMatrix, testMatrix);
+            recmmnd.buildModel(trainMatrix, testMatrix);
             dispatcher.reduce(recmmnd, trainMatrix, testMatrix);
         }
     }

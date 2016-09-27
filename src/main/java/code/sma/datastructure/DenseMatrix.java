@@ -62,8 +62,9 @@ public class DenseMatrix implements Serializable {
     public void setValue(int i, int j, double value, boolean needRanInit) {
         if (vals[i] == null) {
             vals[i] = new DenseVector(N, needRanInit);
+        } else {
+            vals[i].setValue(j, value);
         }
-        vals[i].setValue(j, value);
     }
 
     /**
@@ -77,6 +78,16 @@ public class DenseMatrix implements Serializable {
     }
 
     /**
+     * set the reference of the vector at the given row index
+     * 
+     * @param i The row index
+     * @param b The reference
+     */
+    public void setRowRef(int i, DenseVector b) {
+        vals[i] = b;
+    }
+
+    /**
      * Inner product of two vectors.
      * 
      * @param u                 the index of rows in this object 
@@ -84,7 +95,15 @@ public class DenseMatrix implements Serializable {
      * @param tDenseMatrix     the transposed DenseMatrix
      * @return
      */
-    public double innerProduct(int u, int i, DenseMatrix tDenseMatrix) {
+    public double innerProduct(int u, int i, DenseMatrix tDenseMatrix, boolean needRanInit) {
+        if (needRanInit & vals[u] == null) {
+            this.setRowRef(u, new DenseVector(N, true));
+
+        }
+        if (needRanInit & tDenseMatrix.getRowRef(i) == null) {
+            tDenseMatrix.setRowRef(i, new DenseVector(N, true));
+        }
+
         return vals[u].innerProduct(tDenseMatrix.getRowRef(i));
     }
 

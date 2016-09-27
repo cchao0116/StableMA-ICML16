@@ -94,7 +94,7 @@ public final class MatrixFileUtil {
             reader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = reader.readLine()) != null) {
-                String[] elemnts = line.split(",");
+                String[] elemnts = line.split("\\::");
                 result.setValue(Integer.valueOf(elemnts[0].trim()),
                     Integer.valueOf(elemnts[1].trim()), Double.valueOf(elemnts[2].trim()));
             }

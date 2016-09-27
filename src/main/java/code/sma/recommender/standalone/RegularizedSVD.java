@@ -68,7 +68,7 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
 
                 //global model
                 double AuiReal = Auis[numSeq];
-                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures);
+                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
                 double err = AuiReal - AuiEst;
                 sum += Math.pow(err, 2.0d);
 
@@ -92,8 +92,15 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
             // Show progress:
             isCollaps = recordLoggerAndDynamicStop(round, tMatrix, currErr);
         }
-
-        // final result
-        finalizeLogger(tMatrix);
     }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
+               + " ALG[RegSVD]";
+    }
+
 }

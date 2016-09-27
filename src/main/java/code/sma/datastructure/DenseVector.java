@@ -1,6 +1,9 @@
 package code.sma.datastructure;
 
 import java.io.Serializable;
+import java.util.Iterator;
+
+import com.google.common.primitives.Doubles;
 
 /**
  * Dense Vector used to represent the features
@@ -8,7 +11,7 @@ import java.io.Serializable;
  * @author Chao.Chen
  * @version $Id: DenseVector.java, v 0.1 2016年9月26日 下午1:44:48 Chao.Chen Exp $
  */
-public class DenseVector implements Serializable {
+public class DenseVector implements Serializable, Iterable<Double> {
     /** serialVersionUID */
     private static final long serialVersionUID = 1L;
     /** The number of columns. */
@@ -103,4 +106,13 @@ public class DenseVector implements Serializable {
         }
         return sum;
     }
+
+    /** 
+     * @see java.lang.Iterable#iterator()
+     */
+    @Override
+    public Iterator<Double> iterator() {
+        return Doubles.asList(vals).iterator();
+    }
+
 }

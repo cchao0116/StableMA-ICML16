@@ -1,5 +1,6 @@
 package code.sma.recommender.ensemble;
 
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.depndncy.Discretizer;
+import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
 import code.sma.recommender.standalone.MatrixFactorizationRecommender;
 import code.sma.recommender.standalone.WeigtedSVD;
@@ -81,23 +83,21 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
      * @param verbose Indicating whether to show iteration steps and train error.
-     * @param b0 The parameter controlling the contribution of every training data.
-     * @param b1 The parameter used in ensemble (user-related).
-     * @param b2 The parameter used in ensemble (item-related).
-     * @param tn The number of threads
+     * @param rce  The computational hyper-parameters
      * @param dr The dicretizer to convert continuous data
      * @param clusterDirs The clustering configure files used in WEMAREC
      */
     public WEMAREC(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                   int iter, boolean verbose, double b0, double b1, double b2, int tn,
-                   Discretizer dr, Queue<String> clusterDirs) {
+                   int iter, boolean verbose, RecConfigEnv rce, Discretizer dr,
+                   Queue<String> clusterDirs) {
         super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
-        beta0 = b0;
-        beta1 = b1;
-        beta2 = b2;
-        threadNum = tn;
+        beta0 = (Double) rce.get("BETA0");
+        beta1 = (Double) rce.get("BETA1");
+        beta2 = (Double) rce.get("BETA2");
+        threadNum = (Integer) rce.get("THREAD_NUMBER");
         dctzr = dr;
         clusterDirList = clusterDirs;
+        recmmdsBuffer = new LinkedList<Recommender>();
     }
 
     /** 
@@ -164,7 +164,8 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recommender.Recommender)
      */
     @Override
-    public void reduce(Recommender recmmd) {
+    public void reduce(Recommender recmmd, MatlabFasionSparseMatrix tnMatrix,
+                       MatlabFasionSparseMatrix ttMatrix) {
         int[] uIndx = ttMatrix.getRowIndx();
         int[] iIndx = ttMatrix.getColIndx();
         double[] vals = ttMatrix.getVals();
