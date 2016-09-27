@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
  * </p>
  * 
  * <p>注意：ERROR日志记录请使用{@link ExceptionUtil}，避免日志的重复记录</p>
- * @author Hanke Chen
+ * @author Chao Chen
  * @version $Id: LogUtil.java, v 0.1 2013-7-11 下午8:55:44 chench Exp $
  */
 public final class LoggerUtil {

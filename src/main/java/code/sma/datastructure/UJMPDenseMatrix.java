@@ -5,7 +5,7 @@ import org.ujmp.core.calculation.Calculation.Ret;
 
 /**
  * 
- * @author Hanke
+ * @author Chao Chen
  * @version $Id: UJMPDenseMatrix.java, v 0.1 Jan 28, 2016 1:30:25 PM Exp $
  */
 public class UJMPDenseMatrix {

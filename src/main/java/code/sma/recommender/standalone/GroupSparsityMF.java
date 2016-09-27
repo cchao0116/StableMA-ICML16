@@ -1,4 +1,4 @@
-package code.sma.recommender.ma;
+package code.sma.recommender.standalone;
 
 import code.sma.datastructure.DynIntArr;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
@@ -13,7 +13,7 @@ import code.sma.util.LoggerUtil;
  * Ting Yuan, Recommendation by Mining Multiple User Behaviors with Group Sparsity
  * Proceedings of AAAI, 2014
  * 
- * @author Hanke
+ * @author Chao Chen
  * @version $Id: GSMF.java, v 0.1 Jan 28, 2016 1:05:24 PM Exp $
  */
 public class GroupSparsityMF extends MatrixFactorizationRecommender {
@@ -21,22 +21,22 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
     private static final long serialVersionUID = 1L;
 
     /** he number of item clusters*/
-    private int             L;
+    private int               L;
     /** User profile in low-rank matrix form. */
-    private UJMPDenseMatrix userUJMPFeatures;
+    private UJMPDenseMatrix   userUJMPFeatures;
     /** Item profile in low-rank matrix form. */
-    private UJMPDenseMatrix itemUJMPFeatures;
+    private UJMPDenseMatrix   itemUJMPFeatures;
     /** The Indicator matrix indexed by user id*/
-    private DynIntArr[]     IijIndxU;
+    private DynIntArr[]       IijIndxU;
     /** The Indicator matrix indexed by item id*/
-    private DynIntArr[]     IijIndxI;
+    private DynIntArr[]       IijIndxI;
 
     /** Controlling factor for loss function */
-    double alpha  = 1;
+    double                    alpha            = 1;
     /** Controlling factor for the degree of group-sparsity regularization. */
-    double beta   = 70;
+    double                    beta             = 70;
     /** Controlling factor for the degree of regularization. */
-    double lambda = 0.05;
+    double                    lambda           = 0.05;
 
     /**
      * Construct a matrix-factorization-based model with the given data.
@@ -53,8 +53,8 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
      * @param l  The number of item clusters
      * @param verbose Indicating whether to show iteration steps and train error.
      */
-    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha, double beta,
-                double lambda, int iter, int l, boolean verbose) {
+    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha,
+                           double beta, double lambda, int iter, int l, boolean verbose) {
         super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose);
         this.alpha = alpha;
         this.beta = beta;
@@ -79,9 +79,9 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
      * @param IijIndxI  The Indicator matrix indexed by item id
      * @param verbose Indicating whether to show iteration steps and train error.
      */
-    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha, double beta,
-                double lambda, int iter, int l, DynIntArr[] IijIndxU, DynIntArr[] IijIndxI,
-                boolean verbose) {
+    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha,
+                           double beta, double lambda, int iter, int l, DynIntArr[] IijIndxU,
+                           DynIntArr[] IijIndxI, boolean verbose) {
         super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose);
         this.alpha = alpha;
         this.beta = beta;

@@ -3,14 +3,17 @@ package code.sma.recommender;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 
 /**
+ * Abstract Class for Recommender Model
  * 
- * @author Hanke
+ * @author Chao Chen
  * @version $Id: Recommender.java, v 0.1 2015-6-8 下午6:59:37 Exp $
  */
 public abstract class Recommender {
     /*========================================
      * Common Variables
      *========================================*/
+    /** thread id in multiple thread version */
+    public int    threadId;
     /** The number of users. */
     public int    userCount;
     /** The number of items. */
@@ -32,6 +35,15 @@ public abstract class Recommender {
      */
     public abstract void buildModel(MatlabFasionSparseMatrix rateMatrix,
                                     MatlabFasionSparseMatrix tMatrix);
+
+    /**
+     * Build a model with given training set.
+     * 
+     * @param rateMatrix
+     * @param tMatrix
+     */
+    public abstract void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
+                                        MatlabFasionSparseMatrix tMatrix);
 
     /*========================================
      * Prediction

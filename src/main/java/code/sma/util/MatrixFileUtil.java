@@ -1,27 +1,22 @@
-/**
- * Tongji Edu.
- * Copyright (c) 2004-2014 All Rights Reserved.
- */
 package code.sma.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 
 import org.apache.commons.io.IOUtils;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.datastructure.SparseVector;
-import code.sma.parser.Ml10mParser;
-import code.sma.parser.Parser;
-import code.sma.parser.RatingVO;
 
 /**
  * Matrix write utilities
  * 
- * @author Hanke Chen
+ * @author Chao Chen
  * @version $Id: MatrixFileUtil.java, v 0.1 2014-10-16 下午2:32:09 chench Exp $
  */
 public final class MatrixFileUtil {
@@ -30,7 +25,7 @@ public final class MatrixFileUtil {
      * forbid construction method
      */
     private MatrixFileUtil() {
-
+        //forbid construction method
     }
 
     /**
@@ -84,29 +79,34 @@ public final class MatrixFileUtil {
      * @param parser        the parser to parse the data structure
      * @return
      */
-    public static MatlabFasionSparseMatrix reads(String file, int nnz, Parser parser) {
-        if (parser == null) {
-            parser = new Ml10mParser();
-        }
-
-        MatlabFasionSparseMatrix result = new MatlabFasionSparseMatrix(nnz);
+    public static MatlabFasionSparseMatrix reads(String filePath) {
+        LineNumberReader lnr = null;
         BufferedReader reader = null;
+
+        MatlabFasionSparseMatrix result = null;
         try {
+            File file = new File(filePath);
+            lnr = new LineNumberReader(new FileReader(file));
+            lnr.skip(Long.MAX_VALUE);
+            int nnz = lnr.getLineNumber();
+
+            result = new MatlabFasionSparseMatrix(nnz);
             reader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = reader.readLine()) != null) {
-                RatingVO rating = (RatingVO) parser.parse(line);
-                result.setValue(rating.getUsrId(), rating.getMovieId(), rating.getRatingReal());
+                String[] elemnts = line.split(",");
+                result.setValue(Integer.valueOf(elemnts[0].trim()),
+                    Integer.valueOf(elemnts[1].trim()), Double.valueOf(elemnts[2].trim()));
             }
-            result.reduceMem();
 
             return result;
         } catch (FileNotFoundException e) {
-            ExceptionUtil.caught(e, "无法找到对应的加载文件: " + file);
+            ExceptionUtil.caught(e, "File Path: " + filePath);
         } catch (IOException e) {
-            ExceptionUtil.caught(e, "读取文件发生异常，校验文件格式");
+            ExceptionUtil.caught(e, "Error In Reading");
         } finally {
             IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(lnr);
         }
         return null;
     }

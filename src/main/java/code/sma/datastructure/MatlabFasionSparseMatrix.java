@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 /**
  * 
- * @author Hanke
+ * @author Chao Chen
  * @version $Id: MatlabFasionSparseMatrix.java, v 0.1 2015-5-16 下午2:55:00 Exp $
  */
 public class MatlabFasionSparseMatrix {

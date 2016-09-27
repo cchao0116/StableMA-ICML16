@@ -1,7 +1,3 @@
-/**
- * Tongji Edu.
- * Copyright (c) 2004-2013 All Rights Reserved.
- */
 package code.sma.util;
 
 import java.io.BufferedReader;
@@ -18,30 +14,23 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
 
 /**
- * 简单文件处理工具，读取文件中所有行。
+ * A tool to handle the file operations
  * 
- * @author Hanke Chen
+ * @author Chao Chen
  * @version $Id: FileUtil.java, v 0.1 2013-11-26 上午11:16:49 chench Exp $
  */
 public final class FileUtil {
+    /** break line char*/
+    public static final char   BREAK_LINE      = '\n';
 
-    /** 配置文件中所使用的路径分隔符*/
-    public static final char   UNION_DIR_SEPERATOR = '/';
-
-    /** 文件换行符*/
-    public static final char   BREAK_LINE          = '\n';
-
-    /** 文件后缀 */
-    public static final String TXT_FILE_SUFFIX     = ".txt";
-
-    /** 文件格式的填充字符 */
-    public final static char   ZERO_PAD_CHAR       = '0';
+    /** suffix of all file */
+    public static final String TXT_FILE_SUFFIX = ".txt";
 
     /**
-     * 禁用构造函数
+     * forbidden constructions
      */
     private FileUtil() {
-
+        //forbidden constructions
     }
 
     /**
@@ -56,8 +45,7 @@ public final class FileUtil {
 
         //读取并解析数据
         if (!file.isFile() | !file.exists()) {
-            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "读取文件发生异常，校验文件路径: "
-                                                                              + path);
+            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "Path:  " + path);
             return null;
         }
         BufferedReader reader = null;
@@ -72,9 +60,9 @@ public final class FileUtil {
 
             return stringBuilder.toString();
         } catch (FileNotFoundException e) {
-            ExceptionUtil.caught(e, "无法找到对应的加载文件: " + path);
+            ExceptionUtil.caught(e, "File Path: " + path);
         } catch (IOException e) {
-            ExceptionUtil.caught(e, "读取文件发生异常，校验文件格式");
+            ExceptionUtil.caught(e, "Error In Reading");
         } finally {
             IOUtils.closeQuietly(reader);
         }
@@ -84,10 +72,9 @@ public final class FileUtil {
     }
 
     /**
-     * 简单读取文件，
-     * 返回文件所有行，且去掉空格.
+     * Read content given the file path with filtering blank lines
      * 
-     * @param path   文件路径
+     * @param path   the target file path
      * @return
      */
     public static String[] readLines(String path) {
@@ -95,8 +82,7 @@ public final class FileUtil {
 
         //读取并解析数据
         if (!file.isFile() | !file.exists()) {
-            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "读取文件发生异常，校验文件路径: "
-                                                                              + path);
+            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "Path:  " + path);
             return null;
         }
         BufferedReader reader = null;
@@ -106,14 +92,16 @@ public final class FileUtil {
             List<String> lines = new ArrayList<String>();
             String context = null;
             while ((context = reader.readLine()) != null) {
-                lines.add(StringUtil.trim(context));
+                if (StringUtil.isNotEmpty(context)) {
+                    lines.add(StringUtil.trim(context));
+                }
             }
 
             return lines.toArray(new String[lines.size()]);
         } catch (FileNotFoundException e) {
-            ExceptionUtil.caught(e, "无法找到对应的加载文件: " + path);
+            ExceptionUtil.caught(e, "File Path: " + path);
         } catch (IOException e) {
-            ExceptionUtil.caught(e, "读取文件发生异常，校验文件格式");
+            ExceptionUtil.caught(e, "Error In Reading");
         } finally {
             IOUtils.closeQuietly(reader);
         }
@@ -134,13 +122,12 @@ public final class FileUtil {
         }
 
         //拆分目录和正则表达式
-        int index = path.lastIndexOf(UNION_DIR_SEPERATOR);
+        int index = path.lastIndexOf(File.pathSeparator);
         String dirValue = path.substring(0, index);
         String regexValue = path.substring(index + 1);
         File dir = new File(dirValue);
         if (!dir.isDirectory() | StringUtil.isBlank(regexValue)) {
-            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "目录不存在，校验文件路径: "
-                                                                              + path);
+            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "File Path: " + path);
             return null;
         }
 
@@ -160,9 +147,9 @@ public final class FileUtil {
                     }
 
                 } catch (FileNotFoundException e) {
-                    ExceptionUtil.caught(e, "无法找到对应的加载文件: " + path);
+                    ExceptionUtil.caught(e, "File Path: " + path);
                 } catch (IOException e) {
-                    ExceptionUtil.caught(e, "读取文件发生异常，校验文件格式");
+                    ExceptionUtil.caught(e, "Error In Reading");
                 } finally {
                     IOUtils.closeQuietly(reader);
                 }
@@ -173,40 +160,7 @@ public final class FileUtil {
     }
 
     /**
-     * 获取符合模式的文件路径
-     * 
-     * @param path  文件路径的RE
-     * @return
-     */
-    public static File[] parserFilesByPattern(String path) {
-        if (StringUtil.isEmpty(path)) {
-            return null;
-        }
-
-        //拆分目录和正则表达式
-        int index = path.lastIndexOf(UNION_DIR_SEPERATOR);
-        String dirValue = path.substring(0, index);
-        String regexValue = path.substring(index + 1);
-        File dir = new File(dirValue);
-        if (!dir.isDirectory() | StringUtil.isBlank(regexValue)) {
-            ExceptionUtil.caught(new FileNotFoundException("File Not Found"), "目录不存在，校验文件路径: "
-                                                                              + path);
-            return null;
-        }
-
-        //批量读取文件
-        List<File> filePaths = new ArrayList<File>();
-        Pattern p = Pattern.compile(regexValue);
-        for (File file : dir.listFiles()) {
-            if (file.isFile() && p.matcher(file.getName()).matches()) {
-                filePaths.add(file);
-            }
-        }
-        return filePaths.toArray(new File[filePaths.size()]);
-    }
-
-    /**
-     * 简单写文件
+     * Write content to the given file path
      * 
      * @param file
      * @param context
@@ -229,7 +183,7 @@ public final class FileUtil {
             writer = new BufferedWriter(new FileWriter(file));
             writer.write(context);
         } catch (IOException e) {
-            ExceptionUtil.caught(e, "写文件发生异常，校验文件格式");
+            ExceptionUtil.caught(e, "File: " + file);
         } finally {
             IOUtils.closeQuietly(writer);
         }
@@ -255,7 +209,7 @@ public final class FileUtil {
             writer = new FileWriter(file, true);
             writer.append(context);
         } catch (IOException e) {
-            ExceptionUtil.caught(e, "写文件发生异常，校验文件格式");
+            ExceptionUtil.caught(e, "File: " + file);
         } finally {
             IOUtils.closeQuietly(writer);
         }
@@ -273,7 +227,7 @@ public final class FileUtil {
             writer = new FileWriter(file, true);
             writer.append(context);
         } catch (IOException e) {
-            ExceptionUtil.caught(e, "写文件发生异常，校验文件格式");
+            ExceptionUtil.caught(e, "File: " + file);
         } finally {
             IOUtils.closeQuietly(writer);
         }

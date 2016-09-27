@@ -3,22 +3,20 @@ package code.sma.datastructure;
 import java.io.Serializable;
 
 /**
+ * Dense Matrix used to represent the features
  * 
- * @author Hanke
+ * @author Chao Chen
  * @version $Id: DenseMatrix.java, v 0.1 2015-5-16 下午3:15:50 Exp $
  */
 public class DenseMatrix implements Serializable {
     /**  */
     private static final long serialVersionUID = 1L;
-    /** */
-    boolean[]   nzRows;
-    /** */
-    double[][]  vals;
-
+    /** The matrix of values*/
+    private DenseVector[]     vals;
     /** The number of rows. */
-    private int M;
+    private int               M;
     /** The number of columns. */
-    private int N;
+    private int               N;
 
     /**
      * @param m
@@ -27,14 +25,13 @@ public class DenseMatrix implements Serializable {
     public DenseMatrix(int m, int n) {
         M = m;
         N = n;
-        vals = new double[M][0];
-        nzRows = new boolean[M];
+        vals = new DenseVector[M];
     }
 
-    /*
-     * ======================================== Getter/Setter
-     * ========================================
-     */
+    // ======================================== 
+    //          Getter/Setter
+    // ========================================
+
     /**
      * Retrieve a stored value from the given index.
      * 
@@ -45,8 +42,8 @@ public class DenseMatrix implements Serializable {
      * @return The value stored at the given index.
      */
     public double getValue(int i, int j) {
-        if (nzRows[i]) {
-            return vals[i][j];
+        if (vals[i] != null) {
+            return vals[i].getValue(j);
         } else {
             return 0.0d;
         }
@@ -62,17 +59,25 @@ public class DenseMatrix implements Serializable {
      * @param value
      *            The value to store.
      */
-    public void setValue(int i, int j, double value) {
-        if (!nzRows[i]) {
-            nzRows[i] = true;
-            vals[i] = new double[N];
+    public void setValue(int i, int j, double value, boolean needRanInit) {
+        if (vals[i] == null) {
+            vals[i] = new DenseVector(N, needRanInit);
         }
-
-        vals[i][j] = value;
+        vals[i].setValue(j, value);
     }
 
     /**
-     * nner product of two vectors.
+     * return the reference of the vector at the given row index
+     * 
+     * @param i The row index
+     * @return  The reference
+     */
+    public DenseVector getRowRef(int i) {
+        return vals[i];
+    }
+
+    /**
+     * Inner product of two vectors.
      * 
      * @param u                 the index of rows in this object 
      * @param i                 the index of rows in tDenseFeature
@@ -80,11 +85,7 @@ public class DenseMatrix implements Serializable {
      * @return
      */
     public double innerProduct(int u, int i, DenseMatrix tDenseMatrix) {
-        double sum = 0.0d;
-        for (int f = 0; f < N; f++) {
-            sum += this.getValue(u, f) * tDenseMatrix.getValue(f, i);
-        }
-        return sum;
+        return vals[u].innerProduct(tDenseMatrix.getRowRef(i));
     }
 
 }

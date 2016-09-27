@@ -1,12 +1,8 @@
-/**
- * Tongji Edu.
- * Copyright (c) 2004-2013 All Rights Reserved.
- */
 package code.sma.util;
 
 /**
  * 
- * @author Hanke Chen
+ * @author Chao Chen
  * @version $Id: StringUtil.java, v 0.1 2013-7-2 下午7:40:05 chench Exp $
  */
 public final class StringUtil {

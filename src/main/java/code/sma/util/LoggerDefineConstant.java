@@ -1,13 +1,9 @@
-/**
- * Tongji Edu.
- * Copyright (c) 2004-2013 All Rights Reserved.
- */
 package code.sma.util;
 
 /**
  * 日志分类常量类
  * 
- * @author Hanke Chen
+ * @author Chao Chen 
  * @version $Id: LoggerDefineConstant.java, v 0.1 2013-9-7 下午3:13:11 chench Exp $
  */
 public final class LoggerDefineConstant {

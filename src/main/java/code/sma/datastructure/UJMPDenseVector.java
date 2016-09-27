@@ -532,28 +532,6 @@ public class UJMPDenseVector {
         return sum;
     }
 
-    /**
-     * Outer-product for indices only in the given indices.
-     * 
-     * @param b The vector to be outer-producted with this vector.
-     * @param indexList The list of indices to be applied outer-product.
-     * @return The outer-product value.
-     */
-    public DenseMatrix partOuterProduct(UJMPDenseVector b, int[] indexList) {
-        if (indexList == null)
-            return null;
-
-        DenseMatrix A = new DenseMatrix(b.length(), b.length());
-
-        for (int i : indexList) {
-            for (int j : indexList) {
-                A.setValue(i, j, this.getValue(i) * b.getValue(j));
-            }
-        }
-
-        return A;
-    }
-
     /*========================================
      * Binary Vector operations without creating new Variable
      *========================================*/

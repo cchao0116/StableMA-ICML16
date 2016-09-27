@@ -4,7 +4,8 @@ import java.util.Arrays;
 
 /**
  * Dynamic Primary int array list
- * @author Hanke
+ * 
+ * @author Chao Chen
  * @version $Id: DynIntArr.java, v 0.1 Jan 28, 2016 8:30:26 PM Exp $
  */
 public final class DynIntArr {

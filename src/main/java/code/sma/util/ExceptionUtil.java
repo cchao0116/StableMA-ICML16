@@ -1,29 +1,23 @@
-/**
- * Tongji Edu.
- * Copyright (c) 2004-2013 All Rights Reserved.
- */
 package code.sma.util;
 
 import org.apache.log4j.Logger;
 
-
 /**
- * 捕捉到异常的时候，我们通常会使用<code>logger.error("xxxx",e)</code>方式打印日常堆栈日志<br>
- * 但是这种方式会造成错误日志打印两遍，精益求精，
+ * a specialized logger-related class to capture the error message
  * 
- * @author Hanke Chen
+ * @author Chao Chen
  * @version $Id: ExceptionUtil.java, v 0.1 2013-9-9 下午1:35:51 chench Exp $
  */
 public class ExceptionUtil {
 
     /** logger */
     private static final Logger logger = Logger.getLogger(LoggerDefineConstant.COMMON_ERROR);
-    
+
     /**
-     * 禁用构造函数
+     * forbidden constructions
      */
     private ExceptionUtil() {
-        // 禁用构造函数
+        // forbidden constructions
     }
 
     /**
@@ -35,5 +29,5 @@ public class ExceptionUtil {
     public static void caught(Throwable e, Object... message) {
         logger.error(LoggerUtil.getLogString(message), e);
     }
-    
+
 }

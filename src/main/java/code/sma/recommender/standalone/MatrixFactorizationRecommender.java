@@ -1,4 +1,4 @@
-package code.sma.recommender.ma;
+package code.sma.recommender.standalone;
 
 import java.io.Serializable;
 
@@ -20,7 +20,7 @@ import code.sma.util.LoggerUtil;
  */
 public abstract class MatrixFactorizationRecommender extends Recommender implements Serializable {
     /** SerialVersionNum */
-    private static final long     serialVersionUID = 1L;
+    protected static final long   serialVersionUID = 1L;
 
     /** The number of features. */
     public int                    featureCount;
@@ -44,6 +44,11 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     public DenseMatrix            userDenseFeatures;
     /** Item profile in low-rank matrix form. */
     public DenseMatrix            itemDenseFeatures;
+
+    /** indices involved in training */
+    public int[]                  trainInvlvIndces;
+    /** indices involved in testing */
+    public int[]                  testInvlvIndces;
 
     /** logger */
     protected final static Logger runningLogger    = Logger
@@ -84,6 +89,41 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
         showProgress = verbose;
     }
 
+    /**
+     * Construct a matrix-factorization-based model with the given data.
+     * 
+     * @param uc The number of users in the dataset.
+     * @param ic The number of items in the dataset.
+     * @param max The maximum rating value in the dataset.
+     * @param min The minimum rating value in the dataset.
+     * @param fc The number of features used for describing user and item profiles.
+     * @param lr Learning rate for gradient-based or iterative optimization.
+     * @param r Controlling factor for the degree of regularization. 
+     * @param m Momentum used in gradient-based or iterative optimization.
+     * @param iter The maximum number of iterations.
+     * @param verbose Indicating whether to show iteration steps and train error.
+     * @param trainInvlvIndces Indices involved in training
+     * @param testInvlvIndces Indices involved in testing
+     */
+    public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,
+                                          double r, double m, int iter, boolean verbose,
+                                          int[] trainInvlvIndces, int[] testInvlvIndces) {
+        userCount = uc;
+        itemCount = ic;
+        maxValue = max;
+        minValue = min;
+
+        featureCount = fc;
+        learningRate = lr;
+        regularizer = r;
+        momentum = m;
+        maxIter = iter;
+
+        showProgress = verbose;
+        this.trainInvlvIndces = trainInvlvIndces;
+        this.testInvlvIndces = testInvlvIndces;
+    }
+
     /*========================================
      * Model Builder
      *========================================*/
@@ -94,24 +134,20 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
         LoggerUtil.info(runningLogger,
             "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer);
-
-        //user features
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
-        for (int u = 0; u < userCount; u++) {
-            for (int f = 0; f < featureCount; f++) {
-                double rdm = Math.random() / featureCount;
-                userDenseFeatures.setValue(u, f, rdm);
-            }
-        }
+        itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
+    }
 
-        //item features
-        itemDenseFeatures = new DenseMatrix(featureCount, itemCount);
-        for (int i = 0; i < itemCount; i++) {
-            for (int f = 0; f < featureCount; f++) {
-                double rdm = Math.random() / featureCount;
-                itemDenseFeatures.setValue(f, i, rdm);
-            }
-        }
+    /**
+     * @see code.sma.recommender.Recommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     */
+    @Override
+    public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
+                               MatlabFasionSparseMatrix tMatrix) {
+        LoggerUtil.info(runningLogger,
+            "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer);
+        userDenseFeatures = new DenseMatrix(userCount, featureCount);
+        itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
     }
 
     /*========================================
@@ -196,6 +232,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
      */
     @Override
     public double predict(int u, int i) {
+        // compute the prediction by using inner product 
         double prediction = this.offset;
         if (userDenseFeatures != null && itemDenseFeatures != null) {
             prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures);
@@ -203,6 +240,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
             throw new RuntimeException("features were not initialized.");
         }
 
+        // normalize the prediction
         if (prediction > maxValue) {
             return maxValue;
         } else if (prediction < minValue) {

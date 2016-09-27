@@ -1,4 +1,4 @@
-package code.sma.recommender.ma;
+package code.sma.recommender.standalone;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 
@@ -74,13 +74,13 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
 
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
-                    double Gis = itemDenseFeatures.getValue(s, i);
+                    double Gis = itemDenseFeatures.getValue(i, s);
 
                     //global model updates
                     userDenseFeatures.setValue(u, s,
-                        Fus + learningRate * (err * Gis - regularizer * Fus));
-                    itemDenseFeatures.setValue(s, i,
-                        Gis + learningRate * (err * Fus - regularizer * Gis));
+                        Fus + learningRate * (err * Gis - regularizer * Fus), true);
+                    itemDenseFeatures.setValue(i, s,
+                        Gis + learningRate * (err * Fus - regularizer * Gis), true);
                 }
             }
 

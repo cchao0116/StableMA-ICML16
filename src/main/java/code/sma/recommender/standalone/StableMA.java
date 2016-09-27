@@ -1,4 +1,4 @@
-package code.sma.recommender.ma;
+package code.sma.recommender.standalone;
 
 import java.util.Arrays;
 
@@ -7,17 +7,19 @@ import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.util.LoggerUtil;
 
 /**
+ * This is a class implementing SMA (Stable Matrix Approximation).
+ * Technical detail of the algorithm can be found in
+ * Dongsheng Li, Stable Matrix Approximation,
+ * Proceedings of ICML, 2016.
  * 
- * @author Hanke
+ * @author Chao Chen
  * @version $Id: StableSVD.java, v 0.1 Dec 22, 2015 11:43:15 AM Exp $
  */
 public class StableMA extends MatrixFactorizationRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
-
-    /** number of user/item clusters */
-    protected int             k;
-    protected int             numSet           = 0;
+    /** Number of hard-predictable subsets */
+    protected int             numOfHPSet;
 
     /*========================================
      * Constructors
@@ -36,9 +38,9 @@ public class StableMA extends MatrixFactorizationRecommender {
      * @param iter The maximum number of iterations.
      */
     public StableMA(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                    int iter, int k, boolean verbose) {
+                    int iter, int numOfHPSet, boolean verbose) {
         super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
-        this.k = k;
+        this.numOfHPSet = numOfHPSet;
     }
 
     /** 
@@ -60,11 +62,13 @@ public class StableMA extends MatrixFactorizationRecommender {
 
         // rating assignment
         // pre-compute the rmse
-        boolean[][] rAssigmnt = new boolean[k][rateCount];
+        boolean[][] rAssigmnt = new boolean[numOfHPSet][rateCount];
         double[] errors = new double[rateCount];
-        double[] seInSubset = new double[k];
-        int[] numInSubset = new int[k];
+        double[] seInSubset = new double[numOfHPSet];
+        int[] numInSubset = new int[numOfHPSet];
         double se = assignStable(rateMatrix, rAssigmnt, errors, seInSubset, numInSubset);
+        LoggerUtil.info(runningLogger, "Param: FC: " + featureCount + "\tLR: " + learningRate
+                                       + "\tR: " + regularizer + "\tT: " + rateCount);
 
         // update model
         boolean isCollaps = false;
@@ -81,8 +85,8 @@ public class StableMA extends MatrixFactorizationRecommender {
 
                 // compute all rmse-s
                 double rmse = Math.sqrt((se - errors[numSeq] + err * err) / rateCount);
-                double[] subRMSES = new double[k];
-                for (int kIndx = 0; kIndx < k; kIndx++) {
+                double[] subRMSES = new double[numOfHPSet];
+                for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
                     if (rAssigmnt[kIndx][numSeq] == false) {
                         continue;
                     }
@@ -97,22 +101,22 @@ public class StableMA extends MatrixFactorizationRecommender {
                 // stochastic gradient descend
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
-                    double Gis = itemDenseFeatures.getValue(s, i);
+                    double Gis = itemDenseFeatures.getValue(i, s);
 
                     double uGrad = err * Gis / rmse - regularizer * Fus;
                     double iGrad = err * Fus / rmse - regularizer * Gis;
 
-                    for (int kIndx = 0; kIndx < k; kIndx++) {
+                    for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
                         if (rAssigmnt[kIndx][numSeq] == false) {
                             continue;
                         }
 
-                        uGrad += err * Gis / (2 * k * subRMSES[kIndx]);
-                        iGrad += err * Fus / (2 * k * subRMSES[kIndx]);
+                        uGrad += err * Gis / (2 * numOfHPSet * subRMSES[kIndx]);
+                        iGrad += err * Fus / (2 * numOfHPSet * subRMSES[kIndx]);
                     }
 
-                    userDenseFeatures.setValue(u, s, Fus + learningRate * uGrad);
-                    itemDenseFeatures.setValue(s, i, Gis + learningRate * iGrad);
+                    userDenseFeatures.setValue(u, s, Fus + learningRate * uGrad, true);
+                    itemDenseFeatures.setValue(i, s, Gis + learningRate * iGrad, true);
                 }
             }
 
@@ -124,7 +128,7 @@ public class StableMA extends MatrixFactorizationRecommender {
             if (showProgress & (round % 5 == 0) && tMatrix != null) {
                 StringBuilder logStr = new StringBuilder();
                 logStr.append(round + "\t" + String.format("%.4f", currErr));
-                for (int gIndx = 0; gIndx < k; gIndx++) {
+                for (int gIndx = 0; gIndx < numOfHPSet; gIndx++) {
                     logStr.append('\t').append(
                         String.format("%.4f", Math.sqrt(seInSubset[gIndx] / numInSubset[gIndx])));
                 }
@@ -148,8 +152,7 @@ public class StableMA extends MatrixFactorizationRecommender {
         bestRMSE = bestRMSE < prmse ? bestRMSE : prmse;
         LoggerUtil.info(resultLogger,
             "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer + "\tk: "
-                                      + k + "\tnumSet: " + numSet + "\tRMSE: "
-                                      + String.format("%.6f", bestRMSE));
+                                      + numOfHPSet + "\tRMSE: " + String.format("%.6f", bestRMSE));
     }
 
     /**
@@ -186,11 +189,10 @@ public class StableMA extends MatrixFactorizationRecommender {
 
             diffArr[numSeq] = Math.abs(AuiReal - AuiEst) - recRMSE;
         }
-
         double sampleMean = StatUtils.mean(diffArr);
 
         // make a partition
-        for (int kIndx = 0; kIndx < k; kIndx++) {
+        for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
             Arrays.fill(rAssigmnt[kIndx], true);
         }
         for (int numSeq = 0; numSeq < rateCount; numSeq++) {
@@ -198,11 +200,9 @@ public class StableMA extends MatrixFactorizationRecommender {
             boolean isHardPredictableItem = diffArr[numSeq] > sampleMean;
 
             if ((isHardPredictableItem & (rand < 0.45)) | (!isHardPredictableItem & rand < 0.60)) {
-                rAssigmnt[(int) (k * Math.random())][numSeq] = false;
-                numSet++;
+                rAssigmnt[(int) (numOfHPSet * Math.random())][numSeq] = false;
             }
         }
-        System.out.println(numSet);
 
         return initialStatParam(rateMatrix, rAssigmnt, errors, seInSubset, numInSubset);
     }
@@ -241,7 +241,7 @@ public class StableMA extends MatrixFactorizationRecommender {
             errors[numSeq] = Math.pow(error, 2.0d);
             se += errors[numSeq];
 
-            for (int kIndx = 0; kIndx < k; kIndx++) {
+            for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
                 if (rAssigmnt[kIndx][numSeq] == false) {
                     continue;
                 }
@@ -250,6 +250,15 @@ public class StableMA extends MatrixFactorizationRecommender {
             }
         }
         return se;
+    }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
+               + " ALG[SMA][" + numOfHPSet + "]";
     }
 
 }
