@@ -47,7 +47,7 @@ public final class ClusterInfoUtil {
                 int rowId = rowIndx[mfSeq];
                 int colId = colIndx[mfSeq];
 
-                int clusterId = raf[rowId] * clusteringSize[0] + caf[colId];
+                int clusterId = raf[rowId] * clusteringSize[1] + caf[colId];
                 dynInvlvIndcs[clusterId].addValue(mfSeq);
             }
 

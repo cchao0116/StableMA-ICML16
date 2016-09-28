@@ -57,23 +57,25 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
             }
         }
 
-        // compute the undone clustering
-        int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
-        int rowCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
-        int colCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
-        String trainFile = rootDir + "trainingset";
-        SparseMatrix rateMatrix = MatrixFileUtil.read(trainFile, rowCount, colCount);
-        //        SparseMatrix rateMatrix = null;
+        if (!clusterDirs.isEmpty()) {
+            // compute the undone clustering
+            int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
+            int rowCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
+            int colCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
+            String trainFile = rootDir + "trainingset";
+            SparseMatrix rateMatrix = MatrixFileUtil.read(trainFile, rowCount, colCount);
+            //        SparseMatrix rateMatrix = null;
 
-        try {
-            ExecutorService exec = Executors.newCachedThreadPool();
-            for (int t = 0; t < threadNum; t++) {
-                exec.execute(new ClusteringLearner(this, rateMatrix, conf));
+            try {
+                ExecutorService exec = Executors.newCachedThreadPool();
+                for (int t = 0; t < threadNum; t++) {
+                    exec.execute(new ClusteringLearner(this, rateMatrix, conf));
+                }
+                exec.shutdown();
+                exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+            } catch (InterruptedException e) {
+                ExceptionUtil.caught(e, "Clustering Thead!");
             }
-            exec.shutdown();
-            exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-        } catch (InterruptedException e) {
-            ExceptionUtil.caught(e, "Clustering Thead!");
         }
 
         if (this.successor != null) {

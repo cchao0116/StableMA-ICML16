@@ -53,7 +53,7 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
 
         // every entry plus 1 to avoid zero condition
         for (int t = 0; t < tnS; t++) {
-            tnWs[t] = (tnWs[t] + 1) / (tnMatrix.getNnz() + tnS);
+            tnWs[t] = (tnWs[t] + 1) / (invlvIndces.length + tnS);
         }
         return tnWs;
     }

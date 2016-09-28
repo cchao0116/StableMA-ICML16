@@ -181,6 +181,12 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
                 int i = iIndx[numSeq];
 
                 // update global approximation model
+                if (((MatrixFactorizationRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
+                    || ((MatrixFactorizationRecommender) recmmd).itemDenseFeatures
+                        .getRowRef(i) == null) {
+                    continue;
+                }
+
                 double prediction = ((Recommender) recmmd).predict(u, i);
                 double weight = ensnblWeight(u, i, prediction);
 

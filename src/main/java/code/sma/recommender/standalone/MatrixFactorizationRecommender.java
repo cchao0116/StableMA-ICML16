@@ -214,11 +214,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
         // compute the prediction by using inner product 
         double prediction = this.offset;
         if (userDenseFeatures != null && itemDenseFeatures != null) {
-            if (userDenseFeatures.getRowRef(u) == null | itemDenseFeatures.getRowRef(i) == null) {
-                return (maxValue + minValue) / 2.0;
-            } else {
-                prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
-            }
+            prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
         } else {
             throw new RuntimeException("features were not initialized.");
         }

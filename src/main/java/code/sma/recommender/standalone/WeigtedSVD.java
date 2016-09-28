@@ -86,7 +86,7 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
                     double Gis = itemDenseFeatures.getValue(i, s);
-                    double wts = tnWs[dctzr.convert(AuiReal)];
+                    double wts = 1 + beta0 * tnWs[dctzr.convert(AuiReal)];
 
                     userDenseFeatures.setValue(u, s,
                         Fus + learningRate * (err * Gis * wts - regularizer * Fus), true);
