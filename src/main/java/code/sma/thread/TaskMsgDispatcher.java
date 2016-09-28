@@ -1,7 +1,6 @@
 package code.sma.thread;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recommender.Recommender;
 
 /**
  * The learning task dispatcher
@@ -16,7 +15,7 @@ public interface TaskMsgDispatcher {
      * 
      * @return configured model 
      */
-    public Recommender map();
+    public Object map();
 
     /**
      * merge results
@@ -25,7 +24,7 @@ public interface TaskMsgDispatcher {
      * @param tnMatrix  the training data
      * @param ttMatrix  the testing data
      */
-    public void reduce(Recommender recmmd, MatlabFasionSparseMatrix tnMatrix,
+    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
                        MatlabFasionSparseMatrix ttMatrix);
 
 }

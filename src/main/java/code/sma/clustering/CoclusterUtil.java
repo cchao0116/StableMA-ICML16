@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 
 import code.sma.datastructure.SparseMatrix;
 import code.sma.datastructure.SparseVector;
-import code.sma.util.DistanceUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 
@@ -25,38 +24,28 @@ import code.sma.util.LoggerUtil;
 public final class CoclusterUtil {
 
     //===========================================
-    //      Bragman Divergence
-    //===========================================
-    /** I-Divergence*/
-    public final static int     I_DIVERGENCE         = 501;
-
-    /** Euclidean-Divergence*/
-    public final static int     EUCLIDEAN_DIVERGENCE = 502;
-
-    //===========================================
     //      Constraints
     //===========================================
     /** Constraint 1: preserve E[Z|U*], E[Z|V*] */
-    public final static int     C_1                  = 1;
+    public final static int     C_1    = 1;
 
     /** Constraint 2: preserve E[Z|U*,V*] */
-    public final static int     C_2                  = 2;
+    public final static int     C_2    = 2;
 
     /** Constraint 3: preserve E[Z|U*,V*], E[Z|U] */
-    public final static int     C_3                  = 3;
+    public final static int     C_3    = 3;
 
     /** Constraint 4: preserve E[Z|U*,V*], E[Z|V] */
-    public final static int     C_4                  = 4;
+    public final static int     C_4    = 4;
 
     /** Constraint 5: preserve E[Z|U*,V*], E[Z|U*,V], E[Z|U,V*] */
-    public final static int     C_5                  = 5;
+    public final static int     C_5    = 5;
 
     /** Constraint 6: preserve E[Z|U,V*], E[Z|U*,V] */
-    public final static int     C_6                  = 6;
+    public final static int     C_6    = 6;
 
     /** logger */
-    private final static Logger logger               = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_CORE);
+    private final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_CORE);
 
     /**
      * forbide construction
@@ -81,7 +70,7 @@ public final class CoclusterUtil {
     public static Cluster[][] divideWithConjugateAssumption(final SparseMatrix points, final int K,
                                                             final int L, final int maxIteration,
                                                             final int constraint,
-                                                            final int divergence) {
+                                                            final Distance dtncConst) {
         //check primary parameter
         int rowCount = points.length()[0];
         int colCount = points.length()[1];
@@ -118,14 +107,12 @@ public final class CoclusterUtil {
 
             //update row cluster
             err = updateRowCluster(points, K, L, rowCluster, colCluster, rowAssigmnt, colAssigmnt,
-                constraint, divergence, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc, E_U_Vc, E_Uc_V,
-                E);
+                constraint, dtncConst, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc, E_U_Vc, E_Uc_V, E);
             LoggerUtil.info(logger, round + "A:\t" + err);
 
             //update column cluster
             err = updateColCluster(points, K, L, rowCluster, colCluster, rowAssigmnt, colAssigmnt,
-                constraint, divergence, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc, E_U_Vc, E_Uc_V,
-                E);
+                constraint, dtncConst, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc, E_U_Vc, E_Uc_V, E);
             LoggerUtil.info(logger, round + "B:\t" + err);
 
             //update Lagrange multipliers
@@ -200,16 +187,16 @@ public final class CoclusterUtil {
     protected static double updateRowCluster(final SparseMatrix points, final int K, final int L,
                                              final Cluster[] rowCluster, final Cluster[] colCluster,
                                              final int[] rowAssigmnt, final int[] colAssigmnt,
-                                             final int constraint, final int divergence,
+                                             final int constraint, final Distance dtncConst,
                                              boolean isChanged, double[][] E_Uc_Vc, double[] E_U,
                                              double[] E_Uc, double[] E_V, double[] E_Vc,
                                              double[][] E_U_Vc, double[][] E_Uc_V, double E) {
-        switch (divergence) {
-            case I_DIVERGENCE:
+        switch (dtncConst) {
+            case IW:
                 return updateRowClusterForIDivergence(points, K, L, rowCluster, colCluster,
                     rowAssigmnt, colAssigmnt, constraint, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc,
                     E_U_Vc, E_Uc_V, E);
-            case EUCLIDEAN_DIVERGENCE:
+            case EW:
                 return updateRowClusterForEuclidean(points, K, L, rowCluster, colCluster,
                     rowAssigmnt, colAssigmnt, constraint, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc,
                     E_U_Vc, E_Uc_V, E);
@@ -290,8 +277,7 @@ public final class CoclusterUtil {
                         default:
                             throw new RuntimeException("No contraints is choosed! ");
                     }
-                    iDivergence += DistanceUtil.divergence(ZuvReal, ZuvEstim,
-                        DistanceUtil.I_DIVERGENCE);
+                    iDivergence += Distance.IW.divergence(ZuvReal, ZuvEstim);
                 }
 
                 if (min > iDivergence) {
@@ -387,8 +373,7 @@ public final class CoclusterUtil {
                         default:
                             throw new RuntimeException("No contraints is choosed! ");
                     }
-                    euDivergence += DistanceUtil.divergence(ZuvReal, ZuvEstim,
-                        DistanceUtil.EUCLIDEAN_DIVERGENCE);
+                    euDivergence += Distance.EW.divergence(ZuvReal, ZuvEstim);
                 }
 
                 if (min > euDivergence) {
@@ -416,16 +401,16 @@ public final class CoclusterUtil {
     protected static double updateColCluster(final SparseMatrix points, final int K, final int L,
                                              final Cluster[] rowCluster, final Cluster[] colCluster,
                                              final int[] rowAssigmnt, final int[] colAssigmnt,
-                                             final int constraint, final int divergence,
+                                             final int constraint, final Distance dtncConst,
                                              boolean isChanged, double[][] E_Uc_Vc, double[] E_U,
                                              double[] E_Uc, double[] E_V, double[] E_Vc,
                                              double[][] E_U_Vc, double[][] E_Uc_V, double E) {
-        switch (divergence) {
-            case I_DIVERGENCE:
+        switch (dtncConst) {
+            case IW:
                 return updateColClusterForIDivergence(points, K, L, rowCluster, colCluster,
                     rowAssigmnt, colAssigmnt, constraint, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc,
                     E_U_Vc, E_Uc_V, E);
-            case EUCLIDEAN_DIVERGENCE:
+            case EW:
                 return updateColClusterForEuclidean(points, K, L, rowCluster, colCluster,
                     rowAssigmnt, colAssigmnt, constraint, isChanged, E_Uc_Vc, E_U, E_Uc, E_V, E_Vc,
                     E_U_Vc, E_Uc_V, E);
@@ -516,8 +501,7 @@ public final class CoclusterUtil {
                         default:
                             throw new RuntimeException("No contraints is choosed! ");
                     }
-                    iDivergence += DistanceUtil.divergence(ZuvReal, ZuvEstim,
-                        DistanceUtil.I_DIVERGENCE);
+                    iDivergence += Distance.IW.divergence(ZuvReal, ZuvEstim);
                 }
 
                 if (min > iDivergence) {
@@ -613,8 +597,7 @@ public final class CoclusterUtil {
                         default:
                             throw new RuntimeException("No contraints is choosed! ");
                     }
-                    euDivergence += DistanceUtil.divergence(ZuvReal, ZuvEstim,
-                        DistanceUtil.EUCLIDEAN_DIVERGENCE);
+                    euDivergence += Distance.EW.divergence(ZuvReal, ZuvEstim);
                 }
 
                 if (min > euDivergence) {
@@ -823,5 +806,12 @@ public final class CoclusterUtil {
                 E_Uc_V[k][v] = sum / itemCount;
             }
         }
+    }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    public static String info() {
+        return "Cocluster";
     }
 }

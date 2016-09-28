@@ -1,10 +1,7 @@
 package code.sma.recommender.standalone;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.depndncy.Discretizer;
+import code.sma.dpncy.Discretizer;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -64,8 +61,7 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
         super.buildloclModel(rateMatrix, null);
 
         // Compute dependencies
-        Map<Integer, Double> trnWs = new HashMap<Integer, Double>();
-        cmpTrainParam(rateMatrix, trnWs);
+        double[] tnWs = dctzr.cmpTrainWs(rateMatrix, trainInvlvIndces);
 
         // Gradient Descent:
         int round = 0;
@@ -86,11 +82,11 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
                 double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
 
                 double err = AuiReal - AuiEst;
-                sum += Math.abs(err);
+                sum += Math.pow(err, 2.0d);
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
                     double Gis = itemDenseFeatures.getValue(i, s);
-                    double wts = trnWs.get(dctzr.convert(AuiReal));
+                    double wts = tnWs[dctzr.convert(AuiReal)];
 
                     userDenseFeatures.setValue(u, s,
                         Fus + learningRate * (err * Gis * wts - regularizer * Fus), true);
@@ -100,32 +96,11 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
             }
 
             prevErr = currErr;
-            currErr = sum / rateCount;
-
+            currErr = Math.sqrt(sum / rateCount);
             round++;
 
             // Show progress:
             LoggerUtil.info(runningLogger, round + "\t" + currErr);
-        }
-    }
-
-    /**
-     * Compute the parameters which would be used in the training
-     * 
-     * @param rateMatrix
-     * @return
-     */
-    protected void cmpTrainParam(MatlabFasionSparseMatrix rateMatrix, Map<Integer, Double> trnWs) {
-        // compute rating distributions for each rating value
-        double[] Auis = rateMatrix.getVals();
-        for (int numSeq : trainInvlvIndces) {
-            int key = dctzr.convert(Auis[numSeq]);
-            Double val = trnWs.get(key);
-            trnWs.put(key, val == null ? 0.0d : val + 1);
-        }
-        for (Integer key : trnWs.keySet()) {
-            Double val = trnWs.get(key);
-            trnWs.put(key, 1 + beta0 * val / trainInvlvIndces.length);
         }
     }
 

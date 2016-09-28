@@ -1,7 +1,10 @@
 package code.sma.main;
 
+import java.io.File;
+import java.util.LinkedList;
 import java.util.Queue;
 
+import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
 import code.sma.recommender.ensemble.WEMAREC;
@@ -20,7 +23,6 @@ public final class RecommenderFactory {
     private RecommenderFactory() {
     };
 
-    @SuppressWarnings("unchecked")
     public static Recommender instance(String algName, RecConfigEnv rce) {
         int featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
         double lrate = (double) rce.get("LEARNING_RATE_VALUE");
@@ -44,16 +46,26 @@ public final class RecommenderFactory {
                 regularized, 0, maxIteration, numHPSet, showProgress);
         } else if (StringUtil.equalsIgnoreCase(algName, "GSMF")) {
             // Recommendation by Mining Multiple User Behaviors with Group Sparsity
-            double alpha = (double) rce.get("ALPA");
-            double beta = (double) rce.get("BETA");
-            double lambda = (double) rce.get("LAMBDA");
+            double alpha = (double) rce.get("ALPA_VALUE");
+            double beta = (double) rce.get("BETA_VALUE");
+            double lambda = (double) rce.get("LAMBDA_VALUE");
             return new GroupSparsityMF(userCount, itemCount, maxValue, minValue, featureCount,
                 alpha, beta, lambda, maxIteration, 3, showProgress);
         } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
             // WEMAREC: Accurate and Scalable Recommendation through Weighted and Ensemble Matrix Approximation
-            Queue<String> clusterDirs = (Queue<String>) rce.get("CLUSTERING_SET");
+            String rootDir = (String) rce.get("ROOT_DIR");
+            String[] cDirStrs = ((String) rce.get("CLUSTERING_SET")).split("\\,");
+
+            Queue<String> clusterDirs = new LinkedList<String>();
+            for (String cDirStr : cDirStrs) {
+                String clusterDir = rootDir + cDirStr + File.separator;
+                clusterDirs.add(clusterDir);
+            }
+
             return new WEMAREC(userCount, itemCount, maxValue, minValue, featureCount, lrate,
-                regularized, 0, maxIteration, showProgress, rce, null, clusterDirs);
+                regularized, 0, maxIteration, showProgress, rce,
+                new NetflixMovieLensDiscretizer(userCount, itemCount, maxValue, minValue),
+                clusterDirs);
 
         } else {
             return null;

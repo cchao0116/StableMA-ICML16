@@ -1,4 +1,4 @@
-package code.sma.depndncy;
+package code.sma.dpncy;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 
@@ -21,8 +21,8 @@ public abstract class Discretizer {
     /**
      * compute the training weights using in WEMAREC
      * 
-     * @param tnMatrix            the 
-     * @param invlvIndces
+     * @param tnMatrix            the training data
+     * @param invlvIndces         involved data indices
      * @return
      */
     public abstract double[] cmpTrainWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces);
@@ -30,9 +30,9 @@ public abstract class Discretizer {
     /**
      * compute the ensemble weights using in WEMAREC
      * 
-     * @param ttMatrix
-     * @param invlvIndces
+     * @param tnMatrix           the training data   
+     * @param invlvIndces        involved data indices
      * @return
      */
-    public abstract double[][][] cmpEnsmblWs(MatlabFasionSparseMatrix ttMatrix, int[] invlvIndces);
+    public abstract double[][][] cmpEnsmblWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces);
 }

@@ -40,6 +40,11 @@ This code implemented:
   and note that the dependencies are managed by Maven Plug-in.
   Therefore, if you had dependency issues, please use Maven to import this project again.
 </p>
+<p>
+	PS: the ready-to-run data can be download from 
+	<a href="https://drive.google.com/open?id=0Bz4myK9f22j4ZVpsY2xMZ0JfM3c">Google</a> or
+	<a href="http://pan.baidu.com/s/1hrITIhm">Baidu</a>
+</p>
 
 <h3>[Running Suggestion]</h3>
 <p>

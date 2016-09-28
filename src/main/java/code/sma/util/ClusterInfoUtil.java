@@ -47,7 +47,7 @@ public final class ClusterInfoUtil {
                 int rowId = rowIndx[mfSeq];
                 int colId = colIndx[mfSeq];
 
-                int clusterId = rowId * clusteringSize[0] + colId;
+                int clusterId = raf[rowId] * clusteringSize[0] + caf[colId];
                 dynInvlvIndcs[clusterId].addValue(mfSeq);
             }
 
@@ -80,7 +80,7 @@ public final class ClusterInfoUtil {
         {
             String[] rowAssgnContent = FileUtil.readLines(clusterDir + "RM");
             for (String line : rowAssgnContent) {
-                String[] elemnts = line.split("\\:");
+                String[] elemnts = line.split("\\,");
                 raf[Integer.valueOf(elemnts[0].trim())] = Integer.valueOf(elemnts[1].trim());
             }
         }
@@ -89,7 +89,7 @@ public final class ClusterInfoUtil {
         {
             String[] colAssgnContent = FileUtil.readLines(clusterDir + "CM");
             for (String line : colAssgnContent) {
-                String[] elemnts = line.split("\\:");
+                String[] elemnts = line.split("\\,");
                 caf[Integer.valueOf(elemnts[0].trim())] = Integer.valueOf(elemnts[1].trim());
             }
         }
@@ -109,12 +109,12 @@ public final class ClusterInfoUtil {
         {
             StringBuilder settngContt = new StringBuilder();
             for (Cluster rowCluster : clustering[0]) {
-                settngContt.append(rowCluster.size() + ',');
+                settngContt.append(rowCluster.size() + ",");
             }
             settngContt.replace(settngContt.length() - 1, settngContt.length(), "\n");
 
             for (Cluster colCluster : clustering[1]) {
-                settngContt.append(colCluster.size() + ',');
+                settngContt.append(colCluster.size() + ",");
             }
             settngContt.deleteCharAt(settngContt.length() - 1);
             FileUtil.writeAsAppendWithDirCheck(clusterDir + "SETTING", settngContt.toString());
@@ -126,7 +126,7 @@ public final class ClusterInfoUtil {
             for (Cluster rowCluster : clustering[0]) {
                 StringBuilder rafContt = new StringBuilder();
                 for (Integer rowId : rowCluster) {
-                    rafContt.append(rowId + ':' + rowClusterId + '\n');
+                    rafContt.append(rowId + "," + rowClusterId + '\n');
                 }
 
                 rowClusterId++;
@@ -140,7 +140,7 @@ public final class ClusterInfoUtil {
             for (Cluster colCluster : clustering[1]) {
                 StringBuilder cafContt = new StringBuilder();
                 for (Integer colId : colCluster) {
-                    cafContt.append(colId + ':' + colClusterId + '\n');
+                    cafContt.append(colId + "," + colClusterId + '\n');
                 }
 
                 colClusterId++;

@@ -36,7 +36,7 @@ public class WeakLearner extends Thread {
     @Override
     public void run() {
         Recommender recmmnd = null;
-        while ((recmmnd = dispatcher.map()) != null) {
+        while ((recmmnd = (Recommender) dispatcher.map()) != null) {
             recmmnd.buildloclModel(trainMatrix, testMatrix);
             dispatcher.reduce(recmmnd, trainMatrix, testMatrix);
         }

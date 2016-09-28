@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.depndncy.Discretizer;
+import code.sma.dpncy.Discretizer;
 import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
 import code.sma.recommender.standalone.MatrixFactorizationRecommender;
@@ -51,6 +51,8 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     protected Queue<String>          clusterDirList;
     /** the learning task buffer*/
     protected Queue<Recommender>     recmmdsBuffer;
+    /** current assigned thread id*/
+    protected int                    curTId           = 0;
 
     /*========================================
      * Model specific parameters
@@ -67,8 +69,8 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     /** the rating distribution w.r.t each item*/
     protected double[][]             ensmblWeightInI;
 
-    protected final static Logger    threadLogger     = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_THREAD);
+    protected final static Logger    logger           = Logger
+        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     /**
      * Construct a matrix-factorization-based model with the given data.
@@ -110,7 +112,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
         ttMatrix = tMatrix;
 
         // compute ensemble weights
-        double[][][] ensmbleWs = dctzr.cmpEnsmblWs(ttMatrix, null);
+        double[][][] ensmbleWs = dctzr.cmpEnsmblWs(tnMatrix, null);
         ensmblWeightInU = ensmbleWs[0];
         ensmblWeightInI = ensmbleWs[1];
 
@@ -153,6 +155,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
                     Recommender wsvd = new WeigtedSVD(userCount, itemCount, maxValue, minValue,
                         featureCount, learningRate, regularizer, momentum, maxIter,
                         tnInvlvedIndcs[c], ttInvlvedIndcs[c], beta0, dctzr);
+                    wsvd.threadId = curTId++;
                     recmmdsBuffer.add(wsvd);
                 }
                 return recmmdsBuffer.poll();
@@ -164,7 +167,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recommender.Recommender)
      */
     @Override
-    public void reduce(Recommender recmmd, MatlabFasionSparseMatrix tnMatrix,
+    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
                        MatlabFasionSparseMatrix ttMatrix) {
         int[] uIndx = ttMatrix.getRowIndx();
         int[] iIndx = ttMatrix.getColIndx();
@@ -178,7 +181,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
                 int i = iIndx[numSeq];
 
                 // update global approximation model
-                double prediction = recmmd.predict(u, i);
+                double prediction = ((Recommender) recmmd).predict(u, i);
                 double weight = ensnblWeight(u, i, prediction);
 
                 double newCumPrediction = prediction * weight + cumPrediction.getValue(u, i);
@@ -203,7 +206,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
         }
         rmse = Math.sqrt(rmse / nnz);
 
-        LoggerUtil.info(threadLogger, (new StringBuilder("ThreadId: " + recmmd.threadId))
+        LoggerUtil.info(logger, (new StringBuilder("ThreadId: " + ((Recommender) recmmd).threadId))
             .append(String.format("\tRMSE: %.6f", rmse)));
     }
 

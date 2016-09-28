@@ -80,10 +80,10 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recommender.Recommender)
      */
     @Override
-    public void reduce(Recommender recmmd, MatlabFasionSparseMatrix tnMatrix,
+    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
                        MatlabFasionSparseMatrix ttMatrix) {
         LoggerUtil.info(normalLogger, (new StringBuilder(recmmd.toString()))
-            .append(String.format("\tRMSE: %.6f", recmmd.evaluate(ttMatrix))));
+            .append(String.format("\tRMSE: %.6f", ((Recommender) recmmd).evaluate(ttMatrix))));
     }
 
 }
