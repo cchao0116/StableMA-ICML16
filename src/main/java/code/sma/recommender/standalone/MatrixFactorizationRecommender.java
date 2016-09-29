@@ -6,7 +6,10 @@ import org.apache.log4j.Logger;
 
 import code.sma.datastructure.DenseMatrix;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.recommender.Loss;
+import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
+import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 
@@ -49,6 +52,8 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     public int[]                  trainInvlvIndces;
     /** indices involved in testing */
     public int[]                  testInvlvIndces;
+    /** the loss funciton to measure the distance between real value and approximated value*/
+    protected Loss                lossFunction;
 
     /** logger */
     protected final static Logger runningLogger    = Logger
@@ -72,9 +77,11 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
      * @param verbose Indicating whether to show iteration steps and train error.
+     * @param rce The recommender's specific parameters
      */
     public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,
-                                          double r, double m, int iter, boolean verbose) {
+                                          double r, double m, int iter, boolean verbose,
+                                          RecConfigEnv rce) {
         userCount = uc;
         itemCount = ic;
         maxValue = max;
@@ -87,6 +94,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
         maxIter = iter;
 
         showProgress = verbose;
+        lossFunction = Loss.valueOf((String) rce.get("LOSS_FUNCTION"));
     }
 
     /**
@@ -164,16 +172,15 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     protected boolean recordLoggerAndDynamicStop(int round, MatlabFasionSparseMatrix tMatrix,
                                                  double currErr) {
         if (showProgress && (round % 5 == 0) && tMatrix != null) {
-            double prmse = this.evaluate(tMatrix);
-            LoggerUtil.info(runningLogger, round + "\t" + String.format("%.6f", currErr) + "\t"
-                                           + String.format("%.6f", prmse));
-            if (bestRMSE >= prmse) {
-                bestRMSE = prmse;
+            EvaluationMetrics metric = evaluate(tMatrix);
+            LoggerUtil.info(runningLogger, round + "\t" + metric.printOneLine());
+            if (bestRMSE >= metric.getRMSE()) {
+                bestRMSE = metric.getRMSE();
             } else {
                 return true;
             }
         } else {
-            LoggerUtil.info(runningLogger, round + "\t" + String.format("%.6f", currErr));
+            LoggerUtil.info(runningLogger, String.format("%d\t%.6f", round, currErr));
         }
 
         return false;
@@ -187,23 +194,8 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
      * @see code.sma.recommender.Recommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
-    public double evaluate(MatlabFasionSparseMatrix testMatrix) {
-        double RMSE = 0.0d;
-
-        int rateCount = testMatrix.getNnz();
-        int[] uIndx = testMatrix.getRowIndx();
-        int[] iIndx = testMatrix.getColIndx();
-        double[] Auis = testMatrix.getVals();
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double AuiReal = Auis[numSeq];
-            double AuiEst = predict(u, i);
-
-            RMSE += Math.pow(AuiReal - AuiEst, 2.0d);
-        }
-
-        return Math.sqrt(RMSE / rateCount);
+    public EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix) {
+        return new EvaluationMetrics(this, testMatrix);
     }
 
     /**

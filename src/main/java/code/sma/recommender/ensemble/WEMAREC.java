@@ -92,7 +92,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     public WEMAREC(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
                    int iter, boolean verbose, RecConfigEnv rce, Discretizer dr,
                    Queue<String> clusterDirs) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
+        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
         beta0 = (Double) rce.get("BETA0_VALUE");
         beta1 = (Double) rce.get("BETA1_VALUE");
         beta2 = (Double) rce.get("BETA2_VALUE");
@@ -214,6 +214,24 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
 
         LoggerUtil.info(logger, (new StringBuilder("ThreadId: " + ((Recommender) recmmd).threadId))
             .append(String.format("\tRMSE: %.6f", rmse)));
+    }
+
+    /** 
+     * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#predict(int, int)
+     */
+    @Override
+    public double predict(int u, int i) {
+        double prediction = (cumWeight.getValue(u, i) == 0.0) ? ((maxValue + minValue) / 2)
+            : (cumPrediction.getValue(u, i) / cumWeight.getValue(u, i));
+
+        // normalize the prediction
+        if (prediction > maxValue) {
+            return maxValue;
+        } else if (prediction < minValue) {
+            return minValue;
+        } else {
+            return prediction;
+        }
     }
 
     /** 

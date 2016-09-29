@@ -1,6 +1,7 @@
 package code.sma.recommender;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.util.EvaluationMetrics;
 
 /**
  * Abstract Class for Recommender Model
@@ -55,7 +56,7 @@ public abstract class Recommender {
      * 
      * @return The result of evaluation, such as MAE, RMSE, and rank-score.
      */
-    public abstract double evaluate(MatlabFasionSparseMatrix testMatrix);
+    public abstract EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix);
 
     /**
      * return the predicted rating

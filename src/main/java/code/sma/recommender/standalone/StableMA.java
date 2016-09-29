@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.apache.commons.math3.stat.StatUtils;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.recommender.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -25,7 +26,7 @@ public class StableMA extends MatrixFactorizationRecommender {
      * Constructors
      *========================================*/
     /**
-     * Construct a matrix-factorization model with the given data.<br/>
+     * Construct a matrix-factorization-based model with the given data.
      * 
      * @param uc The number of users in the dataset.
      * @param ic The number of items in the dataset.
@@ -36,11 +37,13 @@ public class StableMA extends MatrixFactorizationRecommender {
      * @param r Controlling factor for the degree of regularization. 
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
+     * @param verbose Indicating whether to show iteration steps and train error.
+     * @param rce The recommender's specific parameters
      */
     public StableMA(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                    int iter, int numOfHPSet, boolean verbose) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
-        this.numOfHPSet = numOfHPSet;
+                    int iter, boolean verbose, RecConfigEnv rce) {
+        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
+        numOfHPSet = ((Double) rce.get("NUMBER_HARD_PREDICTION_SET_VALUE")).intValue();
     }
 
     /** 
@@ -125,31 +128,8 @@ public class StableMA extends MatrixFactorizationRecommender {
             currErr = Math.sqrt(se / rateCount);
             round++;
 
-            if (showProgress & (round % 5 == 0) && tMatrix != null) {
-                StringBuilder logStr = new StringBuilder();
-                logStr.append(round + "\t" + String.format("%.4f", currErr));
-                for (int gIndx = 0; gIndx < numOfHPSet; gIndx++) {
-                    logStr.append('\t').append(
-                        String.format("%.4f", Math.sqrt(seInSubset[gIndx] / numInSubset[gIndx])));
-                }
-
-                double prmse = this.evaluate(tMatrix);
-                if (bestRMSE >= prmse) {
-                    bestRMSE = prmse;
-                } else {
-                    isCollaps = true;
-                }
-                logStr.append('\t').append(String.format("%.4f", prmse));
-                LoggerUtil.info(runningLogger, logStr.toString());
-            } else {
-                LoggerUtil.info(runningLogger, round + "\t" + String.format("%.4f", currErr));
-            }
-
+            isCollaps = recordLoggerAndDynamicStop(round, tMatrix, currErr);
         }
-
-        // final result
-        double prmse = this.evaluate(tMatrix);
-        bestRMSE = bestRMSE < prmse ? bestRMSE : prmse;
     }
 
     /**
@@ -168,9 +148,9 @@ public class StableMA extends MatrixFactorizationRecommender {
 
         // build RSVD model
         RegularizedSVD recmmd = new RegularizedSVD(userCount, itemCount, maxValue, minValue, 20,
-            0.01, 0.001, 0, 30, false);
+            0.01, 0.001, 0, 30, false, null);
         recmmd.buildModel(rateMatrix, null);
-        double recRMSE = recmmd.evaluate(rateMatrix);
+        double recRMSE = recmmd.evaluate(rateMatrix).getRMSE();
 
         // compute a probability for every rating
         int[] uIndx = rateMatrix.getRowIndx();

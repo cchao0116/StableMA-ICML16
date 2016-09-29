@@ -45,8 +45,6 @@ public class Main {
             conf.setProperty("ROOT_DIR", rootDir);
             String trainFile = rootDir + "trainingset";
             String testFile = rootDir + "testingset";
-            MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-            MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
 
             String algName = conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
@@ -56,12 +54,16 @@ public class Main {
                 AbstractDpncyChecker checker = new ClusteringDpncyChecker();
                 checker.handler(conf);
 
+                MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
+                MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
                 RecommenderFactory.instance(algName, rce).buildModel(tnMatrix, tttMatrix);
             } else {
                 TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
                 int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
 
+                MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
+                MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
                 try {
                     ExecutorService exec = Executors.newCachedThreadPool();
                     for (int t = 0; t < threadNum; t++) {

@@ -1,6 +1,7 @@
 package code.sma.recommender.standalone;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.recommender.RecConfigEnv;
 
 /**
  * This is a class implementing Regularized SVD (Singular Value Decomposition).
@@ -20,7 +21,7 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
      * Constructors
      *========================================*/
     /**
-     * Construct a matrix-factorization model with the given data.
+     * Construct a matrix-factorization-based model with the given data.
      * 
      * @param uc The number of users in the dataset.
      * @param ic The number of items in the dataset.
@@ -32,10 +33,11 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
      * @param verbose Indicating whether to show iteration steps and train error.
+     * @param rce The recommender's specific parameters
      */
     public RegularizedSVD(int uc, int ic, double max, double min, int fc, double lr, double r,
-                          double m, int iter, boolean verbose) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
+                          double m, int iter, boolean verbose, RecConfigEnv rce) {
+        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
     }
 
     /*========================================

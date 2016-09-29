@@ -1,6 +1,7 @@
 package code.sma.recommender.ensemble;
 
 import code.sma.datastructure.SparseMatrix;
+import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.standalone.MatrixFactorizationRecommender;
 
 /**
@@ -30,10 +31,11 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
      * @param verbose Indicating whether to show iteration steps and train error.
+     * @param rce The recommender's specific parameters
      */
     public EnsembleMFRecommender(int uc, int ic, double max, double min, int fc, double lr,
-                                 double r, double m, int iter, boolean verbose) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose);
+                                 double r, double m, int iter, boolean verbose, RecConfigEnv rce) {
+        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
         cumPrediction = new SparseMatrix(uc, ic);
         cumWeight = new SparseMatrix(uc, ic);
     }

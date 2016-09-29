@@ -47,18 +47,12 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
             for (double learningRate : conf.getVector("LEARNING_RATE_ARR")) {
                 for (double regulizer : conf.getVector("REGULAIZED_ARR")) {
                     for (double maxIter : conf.getVector("MAX_ITERATION_ARR")) {
-                        RecConfigEnv rce = new RecConfigEnv();
+                        RecConfigEnv rce = new RecConfigEnv(conf);
                         rce.put("FEATURE_COUNT_VALUE", featureCount);
                         rce.put("LEARNING_RATE_VALUE", learningRate);
                         rce.put("REGULAIZED_VALUE", regulizer);
                         rce.put("MAX_ITERATION_VALUE", maxIter);
 
-                        for (Object k : conf.keySet()) {
-                            String key = (String) k;
-                            if (key.endsWith("_VALUE") | key.endsWith("_BOOLEAN")) {
-                                rce.put(key, conf.get(key));
-                            }
-                        }
                         recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
                     }
                 }
@@ -82,8 +76,8 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
     @Override
     public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
                        MatlabFasionSparseMatrix ttMatrix) {
-        LoggerUtil.info(normalLogger, (new StringBuilder(recmmd.toString()))
-            .append(String.format("\tRMSE: %.6f", ((Recommender) recmmd).evaluate(ttMatrix))));
+        LoggerUtil.info(normalLogger, (new StringBuilder(recmmd.toString())).append(": ")
+            .append((((Recommender) recmmd).evaluate(ttMatrix)).printOneLine()));
     }
 
 }

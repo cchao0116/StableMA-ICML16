@@ -74,6 +74,15 @@ public final class DynIntArr {
     }
 
     /**
+     * Returns the number of elements in this list.
+     * 
+     * @return the number of elements in this list
+     */
+    public int size() {
+        return nnz;
+    }
+
+    /**
      * make array compact
      */
     public void reduceMem() {

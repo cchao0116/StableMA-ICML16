@@ -5,6 +5,7 @@ import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.datastructure.UJMPDenseMatrix;
 import code.sma.datastructure.UJMPDenseVector;
+import code.sma.recommender.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -46,19 +47,18 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
      * @param max The maximum rating value in the dataset.
      * @param min The minimum rating value in the dataset.
      * @param fc The number of features used for describing user and item profiles.
-     * @param alpha Controlling factor for loss function.
-     * @param beta Controlling factor for the degree of group-sparsity regularization.
-     * @param lambda Controlling factor for the degree of regularization
      * @param iter The maximum number of iterations.
      * @param l  The number of item clusters
      * @param verbose Indicating whether to show iteration steps and train error.
+     * @param rce The recommender's specific parameters
      */
-    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha,
-                           double beta, double lambda, int iter, int l, boolean verbose) {
-        super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose);
-        this.alpha = alpha;
-        this.beta = beta;
-        this.lambda = lambda;
+    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, int iter, int l,
+                           boolean verbose, RecConfigEnv rce) {
+        super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose, rce);
+        alpha = (double) rce.get("ALPA_VALUE");
+        beta = (double) rce.get("BETA_VALUE");
+        lambda = (double) rce.get("LAMBDA_VALUE");
+
         this.L = l;
     }
 
@@ -82,7 +82,7 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
     public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha,
                            double beta, double lambda, int iter, int l, DynIntArr[] IijIndxU,
                            DynIntArr[] IijIndxI, boolean verbose) {
-        super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose);
+        super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose, null);
         this.alpha = alpha;
         this.beta = beta;
         this.lambda = lambda;
