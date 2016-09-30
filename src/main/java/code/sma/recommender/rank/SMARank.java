@@ -74,7 +74,7 @@ public class SMARank extends RankBasedMFRecommender {
                 for (int v = 1; v < num; v++) {
                     do {
                         vInds[v] = (int) (Math.random() * itemCount);
-                    } while (!uObsvtn[u].contains(vInds[v]));
+                    } while (uObsvtn[u].contains(vInds[v]));
                 }
 
                 //training process
