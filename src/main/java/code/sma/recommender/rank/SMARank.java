@@ -130,6 +130,15 @@ public class SMARank extends RankBasedMFRecommender {
         }
     }
 
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
+               + " ALG[SMARANK][" + String.format("%.0f", negSmplnRat * 100) + "%]";
+    }
+
     /**
      * Bean class containing all user observations
      * 
