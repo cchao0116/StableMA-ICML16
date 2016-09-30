@@ -80,18 +80,18 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
                 int i = iIndx[numSeq];
                 double AuiReal = Auis[numSeq];
                 double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
+                sum += lossFunction.diff(AuiReal, AuiEst);
 
-                double err = AuiReal - AuiEst;
-                sum += Math.pow(err, 2.0d);
+                double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
                     double Gis = itemDenseFeatures.getValue(i, s);
                     double wts = 1 + beta0 * tnWs[dctzr.convert(AuiReal)];
 
                     userDenseFeatures.setValue(u, s,
-                        Fus + learningRate * (err * Gis * wts - regularizer * Fus), true);
+                        Fus + learningRate * (-deriWRTp * Gis * wts - regularizer * Fus), true);
                     itemDenseFeatures.setValue(i, s,
-                        Gis + learningRate * (err * Fus * wts - regularizer * Gis), true);
+                        Gis + learningRate * (-deriWRTp * Fus * wts - regularizer * Gis), true);
                 }
             }
 

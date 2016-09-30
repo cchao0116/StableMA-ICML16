@@ -84,38 +84,39 @@ public class StableMA extends MatrixFactorizationRecommender {
 
                 double AuiReal = Auis[numSeq];
                 double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-                double err = AuiReal - AuiEst;
+                double diff = lossFunction.diff(AuiReal, AuiEst);
 
                 // compute all rmse-s
-                double rmse = Math.sqrt((se - errors[numSeq] + err * err) / rateCount);
+                double rmse = Math.sqrt((se - errors[numSeq] + diff) / rateCount);
                 double[] subRMSES = new double[numOfHPSet];
                 for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
                     if (rAssigmnt[kIndx][numSeq] == false) {
                         continue;
                     }
 
-                    subRMSES[kIndx] = Math.sqrt(
-                        (seInSubset[kIndx] - errors[numSeq] + err * err) / numInSubset[kIndx]);
-                    seInSubset[kIndx] = seInSubset[kIndx] - errors[numSeq] + err * err;
+                    subRMSES[kIndx] = Math
+                        .sqrt((seInSubset[kIndx] - errors[numSeq] + diff) / numInSubset[kIndx]);
+                    seInSubset[kIndx] = seInSubset[kIndx] - errors[numSeq] + diff;
                 }
-                se = se - errors[numSeq] + err * err;
-                errors[numSeq] = err * err;
+                se = se - errors[numSeq] + diff;
+                errors[numSeq] = diff;
 
                 // stochastic gradient descend
+                double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
                     double Gis = itemDenseFeatures.getValue(i, s);
 
-                    double uGrad = err * Gis / rmse - regularizer * Fus;
-                    double iGrad = err * Fus / rmse - regularizer * Gis;
+                    double uGrad = -deriWRTp * Gis / rmse - regularizer * Fus;
+                    double iGrad = -deriWRTp * Fus / rmse - regularizer * Gis;
 
                     for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
                         if (rAssigmnt[kIndx][numSeq] == false) {
                             continue;
                         }
 
-                        uGrad += err * Gis / (2 * numOfHPSet * subRMSES[kIndx]);
-                        iGrad += err * Fus / (2 * numOfHPSet * subRMSES[kIndx]);
+                        uGrad += -deriWRTp * Gis / (2 * numOfHPSet * subRMSES[kIndx]);
+                        iGrad += -deriWRTp * Fus / (2 * numOfHPSet * subRMSES[kIndx]);
                     }
 
                     userDenseFeatures.setValue(u, s, Fus + learningRate * uGrad, true);

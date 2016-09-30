@@ -5,7 +5,6 @@ import java.util.Set;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recommender.RecConfigEnv;
-import code.sma.recommender.standalone.MatrixFactorizationRecommender;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -13,7 +12,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: SMARank.java, v 0.1 2016年9月29日 上午11:22:33 Chao.Chen Exp $
  */
-public class SMARank extends MatrixFactorizationRecommender {
+public class SMARank extends RankBasedMFRecommender {
     /** serialVersionUID */
     private static final long serialVersionUID = 1L;
     /**  negative sampling rate*/
@@ -59,7 +58,7 @@ public class SMARank extends MatrixFactorizationRecommender {
 
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        //        double[] Auis = rateMatrix.getVals();
 
         while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter) {
             double sum = 0.0;
@@ -84,7 +83,7 @@ public class SMARank extends MatrixFactorizationRecommender {
                     int i = vInds[v];
                     tnCount++;
 
-                    double AuiReal = (v == 0) ? Auis[numSeq] : -1.0d;
+                    double AuiReal = (v == 0) ? 1.0d : -1.0d;
                     double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
                     sum += lossFunction.diff(AuiReal, AuiEst);
 
@@ -95,9 +94,9 @@ public class SMARank extends MatrixFactorizationRecommender {
 
                         //global model updates
                         userDenseFeatures.setValue(u, s,
-                            Fus + learningRate * (deriWRTp * Gis - regularizer * Fus), true);
+                            Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus), true);
                         itemDenseFeatures.setValue(i, s,
-                            Gis + learningRate * (deriWRTp * Fus - regularizer * Gis), true);
+                            Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis), true);
                     }
                 }
             }

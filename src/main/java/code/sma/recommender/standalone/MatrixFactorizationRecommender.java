@@ -173,7 +173,8 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
                                                  double currErr) {
         if (showProgress && (round % 5 == 0) && tMatrix != null) {
             EvaluationMetrics metric = evaluate(tMatrix);
-            LoggerUtil.info(runningLogger, round + "\t" + metric.printOneLine());
+            LoggerUtil.info(runningLogger,
+                String.format("%d\t%.6f [%s]", round, currErr, metric.printOneLine()));
             if (bestRMSE >= metric.getRMSE()) {
                 bestRMSE = metric.getRMSE();
             } else {

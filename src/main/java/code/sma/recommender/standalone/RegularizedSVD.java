@@ -71,18 +71,18 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
                 //global model
                 double AuiReal = Auis[numSeq];
                 double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-                double err = AuiReal - AuiEst;
-                sum += Math.pow(err, 2.0d);
+                sum += lossFunction.diff(AuiReal, AuiEst);
 
+                double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = userDenseFeatures.getValue(u, s);
                     double Gis = itemDenseFeatures.getValue(i, s);
 
                     //global model updates
                     userDenseFeatures.setValue(u, s,
-                        Fus + learningRate * (err * Gis - regularizer * Fus), true);
+                        Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus), true);
                     itemDenseFeatures.setValue(i, s,
-                        Gis + learningRate * (err * Fus - regularizer * Gis), true);
+                        Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis), true);
                 }
             }
 

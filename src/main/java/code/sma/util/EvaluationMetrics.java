@@ -180,6 +180,6 @@ public class EvaluationMetrics {
      */
     public String printOneLine() {
         return String.format("MAE(%.6f) RMSE(%.6f) NDCG@%d(%.6f) AP(%.6f)", this.getMAE(),
-            this.getRMSE(), this.getNDCG(), N, this.getAvgPrecision());
+            this.getRMSE(), N, this.getNDCG(), this.getAvgPrecision());
     }
 }
