@@ -1,10 +1,13 @@
 package code.sma.thread;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import org.apache.log4j.Logger;
 
+import code.sma.datastructure.DenseVector;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
@@ -12,6 +15,7 @@ import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
+import code.sma.util.StringUtil;
 
 /**
  * A simple implementation of Task Message Dispatcher
@@ -43,21 +47,58 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
         recmmdsBuffer = new LinkedList<Recommender>();
 
         String algName = conf.getProperty("ALG_NAME");
-        for (double featureCount : conf.getVector("FEATURE_COUNT_ARR")) {
-            for (double learningRate : conf.getVector("LEARNING_RATE_ARR")) {
-                for (double regulizer : conf.getVector("REGULAIZED_ARR")) {
-                    for (double maxIter : conf.getVector("MAX_ITERATION_ARR")) {
-                        RecConfigEnv rce = new RecConfigEnv(conf);
-                        rce.put("FEATURE_COUNT_VALUE", featureCount);
-                        rce.put("LEARNING_RATE_VALUE", learningRate);
-                        rce.put("REGULAIZED_VALUE", regulizer);
-                        rce.put("MAX_ITERATION_VALUE", maxIter);
 
-                        recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
+        List<String> suffArrKeys = new ArrayList<String>();
+        List<DenseVector> suffArrVals = new ArrayList<DenseVector>();
+        for (Object k : conf.keySet()) {
+            String key = String.valueOf(k);
+            if (key.endsWith("ARR")) {
+                suffArrKeys
+                    .add(StringUtil.reverse(StringUtil.reverse(key).replace("RRA", "EULAV")));
+                suffArrVals.add(conf.getVector(key));
+            }
+        }
+
+        if (!suffArrKeys.isEmpty()) {
+            // Deep-First-Search: the ARR-end configure entries
+            int maxLayer = suffArrKeys.size();
+            int lastLayerWidth = suffArrVals.get(maxLayer - 1).len();
+            List<Integer> nodes = new ArrayList<Integer>();
+            nodes.add(0);
+            while (!nodes.isEmpty()) {
+                int nextLayer = nodes.size();
+                while (nextLayer < maxLayer - 1) {
+                    nodes.add(0);
+                    nextLayer++;
+                }
+
+                // store all possible configures
+                for (int l = 0; l < lastLayerWidth; l++) {
+                    RecConfigEnv rce = new RecConfigEnv(conf);
+                    for (int c = 0; c < maxLayer - 1; c++) {
+                        rce.put(suffArrKeys.get(c), suffArrVals.get(c).getValue(nodes.get(c)));
+                    }
+                    rce.put(suffArrKeys.get(nextLayer), suffArrVals.get(nextLayer).getValue(l));
+                    recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
+                }
+
+                // trace back to next node
+                while (nextLayer > 0) {
+                    nextLayer--;
+                    int nextLayerPivot = nodes.get(nextLayer) + 1;
+                    if (nextLayerPivot < suffArrVals.get(nextLayer).len()) {
+                        nodes.set(nextLayer, nextLayerPivot);
+                        break;
+                    } else {
+                        nodes.remove(nextLayer);
                     }
                 }
             }
+        } else {
+            RecConfigEnv rce = new RecConfigEnv(conf);
+            recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
         }
+
     }
 
     /** 

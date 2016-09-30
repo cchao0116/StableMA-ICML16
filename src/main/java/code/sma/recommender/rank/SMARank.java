@@ -5,7 +5,6 @@ import java.util.Set;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recommender.RecConfigEnv;
-import code.sma.util.LoggerUtil;
 
 /**
  * 
@@ -105,7 +104,7 @@ public class SMARank extends RankBasedMFRecommender {
             currErr = Math.sqrt(sum / tnCount);
 
             round++;
-            LoggerUtil.info(runningLogger, round + "\t" + String.format("%.6f", currErr));
+            recordLoggerAndDynamicStop(round, tMatrix, currErr);
         }
 
     }
