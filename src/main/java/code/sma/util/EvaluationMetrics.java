@@ -84,7 +84,7 @@ public class EvaluationMetrics {
 
             int avgPEffectiveUserCount = 0;
             for (int u = 0; u < userCount; u++) {
-                if (dArr[u].size() < N) {
+                if (dArr[u] == null || dArr[u].size() < N) {
                     continue;
                 }
                 avgPEffectiveUserCount++;
