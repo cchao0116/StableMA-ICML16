@@ -9,6 +9,7 @@ import code.sma.recommender.RecConfigEnv;
 import code.sma.recommender.Recommender;
 import code.sma.recommender.ensemble.WEMAREC;
 import code.sma.recommender.rank.SMARank;
+import code.sma.recommender.standalone.GradientBoostedMA;
 import code.sma.recommender.standalone.GroupSparsityMF;
 import code.sma.recommender.standalone.RegularizedSVD;
 import code.sma.recommender.standalone.StableMA;
@@ -67,6 +68,9 @@ public final class RecommenderFactory {
             // unpublished
             return new SMARank(userCount, itemCount, maxValue, minValue, featureCount, lrate,
                 regularized, 0, maxIteration, showProgress, rce);
+        } else if (StringUtil.equalsIgnoreCase(algName, "GBMA")) {
+            return new GradientBoostedMA(userCount, itemCount, maxValue, minValue, featureCount,
+                lrate, regularized, 0, maxIteration, showProgress, rce);
         } else {
             return null;
         }
