@@ -1,5 +1,6 @@
 package code.sma.recommender.standalone;
 
+import code.sma.datastructure.DenseVector;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recommender.RecConfigEnv;
 
@@ -12,10 +13,6 @@ import code.sma.recommender.RecConfigEnv;
 public class GradientBoostedMA extends MatrixFactorizationRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
-    /** user average rating*/
-    private double[]          uAvg;
-    /** item average rating*/
-    private double[]          iAvg;
 
     /*========================================
      * Constructors
@@ -38,8 +35,8 @@ public class GradientBoostedMA extends MatrixFactorizationRecommender {
     public GradientBoostedMA(int uc, int ic, double max, double min, int fc, double lr, double r,
                              double m, int iter, boolean verbose, RecConfigEnv rce) {
         super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
-        uAvg = new double[userCount];
-        iAvg = new double[itemCount];
+        avgUser = (DenseVector) rce.get("AVG_USER");
+        avgItem = (DenseVector) rce.get("AVG_ITEM");
     }
 
     /** 
@@ -48,9 +45,6 @@ public class GradientBoostedMA extends MatrixFactorizationRecommender {
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
         super.buildModel(rateMatrix, tMatrix);
-
-        // compute statistics
-        avgRating(rateMatrix);
 
         // Gradient Descent:
         int round = 0;
@@ -99,61 +93,12 @@ public class GradientBoostedMA extends MatrixFactorizationRecommender {
 
     }
 
-    protected void avgRating(MatlabFasionSparseMatrix rateMatrix) {
-        int rateCount = rateMatrix.getNnz();
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
-
-        // user average rating
-        {
-            int[] uRatingCount = new int[userCount];
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                int u = uIndx[numSeq];
-                uAvg[u] = Auis[numSeq];
-                uRatingCount[u]++;
-            }
-
-            for (int u = 0; u < userCount; u++) {
-                if (uRatingCount[u] == 0) {
-                    continue;
-                }
-                uAvg[u] /= uRatingCount[u];
-            }
-        }
-
-        // item average rating
-        {
-            int[] iRatingCount = new int[itemCount];
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                int i = iIndx[numSeq];
-                iAvg[i] = Auis[numSeq];
-                iRatingCount[i]++;
-            }
-
-            for (int i = 0; i < itemCount; i++) {
-                if (iRatingCount[i] == 0) {
-                    continue;
-                }
-                iAvg[i] /= iRatingCount[i];
-            }
-        }
-
-        // re-adjust training data
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            Auis[numSeq] = Auis[numSeq] - (uAvg[u] + iAvg[i]) / 2.0;
-        }
-    }
-
     /** 
-     * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#predict(int, int)
+     * @see java.lang.Object#toString()
      */
     @Override
-    public double predict(int u, int i) {
-        this.offset = (uAvg[u] + iAvg[i]) / 2.0;
-        return super.predict(u, i);
+    public String toString() {
+        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
+               + " ALG[GBMA]";
     }
-
 }

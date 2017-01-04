@@ -5,6 +5,7 @@ import java.io.Serializable;
 import org.apache.log4j.Logger;
 
 import code.sma.datastructure.DenseMatrix;
+import code.sma.datastructure.DenseVector;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recommender.Loss;
 import code.sma.recommender.RecConfigEnv;
@@ -54,6 +55,11 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     public int[]                  testInvlvIndces;
     /** the loss funciton to measure the distance between real value and approximated value*/
     protected Loss                lossFunction;
+
+    /** user average rating*/
+    protected DenseVector         avgUser;
+    /** item average rating*/
+    protected DenseVector         avgItem;
 
     /** logger */
     protected final static Logger runningLogger    = Logger
@@ -205,6 +211,10 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     @Override
     public double predict(int u, int i) {
         // compute the prediction by using inner product 
+        if (avgUser != null && avgItem != null) {
+            this.offset = (avgUser.getValue(u) + avgItem.getValue(i)) / 2.0;
+        }
+
         double prediction = this.offset;
         if (userDenseFeatures != null && itemDenseFeatures != null) {
             prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
