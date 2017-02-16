@@ -65,8 +65,9 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
             int lastLayerWidth = suffArrVals.get(maxLayer - 1).len();
             List<Integer> nodes = new ArrayList<Integer>();
             nodes.add(0);
+
+            int nextLayer = 0;
             while (!nodes.isEmpty()) {
-                int nextLayer = nodes.size();
                 while (nextLayer < maxLayer - 1) {
                     nodes.add(0);
                     nextLayer++;
@@ -83,6 +84,10 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
                 }
 
                 // trace back to next node
+                if (nextLayer == 0) {
+                    nodes.remove(nextLayer);
+                }
+
                 while (nextLayer > 0) {
                     nextLayer--;
                     int nextLayerPivot = nodes.get(nextLayer) + 1;
