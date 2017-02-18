@@ -29,6 +29,7 @@ public class EvaluationMetrics {
     private double      mse;
     /** Rank-based Normalized Discounted Cumulative Gain (NDCG) */
     private double      ndcg;
+    private double      recall;
     /** Average Precision */
     private double      avgPrecision;
     /** Recommender to produce prediction*/
@@ -37,14 +38,15 @@ public class EvaluationMetrics {
     public EvaluationMetrics(Recommender recmmd, MatlabFasionSparseMatrix ttMatrix) {
         super();
         this.recmmd = recmmd;
-        build(ttMatrix);
+        build(ttMatrix, null);
     }
 
-    public EvaluationMetrics(Recommender recmmd, MatlabFasionSparseMatrix ttMatrix, int N) {
+    public EvaluationMetrics(Recommender recmmd, MatlabFasionSparseMatrix ttMatrix,
+                             MatlabFasionSparseMatrix trMatrix, int N) {
         super();
         this.recmmd = recmmd;
         this.N = N;
-        build(ttMatrix);
+        build(ttMatrix, trMatrix);
     }
 
     /**
@@ -52,7 +54,7 @@ public class EvaluationMetrics {
      * 
      * @param ttMatrix  test data
      */
-    protected void build(MatlabFasionSparseMatrix ttMatrix) {
+    protected void build(MatlabFasionSparseMatrix ttMatrix, MatlabFasionSparseMatrix trMatrix) {
         // Rating Prediction evaluation
         int totlCount = ttMatrix.getNnz();
         int[] uIndx = ttMatrix.getRowIndx();
@@ -82,6 +84,19 @@ public class EvaluationMetrics {
                 dArr[uIndx[numSeq]].addValue(numSeq);
             }
 
+            DynIntArr[] trArr = new DynIntArr[userCount];
+            {
+                int ltCount = trMatrix.getNnz();
+                int[] luIndx = trMatrix.getRowIndx();
+
+                for (int n = 0; n < ltCount; n++) {
+                    if (trArr[luIndx[n]] == null) {
+                        trArr[luIndx[n]] = new DynIntArr(N);
+                    }
+                    trArr[luIndx[n]].addValue(n);
+                }
+            }
+
             int avgPEffectiveUserCount = 0;
             for (int u = 0; u < userCount; u++) {
                 if (dArr[u] == null || dArr[u].size() < N) {
@@ -101,7 +116,17 @@ public class EvaluationMetrics {
 
                         }).maximumSize(N).create();
 
+                    // filtering training data
+                    SparseVector trainVs = new SparseVector(itemCount);
+                    for (int n : trArr[u].getArr()) {
+                        trainVs.setValue(trMatrix.getRowIndx()[n], trMatrix.getVals()[n]);
+                    }
+
                     for (int i = 0; i < itemCount; i++) {
+                        if (trainVs.getValue(i) != 0.0d) {
+                            continue;
+                        }
+
                         Pair<Integer, Double> uidVSratg = new ImmutablePair<Integer, Double>(i,
                             recmmd.predict(u, i));
                         fpQue.add(uidVSratg);
@@ -113,28 +138,37 @@ public class EvaluationMetrics {
                 }
 
                 // get user real ratings
+
                 SparseVector realVs = new SparseVector(itemCount);
                 for (int n : dArr[u].getArr()) {
                     realVs.setValue(iIndx[n], Auis[n]);
+
                 }
 
+                double lRecl = 0.0d;
                 for (int s = 0; s < N; s++) {
                     int rcmmdtn = topNRcmdn[s];
                     if (realVs.getValue(rcmmdtn) != 0.0d) {
                         avgPrecision++;
+                        lRecl++;
                         ndcg += 1 / MathUtil.log2(s + 2);
                     }
                 }
-
+                recall += lRecl / realVs.length();
             }
 
             double iNDCG = 0.0d;
             for (int s = 0; s < N; s++) {
                 iNDCG += 1 / MathUtil.log2(s + 2);
             }
+            recall /= avgPEffectiveUserCount;
             ndcg /= iNDCG * avgPEffectiveUserCount;
             avgPrecision /= N * avgPEffectiveUserCount;
         }
+    }
+
+    public double getRecall() {
+        return recall;
     }
 
     /**
@@ -179,7 +213,8 @@ public class EvaluationMetrics {
      * @return The one-line string to be printed.
      */
     public String printOneLine() {
-        return String.format("MAE(%.6f) RMSE(%.6f) NDCG@%d(%.6f) AP(%.6f)", this.getMAE(),
-            this.getRMSE(), N, this.getNDCG(), this.getAvgPrecision());
+        return String.format("MAE(%.6f) RMSE(%.6f) NDCG@%d(%.6f) AP(%.6f) Recall(%.6f)",
+            this.getMAE(), this.getRMSE(), N, this.getNDCG(), this.getAvgPrecision(),
+            this.getRecall());
     }
 }

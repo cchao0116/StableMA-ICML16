@@ -13,9 +13,11 @@ import code.sma.util.EvaluationMetrics;
  */
 public class RankBasedMFRecommender extends MatrixFactorizationRecommender {
     /** Top-N recommendations*/
-    protected int             topN;
+    protected int                      topN;
+    /** Training data*/
+    protected MatlabFasionSparseMatrix rateMatrix;
     /**  serialVersionUID */
-    private static final long serialVersionUID = 1L;
+    private static final long          serialVersionUID = 1L;
 
     /**
      * Construct a matrix-factorization-based model with the given data.
@@ -39,11 +41,20 @@ public class RankBasedMFRecommender extends MatrixFactorizationRecommender {
     }
 
     /** 
+     * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     */
+    @Override
+    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+        super.buildModel(rateMatrix, tMatrix);
+        this.rateMatrix = rateMatrix;
+    }
+
+    /** 
      * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix) {
-        return new EvaluationMetrics(this, testMatrix, topN);
+        return new EvaluationMetrics(this, testMatrix, rateMatrix, topN);
     }
 
     /** 

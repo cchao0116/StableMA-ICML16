@@ -46,7 +46,8 @@ public enum Loss {
             case LOSS_RMSE:
                 return -realVal + predVal;
             case LOSS_LOG:
-                return -realVal / (1 + Math.exp(-1 * realVal * predVal));
+                return -realVal * Math.exp(-1 * realVal * predVal)
+                       / (1 + Math.exp(-1 * realVal * predVal));
             case LOSS_EXP:
                 return -realVal * Math.exp(-1 * realVal * predVal);
             case LOSS_HINGE:
