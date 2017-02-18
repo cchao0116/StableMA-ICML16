@@ -10,6 +10,7 @@ import com.google.common.collect.MinMaxPriorityQueue;
 
 import code.sma.datastructure.DynIntArr;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.datastructure.SparseMatrix;
 import code.sma.datastructure.SparseVector;
 import code.sma.recommender.Recommender;
 
@@ -84,18 +85,7 @@ public class EvaluationMetrics {
                 dArr[uIndx[numSeq]].addValue(numSeq);
             }
 
-            DynIntArr[] trArr = new DynIntArr[userCount];
-            {
-                int ltCount = trMatrix.getNnz();
-                int[] luIndx = trMatrix.getRowIndx();
-
-                for (int n = 0; n < ltCount; n++) {
-                    if (trArr[luIndx[n]] == null) {
-                        trArr[luIndx[n]] = new DynIntArr(N);
-                    }
-                    trArr[luIndx[n]].addValue(n);
-                }
-            }
+            SparseMatrix trainMatrix = trMatrix.toSparseMatrix(userCount, itemCount);
 
             int avgPEffectiveUserCount = 0;
             for (int u = 0; u < userCount; u++) {
@@ -117,13 +107,8 @@ public class EvaluationMetrics {
                         }).maximumSize(N).create();
 
                     // filtering training data
-                    SparseVector trainVs = new SparseVector(itemCount);
-                    for (int n : trArr[u].getArr()) {
-                        trainVs.setValue(trMatrix.getRowIndx()[n], trMatrix.getVals()[n]);
-                    }
-
                     for (int i = 0; i < itemCount; i++) {
-                        if (trainVs.getValue(i) != 0.0d) {
+                        if (trainMatrix.getValue(u, i) != 0.0d) {
                             continue;
                         }
 
