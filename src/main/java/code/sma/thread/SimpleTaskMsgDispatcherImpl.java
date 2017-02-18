@@ -84,18 +84,17 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
                 }
 
                 // trace back to next node
-                if (nextLayer == 0) {
+                while (nextLayer >= 0) {
                     nodes.remove(nextLayer);
-                }
-
-                while (nextLayer > 0) {
                     nextLayer--;
+                    if (nextLayer < 0) {
+                        break;
+                    }
+
                     int nextLayerPivot = nodes.get(nextLayer) + 1;
                     if (nextLayerPivot < suffArrVals.get(nextLayer).len()) {
                         nodes.set(nextLayer, nextLayerPivot);
                         break;
-                    } else {
-                        nodes.remove(nextLayer);
                     }
                 }
             }
