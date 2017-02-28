@@ -7,8 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
 import code.sma.clustering.Cluster;
 import code.sma.clustering.CoclusterUtil;
 import code.sma.clustering.Distance;
@@ -19,7 +17,6 @@ import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ClusterInfoUtil;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.FileUtil;
-import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixFileUtil;
 import code.sma.util.StringUtil;
@@ -31,11 +28,9 @@ import code.sma.util.StringUtil;
  */
 public class ClusteringDpncyChecker extends AbstractDpncyChecker implements TaskMsgDispatcher {
     /** the clusting tasks */
-    protected Queue<String>       clusterDirs;
+    protected Queue<String> clusterDirs;
     /** mutex using in map procedure*/
-    protected static Object       MAP_MUTEX    = new Object();
-    protected final static Logger normalLogger = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
+    protected static Object MAP_MUTEX = new Object();
 
     public ClusteringDpncyChecker() {
         clusterDirs = new LinkedList<String>();

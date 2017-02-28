@@ -102,12 +102,14 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
      * @param m Momentum used in gradient-based or iterative optimization.
      * @param iter The maximum number of iterations.
      * @param verbose Indicating whether to show iteration steps and train error.
+     * @param lossFunction the loss-function used to measure the difference between two objects
      * @param trainInvlvIndces Indices involved in training
      * @param testInvlvIndces Indices involved in testing
      */
     public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,
                                           double r, double m, int iter, boolean verbose,
-                                          int[] trainInvlvIndces, int[] testInvlvIndces) {
+                                          Loss lossFunction, int[] trainInvlvIndces,
+                                          int[] testInvlvIndces) {
         userCount = uc;
         itemCount = ic;
         maxValue = max;
@@ -120,6 +122,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
         maxIter = iter;
 
         showProgress = verbose;
+        this.lossFunction = lossFunction;
         this.trainInvlvIndces = trainInvlvIndces;
         this.testInvlvIndces = testInvlvIndces;
     }

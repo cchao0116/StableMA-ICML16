@@ -1,8 +1,21 @@
 package code.sma.recmmd.ensemble;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
+
+import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.Recommender;
 import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.thread.TaskMsgDispatcher;
+import code.sma.thread.WeakLearner;
+import code.sma.util.ExceptionUtil;
+import code.sma.util.LoggerDefineConstant;
+import code.sma.util.LoggerUtil;
 
 /**
  * Ensemble-based Matrix Approximation method
@@ -10,33 +23,131 @@ import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
  * @author Chao.Chen
  * @version $Id: EnsembleMFRecommender.java, v 0.1 2016年9月26日 下午4:22:14 Chao.Chen Exp $
  */
-public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommender {
+public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommender
+                                            implements TaskMsgDispatcher {
     /** SerialVersionNum */
-    protected static final long serialVersionUID = 1L;
+    protected static final long        serialVersionUID = 1L;
     /** cumulative prediction */
-    protected SparseMatrix      cumPrediction    = null;
+    protected SparseMatrix             cumPrediction    = null;
     /** cumulative weights */
-    protected SparseMatrix      cumWeight        = null;
+    protected SparseMatrix             cumWeight        = null;
+    /** the number of threads in training*/
+    protected int                      threadNum;
+    /** current assigned thread id*/
+    protected int                      tskId            = 0;
 
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param lr Learning rate for gradient-based or iterative optimization.
-     * @param r Controlling factor for the degree of regularization. 
-     * @param m Momentum used in gradient-based or iterative optimization.
-     * @param iter The maximum number of iterations.
-     * @param verbose Indicating whether to show iteration steps and train error.
-     * @param rce The recommender's specific parameters
-     */
+    /** mutex using in map procedure*/
+    protected static Object            MAP_MUTEX        = new Object();
+    /** mutex using in reduce procedure*/
+    protected static Object            REDUCE_MUTEX     = new Object();
+    /** training data*/
+    protected MatlabFasionSparseMatrix tnMatrix;
+    /** testing data*/
+    protected MatlabFasionSparseMatrix ttMatrix;
+
+    protected final static Logger      logger           = Logger
+        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
+
+    /*========================================
+     * Constructors
+     *========================================*/
     public EnsembleMFRecommender(RecConfigEnv rce) {
         super(rce);
+        threadNum = ((Double) rce.get("THREAD_NUMBER_VALUE")).intValue();
         cumPrediction = new SparseMatrix(userCount, itemCount);
         cumWeight = new SparseMatrix(userCount, itemCount);
+    }
+
+    /** 
+     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     */
+    @Override
+    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+        tnMatrix = rateMatrix;
+        ttMatrix = tMatrix;
+
+        // run learning threads
+        try {
+            ExecutorService exec = Executors.newCachedThreadPool();
+            for (int t = 0; t < threadNum; t++) {
+                exec.execute(new WeakLearner(this, rateMatrix, tMatrix));
+            }
+            exec.shutdown();
+            exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            ExceptionUtil.caught(e, "Ensemble Recmmd Thead!");
+        }
+    }
+
+    /** 
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
+     */
+    @Override
+    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
+                       MatlabFasionSparseMatrix ttMatrix) {
+        int[] uIndx = ttMatrix.getRowIndx();
+        int[] iIndx = ttMatrix.getColIndx();
+        double[] vals = ttMatrix.getVals();
+
+        // update approximated model
+        synchronized (REDUCE_MUTEX) {
+            int[] testInvlvIndces = ((MatrixFactorizationRecommender) recmmd).testInvlvIndces;
+            for (int numSeq : testInvlvIndces) {
+                int u = uIndx[numSeq];
+                int i = iIndx[numSeq];
+
+                // update global approximation model
+                if (((MatrixFactorizationRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
+                    || ((MatrixFactorizationRecommender) recmmd).itemDenseFeatures
+                        .getRowRef(i) == null) {
+                    continue;
+                }
+
+                double prediction = ((Recommender) recmmd).predict(u, i);
+                double weight = ensnblWeight(u, i, prediction);
+
+                double newCumPrediction = prediction * weight + cumPrediction.getValue(u, i);
+                double newCumWeight = weight + cumWeight.getValue(u, i);
+
+                cumPrediction.setValue(u, i, newCumPrediction);
+                cumWeight.setValue(u, i, newCumWeight);
+            }
+        }
+
+        // evaluate approximated model
+        // WARNING: this part is not thread safe in order to quick produce the evaluation
+        int nnz = ttMatrix.getNnz();
+        double rmse = 0.0d;
+        for (int numSeq = 0; numSeq < nnz; numSeq++) {
+            int u = uIndx[numSeq];
+            int i = iIndx[numSeq];
+            double AuiRel = vals[numSeq];
+            double AuiEst = (cumWeight.getValue(u, i) == 0.0) ? ((maxValue + minValue) / 2)
+                : (cumPrediction.getValue(u, i) / cumWeight.getValue(u, i));
+            rmse += Math.pow(AuiEst - AuiRel, 2.0d);
+        }
+        rmse = Math.sqrt(rmse / nnz);
+
+        LoggerUtil.info(logger, (new StringBuilder("ThreadId: " + ((Recommender) recmmd).threadId))
+            .append(String.format("\tRMSE: %.6f", rmse)));
+    }
+
+    /** 
+     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#predict(int, int)
+     */
+    @Override
+    public double predict(int u, int i) {
+        double prediction = (cumWeight.getValue(u, i) == 0.0) ? ((maxValue + minValue) / 2)
+            : (cumPrediction.getValue(u, i) / cumWeight.getValue(u, i));
+
+        // normalize the prediction
+        if (prediction > maxValue) {
+            return maxValue;
+        } else if (prediction < minValue) {
+            return minValue;
+        } else {
+            return prediction;
+        }
     }
 
     /**

@@ -2,6 +2,7 @@ package code.sma.recmmd.standalone;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.dpncy.Discretizer;
+import code.sma.recmmd.Loss;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -24,27 +25,11 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
     /*========================================
      * Constructors
      *========================================*/
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param lr Learning rate for gradient-based or iterative optimization.
-     * @param r Controlling factor for the degree of regularization. 
-     * @param m Momentum used in gradient-based or iterative optimization.
-     * @param iter The maximum number of iterations.
-     * @param trainInvlvIndces Indices involved in training
-     * @param testInvlvIndces Indices involved in testing
-     * @param b0 The parameter controlling the contribution of every training data.
-     * @param dctzr The dicretizer to convert continuous data
-     */
     public WeigtedSVD(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                      int iter, int[] trainInvlvIndces, int[] testInvlvIndces, double b0,
-                      Discretizer dctzr) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, true, trainInvlvIndces, testInvlvIndces);
+                      int iter, Loss lossFunction, int[] trainInvlvIndces, int[] testInvlvIndces,
+                      double b0, Discretizer dctzr) {
+        super(uc, ic, max, min, fc, lr, r, m, iter, true, lossFunction, trainInvlvIndces,
+            testInvlvIndces);
         this.beta0 = b0;
         this.dctzr = dctzr;
     }

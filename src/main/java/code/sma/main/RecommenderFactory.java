@@ -7,6 +7,7 @@ import java.util.Queue;
 import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
+import code.sma.recmmd.ensemble.MultTskREC;
 import code.sma.recmmd.ensemble.WEMAREC;
 import code.sma.recmmd.rank.SMARank;
 import code.sma.recmmd.standalone.GradientBoostedMA;
@@ -47,6 +48,9 @@ public final class RecommenderFactory {
             }
 
             return new WEMAREC(rce, new NetflixMovieLensDiscretizer(rce), clusterDirs);
+        } else if (StringUtil.equalsIgnoreCase(algName, "MTREC")) {
+            // unpublished
+            return new MultTskREC(rce);
         } else if (StringUtil.equalsIgnoreCase(algName, "SMARank")) {
             // unpublished
             return new SMARank(rce);

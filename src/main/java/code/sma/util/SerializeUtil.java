@@ -1,5 +1,6 @@
 package code.sma.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -33,7 +34,13 @@ public final class SerializeUtil {
     public static void writeObject(Object obj, String outputFile) {
         ObjectOutputStream out = null;
         try {
-            out = new ObjectOutputStream(new FileOutputStream(outputFile));
+            File file = new File(outputFile);
+            if (file.exists()) {
+                file.delete();
+            }
+            file.getParentFile().mkdirs();
+
+            out = new ObjectOutputStream(new FileOutputStream(file));
             out.writeObject(obj);
             out.close();
         } catch (FileNotFoundException e) {
