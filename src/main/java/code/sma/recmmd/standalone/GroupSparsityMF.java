@@ -1,11 +1,11 @@
-package code.sma.recommender.standalone;
+package code.sma.recmmd.standalone;
 
 import code.sma.datastructure.DynIntArr;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.datastructure.UJMPDenseMatrix;
 import code.sma.datastructure.UJMPDenseVector;
-import code.sma.recommender.RecConfigEnv;
+import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -21,7 +21,7 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
     /**  SerialVersionNum */
     private static final long serialVersionUID = 1L;
 
-    /** he number of item clusters*/
+    /** Number of item clusters*/
     private int               L;
     /** User profile in low-rank matrix form. */
     private UJMPDenseMatrix   userUJMPFeatures;
@@ -39,57 +39,15 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
     /** Controlling factor for the degree of regularization. */
     double                    lambda           = 0.05;
 
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param iter The maximum number of iterations.
-     * @param l  The number of item clusters
-     * @param verbose Indicating whether to show iteration steps and train error.
-     * @param rce The recommender's specific parameters
-     */
-    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, int iter, int l,
-                           boolean verbose, RecConfigEnv rce) {
-        super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose, rce);
+    /*========================================
+     * Constructors
+     *========================================*/
+    public GroupSparsityMF(RecConfigEnv rce) {
+        super(rce);
         alpha = (double) rce.get("ALPA_VALUE");
         beta = (double) rce.get("BETA_VALUE");
         lambda = (double) rce.get("LAMBDA_VALUE");
-
-        this.L = l;
-    }
-
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param alpha Controlling factor for loss function.
-     * @param beta Controlling factor for the degree of group-sparsity regularization.
-     * @param lambda Controlling factor for the degree of regularization
-     * @param iter The maximum number of iterations.
-     * @param l  The number of item clusters
-     * @param IijIndxU  The Indicator matrix indexed by user id
-     * @param IijIndxI  The Indicator matrix indexed by item id
-     * @param verbose Indicating whether to show iteration steps and train error.
-     */
-    public GroupSparsityMF(int uc, int ic, double max, double min, int fc, double alpha,
-                           double beta, double lambda, int iter, int l, DynIntArr[] IijIndxU,
-                           DynIntArr[] IijIndxI, boolean verbose) {
-        super(uc, ic, max, min, fc, 0, 0, 0, iter, verbose, null);
-        this.alpha = alpha;
-        this.beta = beta;
-        this.lambda = lambda;
-
-        this.IijIndxU = IijIndxU;
-        this.IijIndxI = IijIndxI;
-        this.L = l;
+        this.L = ((Double) rce.get("ITEM_CLUSTER_NUM_VALUE")).intValue();
     }
 
     /** 

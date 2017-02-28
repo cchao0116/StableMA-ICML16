@@ -1,10 +1,10 @@
-package code.sma.recommender.rank;
+package code.sma.recmmd.rank;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recommender.RecConfigEnv;
+import code.sma.recmmd.RecConfigEnv;
 
 /**
  * 
@@ -17,29 +17,16 @@ public class SMARank extends RankBasedMFRecommender {
     /**  negative sampling rate*/
     private double            negSmplnRat;
 
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param lr Learning rate for gradient-based or iterative optimization.
-     * @param r Controlling factor for the degree of regularization. 
-     * @param m Momentum used in gradient-based or iterative optimization.
-     * @param iter The maximum number of iterations.
-     * @param verbose Indicating whether to show iteration steps and train error.
-     * @param rce The recommender's specific parameters
-     */
-    public SMARank(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                   int iter, boolean verbose, RecConfigEnv rce) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
+    /*========================================
+     * Constructors
+     *========================================*/
+    public SMARank(RecConfigEnv rce) {
+        super(rce);
         negSmplnRat = (Double) rce.get("NEGATIVE_SAMPLING_RATE_VALUE");
     }
 
     /** 
-     * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {

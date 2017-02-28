@@ -1,4 +1,4 @@
-package code.sma.recommender.standalone;
+package code.sma.recmmd.standalone;
 
 import java.io.Serializable;
 
@@ -7,9 +7,9 @@ import org.apache.log4j.Logger;
 import code.sma.datastructure.DenseMatrix;
 import code.sma.datastructure.DenseVector;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recommender.Loss;
-import code.sma.recommender.RecConfigEnv;
-import code.sma.recommender.Recommender;
+import code.sma.recmmd.Loss;
+import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.Recommender;
 import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
@@ -73,34 +73,20 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     /**
      * Construct a matrix-factorization-based model with the given data.
      * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param lr Learning rate for gradient-based or iterative optimization.
-     * @param r Controlling factor for the degree of regularization. 
-     * @param m Momentum used in gradient-based or iterative optimization.
-     * @param iter The maximum number of iterations.
-     * @param verbose Indicating whether to show iteration steps and train error.
      * @param rce The recommender's specific parameters
      */
-    public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,
-                                          double r, double m, int iter, boolean verbose,
-                                          RecConfigEnv rce) {
-        userCount = uc;
-        itemCount = ic;
-        maxValue = max;
-        minValue = min;
+    public MatrixFactorizationRecommender(RecConfigEnv rce) {
+        this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
+        this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
+        this.regularizer = ((Double) rce.get("REGULAIZED_VALUE")).doubleValue();
+        this.maxIter = ((Double) rce.get("MAX_ITERATION_VALUE")).intValue();
 
-        featureCount = fc;
-        learningRate = lr;
-        regularizer = r;
-        momentum = m;
-        maxIter = iter;
-
-        showProgress = verbose;
-        lossFunction = Loss.valueOf((String) rce.get("LOSS_FUNCTION"));
+        this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
+        this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
+        this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
+        this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
+        this.showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
+        this.lossFunction = Loss.valueOf((String) rce.get("LOSS_FUNCTION"));
     }
 
     /**
@@ -153,7 +139,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
     }
 
     /**
-     * @see code.sma.recommender.Recommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
@@ -198,7 +184,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender impleme
      *========================================*/
 
     /**
-     * @see code.sma.recommender.Recommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.Recommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix) {

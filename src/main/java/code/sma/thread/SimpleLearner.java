@@ -1,7 +1,7 @@
 package code.sma.thread;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recommender.Recommender;
+import code.sma.recmmd.Recommender;
 
 /**
  * the general thread learner for recommender system

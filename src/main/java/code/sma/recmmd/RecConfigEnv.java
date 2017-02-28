@@ -1,4 +1,4 @@
-package code.sma.recommender;
+package code.sma.recmmd;
 
 import java.util.HashMap;
 import java.util.Map;

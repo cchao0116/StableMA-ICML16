@@ -12,7 +12,7 @@ import code.sma.datastructure.DynIntArr;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.datastructure.SparseVector;
-import code.sma.recommender.Recommender;
+import code.sma.recmmd.Recommender;
 
 /**
  * This is a unified class providing evaluation metrics,

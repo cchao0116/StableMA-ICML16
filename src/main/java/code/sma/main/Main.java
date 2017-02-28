@@ -10,7 +10,7 @@ import code.sma.datastructure.DenseVector;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ClusteringDpncyChecker;
-import code.sma.recommender.RecConfigEnv;
+import code.sma.recmmd.RecConfigEnv;
 import code.sma.thread.SimpleLearner;
 import code.sma.thread.SimpleTaskMsgDispatcherImpl;
 import code.sma.thread.TaskMsgDispatcher;

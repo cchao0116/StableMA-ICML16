@@ -1,4 +1,4 @@
-package code.sma.recommender.standalone;
+package code.sma.recmmd.standalone;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.dpncy.Discretizer;

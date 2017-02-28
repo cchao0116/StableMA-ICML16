@@ -1,10 +1,10 @@
-package code.sma.recommender.standalone;
+package code.sma.recmmd.standalone;
 
 import java.util.Arrays;
 
 import org.apache.commons.math3.stat.StatUtils;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recommender.RecConfigEnv;
+import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -25,24 +25,8 @@ public class StableMA extends MatrixFactorizationRecommender {
     /*========================================
      * Constructors
      *========================================*/
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param lr Learning rate for gradient-based or iterative optimization.
-     * @param r Controlling factor for the degree of regularization. 
-     * @param m Momentum used in gradient-based or iterative optimization.
-     * @param iter The maximum number of iterations.
-     * @param verbose Indicating whether to show iteration steps and train error.
-     * @param rce The recommender's specific parameters
-     */
-    public StableMA(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                    int iter, boolean verbose, RecConfigEnv rce) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
+    public StableMA(RecConfigEnv rce) {
+        super(rce);
         numOfHPSet = ((Double) rce.get("NUMBER_HARD_PREDICTION_SET_VALUE")).intValue();
     }
 
@@ -148,8 +132,19 @@ public class StableMA extends MatrixFactorizationRecommender {
         int rateCount = rateMatrix.getNnz();
 
         // build RSVD model
-        RegularizedSVD recmmd = new RegularizedSVD(userCount, itemCount, maxValue, minValue, 20,
-            0.01, 0.001, 0, 30, false, null);
+        RecConfigEnv rce = new RecConfigEnv();
+        rce.put("USER_COUNT_VALUE", userCount);
+        rce.put("ITEM_COUNT_VALUE", itemCount);
+        rce.put("MAX_RATING_VALUE", maxValue);
+        rce.put("MIN_RATING_VALUE", minValue);
+
+        rce.put("FEATURE_COUNT_VALUE", 30);
+        rce.put("LEARNING_RATE_VALUE", 0.01);
+        rce.put("REGULAIZED_VALUE", 0.001);
+        rce.put("MAX_ITERATION_VALUE", 30);
+        rce.put("VERBOSE_BOOLEAN", false);
+
+        RegularizedSVD recmmd = new RegularizedSVD(rce);
         recmmd.buildModel(rateMatrix, null);
         double recRMSE = recmmd.evaluate(rateMatrix).getRMSE();
 

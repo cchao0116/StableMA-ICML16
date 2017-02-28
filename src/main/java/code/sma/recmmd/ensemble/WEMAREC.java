@@ -1,4 +1,4 @@
-package code.sma.recommender.ensemble;
+package code.sma.recmmd.ensemble;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -10,10 +10,10 @@ import org.apache.log4j.Logger;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.dpncy.Discretizer;
-import code.sma.recommender.RecConfigEnv;
-import code.sma.recommender.Recommender;
-import code.sma.recommender.standalone.MatrixFactorizationRecommender;
-import code.sma.recommender.standalone.WeigtedSVD;
+import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.Recommender;
+import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.standalone.WeigtedSVD;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
 import code.sma.util.ClusterInfoUtil;
@@ -89,10 +89,8 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
      * @param dr The dicretizer to convert continuous data
      * @param clusterDirs The clustering configure files used in WEMAREC
      */
-    public WEMAREC(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                   int iter, boolean verbose, RecConfigEnv rce, Discretizer dr,
-                   Queue<String> clusterDirs) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
+    public WEMAREC(RecConfigEnv rce, Discretizer dr, Queue<String> clusterDirs) {
+        super(rce);
         beta0 = (Double) rce.get("BETA0_VALUE");
         beta1 = (Double) rce.get("BETA1_VALUE");
         beta2 = (Double) rce.get("BETA2_VALUE");
@@ -103,7 +101,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#buildGloblModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildGloblModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
@@ -164,7 +162,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recommender.Recommender)
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
      */
     @Override
     public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
@@ -217,7 +215,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recommender.standalone.MatrixFactorizationRecommender#predict(int, int)
+     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#predict(int, int)
      */
     @Override
     public double predict(int u, int i) {
@@ -235,7 +233,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recommender.ensemble.EnsembleMFRecommender#ensnblWeight(int, int, double)
+     * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#ensnblWeight(int, int, double)
      */
     @Override
     public double ensnblWeight(int u, int i, double prediction) {

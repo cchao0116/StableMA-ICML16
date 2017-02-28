@@ -3,6 +3,7 @@ package code.sma.dpncy;
 import org.apache.commons.math3.stat.StatUtils;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.recmmd.RecConfigEnv;
 
 /**
  * Convert the rating data in Netflix and Movielens into continuous discrete data
@@ -22,13 +23,12 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     /** maximum value*/
     private double maxValue;
 
-    public NetflixMovieLensDiscretizer(int userCount, int itemCount, double maxValue,
-                                       double minValue) {
+    public NetflixMovieLensDiscretizer(RecConfigEnv rce) {
         super();
-        this.userCount = userCount;
-        this.itemCount = itemCount;
-        this.maxValue = maxValue;
-        this.minValue = minValue;
+        this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
+        this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
+        this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
+        this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
     }
 
     /** 

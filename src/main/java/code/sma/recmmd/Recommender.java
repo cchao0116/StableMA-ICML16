@@ -1,4 +1,4 @@
-package code.sma.recommender;
+package code.sma.recmmd;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.util.EvaluationMetrics;

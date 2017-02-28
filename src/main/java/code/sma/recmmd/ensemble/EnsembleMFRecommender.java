@@ -1,8 +1,8 @@
-package code.sma.recommender.ensemble;
+package code.sma.recmmd.ensemble;
 
 import code.sma.datastructure.SparseMatrix;
-import code.sma.recommender.RecConfigEnv;
-import code.sma.recommender.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
 
 /**
  * Ensemble-based Matrix Approximation method
@@ -33,11 +33,10 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
      * @param verbose Indicating whether to show iteration steps and train error.
      * @param rce The recommender's specific parameters
      */
-    public EnsembleMFRecommender(int uc, int ic, double max, double min, int fc, double lr,
-                                 double r, double m, int iter, boolean verbose, RecConfigEnv rce) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, rce);
-        cumPrediction = new SparseMatrix(uc, ic);
-        cumWeight = new SparseMatrix(uc, ic);
+    public EnsembleMFRecommender(RecConfigEnv rce) {
+        super(rce);
+        cumPrediction = new SparseMatrix(userCount, itemCount);
+        cumWeight = new SparseMatrix(userCount, itemCount);
     }
 
     /**

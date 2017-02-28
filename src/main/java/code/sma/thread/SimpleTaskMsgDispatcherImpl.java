@@ -11,8 +11,8 @@ import code.sma.datastructure.DenseVector;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
-import code.sma.recommender.RecConfigEnv;
-import code.sma.recommender.Recommender;
+import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.Recommender;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.StringUtil;
@@ -116,7 +116,7 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recommender.Recommender)
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
      */
     @Override
     public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
