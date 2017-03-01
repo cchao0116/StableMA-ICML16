@@ -41,6 +41,16 @@ public class Accumulator {
         indvdlVal[accId][vId] = value;
     }
 
+    /** 
+     * get the root sum of the given accumulator's ID
+     * 
+     * @param accId the accumulator's ID
+     * @return
+     */
+    public double rs(int accId) {
+        return Math.sqrt(accVal[accId]);
+    }
+
     /**
      * get the root mean value of the given accumulator's ID
      * 
