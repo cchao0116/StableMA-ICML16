@@ -57,7 +57,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
         double[] Auis = rateMatrix.getVals();
 
         // Compute the involved entries
-        trainInvlvIndces = ClusterInfoUtil.readInvolvedIndices(rateMatrix, raf, caf);
+        trainInvlvIndces = ClusterInfoUtil.readInvolvedIndicesExpanded(rateMatrix, raf, caf);
         testInvlvIndces = ClusterInfoUtil.readInvolvedIndices(tMatrix, raf, caf);
 
         // statistics of current model
@@ -158,12 +158,43 @@ public class GLOMA extends MatrixFactorizationRecommender {
             round++;
 
             // Show progress:
-            {
-                if (showProgress) {
-                    LoggerUtil.info(runningLogger, String.format("%d: %.5f,%.5f,%.5f", round,
-                        accErr.rm(0), accErr.rm(1), accErr.rm(2)));
+            if (runningLogger.isDebugEnabled()) {
+                Accumulator accTest = new Accumulator(3, testInvlvIndces.length);
+                int testNum = 0;
+                for (int numSeq : testInvlvIndces) {
+                    int u = tMatrix.getRowIndx()[numSeq];
+                    int i = tMatrix.getColIndx()[numSeq];
+                    double AuiReal = tMatrix.getVals()[numSeq];
+
+                    if (raf[u] && caf[i]) {
+                        double LuLi = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
+                        double LuGi = userDenseFeatures.innerProduct(u, i, auxRec.itemDenseFeatures,
+                            true);
+                        double GuLi = auxRec.userDenseFeatures.innerProduct(u, i, itemDenseFeatures,
+                            true);
+                        accTest.insert(0, testNum, lossFunction.diff(AuiReal, LuLi));
+                        accTest.insert(1, testNum, lossFunction.diff(AuiReal, LuGi));
+                        accTest.insert(2, testNum, lossFunction.diff(AuiReal, GuLi));
+                    } else if (raf[u]) {
+                        double LuGi = userDenseFeatures.innerProduct(u, i, auxRec.itemDenseFeatures,
+                            true);
+                        accTest.insert(1, testNum, lossFunction.diff(AuiReal, LuGi));
+                    } else if (caf[i]) {
+                        double GuLi = auxRec.userDenseFeatures.innerProduct(u, i, itemDenseFeatures,
+                            true);
+                        accTest.insert(2, testNum, lossFunction.diff(AuiReal, GuLi));
+                    }
+                    testNum++;
                 }
+
+                LoggerUtil.info(runningLogger,
+                    String.format("%d: %.5f,%.5f,%.5f-[%.5f],[%.5f],[%.5f]", round, accErr.rm(0),
+                        accErr.rm(1), accErr.rm(2), accTest.rm(0), accTest.rm(1), accTest.rm(2)));
+            } else if (showProgress) {
+                LoggerUtil.info(runningLogger, String.format("%d: %.5f,%.5f,%.5f", round,
+                    accErr.rm(0), accErr.rm(1), accErr.rm(2)));
             }
+
         }
     }
 

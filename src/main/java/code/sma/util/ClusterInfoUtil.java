@@ -41,6 +41,38 @@ public final class ClusterInfoUtil {
                 int rowId = rowIndx[mfSeq];
                 int colId = colIndx[mfSeq];
 
+                if (raf[rowId] && caf[colId]) {
+                    dynInvlvIndcs.addValue(mfSeq);
+                }
+            }
+
+            involvedIndices = dynInvlvIndcs.getArr();
+        }
+        return involvedIndices;
+    }
+
+    /**
+     * filter the specific-expanded cluster-based indices from the sequential data stream
+     * 
+     * @param mfMatrix          the data matrix
+     * @param raf               row assignment function
+     * @param caf               column assignment function
+     * @param specClusterIndx   the target cluster index
+     * @return                  the involved indices
+     */
+    public static int[] readInvolvedIndicesExpanded(MatlabFasionSparseMatrix mfMatrix,
+                                                    boolean[] raf, boolean[] caf) {
+        int[] involvedIndices = new int[0];
+        {
+            int nnz = mfMatrix.getNnz();
+            int[] rowIndx = mfMatrix.getRowIndx();
+            int[] colIndx = mfMatrix.getColIndx();
+            DynIntArr dynInvlvIndcs = new DynIntArr(nnz / 10);
+
+            for (int mfSeq = 0; mfSeq < nnz; mfSeq++) {
+                int rowId = rowIndx[mfSeq];
+                int colId = colIndx[mfSeq];
+
                 if (raf[rowId] || caf[colId]) {
                     dynInvlvIndcs.addValue(mfSeq);
                 }
