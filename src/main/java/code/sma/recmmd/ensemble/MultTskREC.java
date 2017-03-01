@@ -27,6 +27,8 @@ public class MultTskREC extends EnsembleMFRecommender {
     private double              samplingRate;
     /** the path of the auxiliary model */
     private String              auxRcmmdPath;
+    /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
+    private double[]            lambda           = { 1.0d, 0.5d, 0.5d };
 
     /*========================================
      * Constructors
@@ -36,7 +38,17 @@ public class MultTskREC extends EnsembleMFRecommender {
         this.samplingRate = (double) rce.get("SAMPLE_RATE_VALUE");
         this.auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
 
-        randSeeds = new LinkedList<Long>();
+        {
+            String lam = (String) rce.get("LAMBDA");
+            if (lam != null) {
+                String[] lamStr = lam.split(",");
+                for (int l = 0; l < 3; l++) {
+                    lambda[l] = Double.valueOf(lamStr[l]).doubleValue();
+                }
+            }
+        }
+
+        this.randSeeds = new LinkedList<Long>();
         {
             String[] randSds = ((String) rce.get("RANDOM_SEED_SET")).split(",|\t| ");
             for (String rand : randSds) {
@@ -73,8 +85,8 @@ public class MultTskREC extends EnsembleMFRecommender {
                 MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
                     .readObject(auxRcmmdPath);
                 GLOMA rcmmd = new GLOMA(userCount, itemCount, maxValue, minValue, featureCount,
-                    learningRate, regularizer, momentum, maxIter, true, lossFunction, raf, caf,
-                    auxRec);
+                    learningRate, regularizer, momentum, maxIter, true, lossFunction, lambda, raf,
+                    caf, auxRec);
                 rcmmd.threadId = tskId++;
                 return rcmmd;
             }
