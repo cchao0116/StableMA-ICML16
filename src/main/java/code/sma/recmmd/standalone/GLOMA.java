@@ -62,8 +62,8 @@ public class GLOMA extends MatrixFactorizationRecommender {
 
         // statistics of current model
         Accumulator accErr = new Accumulator(3, rateCount);
-        Accumulator accFactrUsr = new Accumulator(featureCount, userCount);
-        Accumulator accFactrItm = new Accumulator(featureCount, itemCount);
+        Accumulator accFactrUsr = new Accumulator(userCount, featureCount);
+        Accumulator accFactrItm = new Accumulator(itemCount, featureCount);
         statistics(rateMatrix, trainInvlvIndces, accErr, accFactrUsr, accFactrItm);
 
         // SGD
@@ -109,46 +109,40 @@ public class GLOMA extends MatrixFactorizationRecommender {
                         userDenseFeatures.setValue(u, s,
                             Fus + learningRate * (-deriWRTpLuLi * Gis * lambda[0]
                                                   - deriWRTpLuGi * gis * lambda[1]
-                                                  - regularizer * Fus / accFactrUsr.rm(s)),
+                                                  - regularizer * Fus / accFactrUsr.rm(u)),
                             true);
                         itemDenseFeatures.setValue(i, s,
                             Gis + learningRate * (-deriWRTpLuLi * Fus * lambda[0]
                                                   - deriWRTpGuLi * fus * lambda[2]
-                                                  - regularizer * Gis / accFactrItm.rm(s)),
+                                                  - regularizer * Gis / accFactrItm.rm(i)),
                             true);
 
-                        auxRec.itemDenseFeatures.setValue(
-                            i, s, gis + learningRate
-                                        * (-deriWRTpLuGi * Fus * lambda[0] - regularizer * gis),
-                            true);
+                        auxRec.itemDenseFeatures.setValue(i, s,
+                            gis + learningRate * (-deriWRTpLuGi * Fus - regularizer * gis), true);
 
-                        auxRec.userDenseFeatures.setValue(
-                            u, s, fus + learningRate
-                                        * (-deriWRTpGuLi * Gis * lambda[0] - regularizer * fus),
-                            true);
+                        auxRec.userDenseFeatures.setValue(u, s,
+                            fus + learningRate * (-deriWRTpGuLi * Gis - regularizer * fus), true);
 
-                        accFactrUsr.update(s, u, userDenseFeatures.getValue(u, s));
-                        accFactrItm.update(s, i, itemDenseFeatures.getValue(i, s));
+                        accFactrUsr.update(u, s, userDenseFeatures.getValue(u, s));
+                        accFactrItm.update(i, s, itemDenseFeatures.getValue(i, s));
                     } else if (raf[u]) {
-                        userDenseFeatures.setValue(u,
-                            s, Fus + learningRate * (-deriWRTpLuGi * gis * lambda[1]
-                                                     - regularizer * Fus / accFactrUsr.rm(s)),
-                            true);
-                        auxRec.itemDenseFeatures.setValue(
-                            i, s, gis + learningRate
-                                        * (-deriWRTpLuGi * Fus * lambda[0] - regularizer * gis),
-                            true);
-                        accFactrUsr.update(s, u, userDenseFeatures.getValue(u, s));
+                        userDenseFeatures
+                            .setValue(u, s,
+                                Fus + learningRate * (-deriWRTpLuGi * gis
+                                                      - regularizer * Fus / accFactrUsr.rm(u)),
+                                true);
+                        auxRec.itemDenseFeatures.setValue(i, s,
+                            gis + learningRate * (-deriWRTpLuGi * Fus - regularizer * gis), true);
+                        accFactrUsr.update(u, s, userDenseFeatures.getValue(u, s));
                     } else if (caf[i]) {
-                        itemDenseFeatures.setValue(i,
-                            s, Gis + learningRate * (-deriWRTpGuLi * fus * lambda[2]
-                                                     - regularizer * Gis / accFactrItm.rm(s)),
-                            true);
-                        auxRec.userDenseFeatures.setValue(
-                            u, s, fus + learningRate
-                                        * (-deriWRTpGuLi * Gis * lambda[0] - regularizer * fus),
-                            true);
-                        accFactrItm.update(s, i, itemDenseFeatures.getValue(i, s));
+                        itemDenseFeatures
+                            .setValue(i, s,
+                                Gis + learningRate * (-deriWRTpGuLi * fus
+                                                      - regularizer * Gis / accFactrItm.rm(i)),
+                                true);
+                        auxRec.userDenseFeatures.setValue(u, s,
+                            fus + learningRate * (-deriWRTpGuLi * Gis - regularizer * fus), true);
+                        accFactrItm.update(i, s, itemDenseFeatures.getValue(i, s));
                     }
                 }
             }
@@ -245,7 +239,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
             }
 
             for (int f = 0; f < featureCount; f++) {
-                accFactrUsr.insert(f, u, userDenseFeatures.getValue(u, f));
+                accFactrUsr.insert(u, f, userDenseFeatures.getValue(u, f));
             }
         }
 
@@ -255,7 +249,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
             }
 
             for (int f = 0; f < featureCount; f++) {
-                accFactrItm.insert(f, i, itemDenseFeatures.getValue(i, f));
+                accFactrItm.insert(i, f, itemDenseFeatures.getValue(i, f));
             }
         }
     }
