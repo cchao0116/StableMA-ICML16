@@ -1,7 +1,5 @@
 package code.sma.recmmd.standalone;
 
-import java.io.Serializable;
-
 import org.apache.log4j.Logger;
 
 import code.sma.datastructure.DenseMatrix;
@@ -22,49 +20,49 @@ import code.sma.util.LoggerUtil;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public abstract class MatrixFactorizationRecommender extends Recommender implements Serializable {
+public abstract class MatrixFactorizationRecommender extends Recommender {
     /** SerialVersionNum */
-    protected static final long   serialVersionUID = 1L;
+    protected static final long             serialVersionUID = 1L;
 
     /** The number of features. */
-    public int                    featureCount;
+    public int                              featureCount;
     /** Learning rate parameter. */
-    public double                 learningRate;
+    public double                           learningRate;
     /** Regularization factor parameter. */
-    public double                 regularizer;
+    public double                           regularizer;
     /** Momentum parameter. */
-    public double                 momentum;
+    public double                           momentum;
     /** Maximum number of iteration. */
-    public int                    maxIter;
+    public int                              maxIter;
     /** The best RMSE in test*/
-    protected double              bestRMSE         = Double.MAX_VALUE;
+    protected double                        bestRMSE         = Double.MAX_VALUE;
 
     /** Indicator whether to show progress of iteration. */
-    public boolean                showProgress;
+    public boolean                          showProgress;
     /** Offset to rating estimation. Usually this is the average of ratings. */
-    protected double              offset;
+    protected double                        offset;
 
     /** User profile in low-rank matrix form. */
-    public DenseMatrix            userDenseFeatures;
+    public DenseMatrix                      userDenseFeatures;
     /** Item profile in low-rank matrix form. */
-    public DenseMatrix            itemDenseFeatures;
+    public DenseMatrix                      itemDenseFeatures;
 
     /** indices involved in training */
-    public int[]                  trainInvlvIndces;
+    public transient int[]                  trainInvlvIndces;
     /** indices involved in testing */
-    public int[]                  testInvlvIndces;
+    public transient int[]                  testInvlvIndces;
     /** the loss funciton to measure the distance between real value and approximated value*/
-    protected Loss                lossFunction;
+    protected Loss                          lossFunction;
 
     /** user average rating*/
-    protected DenseVector         avgUser;
+    protected DenseVector                   avgUser;
     /** item average rating*/
-    protected DenseVector         avgItem;
+    protected DenseVector                   avgItem;
 
     /** logger */
-    protected final static Logger runningLogger    = Logger
+    protected final static transient Logger runningLogger    = Logger
         .getLogger(LoggerDefineConstant.SERVICE_CORE);
-    protected final static Logger resultLogger     = Logger
+    protected final static transient Logger resultLogger     = Logger
         .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     /*========================================

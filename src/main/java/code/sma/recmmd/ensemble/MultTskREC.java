@@ -41,7 +41,7 @@ public class MultTskREC extends EnsembleMFRecommender {
             String[] randSds = ((String) rce.get("RANDOM_SEED_SET")).split(",|\t| ");
             for (String rand : randSds) {
                 long seed = Long.valueOf(rand.trim());
-                randSeeds.add(seed == -1 ? System.currentTimeMillis() : seed);
+                randSeeds.add(seed == -1 ? ((long) (Math.random() * Long.MAX_VALUE)) : seed);
             }
         }
     }
@@ -72,9 +72,11 @@ public class MultTskREC extends EnsembleMFRecommender {
 
                 MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
                     .readObject(auxRcmmdPath);
-                return new GLOMA(userCount, itemCount, maxValue, minValue, featureCount,
+                GLOMA rcmmd = new GLOMA(userCount, itemCount, maxValue, minValue, featureCount,
                     learningRate, regularizer, momentum, maxIter, true, lossFunction, raf, caf,
                     auxRec);
+                rcmmd.threadId = tskId++;
+                return rcmmd;
             }
         }
     }

@@ -41,7 +41,7 @@ public final class ClusterInfoUtil {
                 int rowId = rowIndx[mfSeq];
                 int colId = colIndx[mfSeq];
 
-                if (raf[rowId] && caf[colId]) {
+                if (raf[rowId] || caf[colId]) {
                     dynInvlvIndcs.addValue(mfSeq);
                 }
             }

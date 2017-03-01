@@ -27,30 +27,30 @@ import code.sma.util.ExceptionUtil;
  */
 public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher {
     /** SerialVersionNum */
-    protected static final long  serialVersionUID = 1L;
+    protected static final long            serialVersionUID = 1L;
 
     /** dicretizer */
-    protected Discretizer        dctzr;
+    protected Discretizer                  dctzr;
 
     /** the arrays containing various clusterings*/
-    protected Queue<String>      clusterDirList;
+    protected transient Queue<String>      clusterDirList;
     /** the learning task buffer*/
-    protected Queue<Recommender> recmmdsBuffer;
+    protected transient Queue<Recommender> recmmdsBuffer;
 
     /*========================================
      * Model specific parameters
      *========================================*/
     /** parameter used in training*/
-    protected double             beta0            = 0.4f;
+    protected double                       beta0            = 0.4f;
     /** parameter used in ensemble (user-related) */
-    public double                beta1            = 0.7f;
+    public double                          beta1            = 0.7f;
     /** parameter used in ensemble (item-related) */
-    public double                beta2            = 0.8f;
+    public double                          beta2            = 0.8f;
 
     /** the rating distribution w.r.t each user*/
-    protected double[][]         ensmblWeightInU;
+    protected double[][]                   ensmblWeightInU;
     /** the rating distribution w.r.t each item*/
-    protected double[][]         ensmblWeightInI;
+    protected double[][]                   ensmblWeightInI;
 
     /*========================================
      * Constructors

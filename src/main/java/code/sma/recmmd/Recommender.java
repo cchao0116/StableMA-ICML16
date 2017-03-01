@@ -1,5 +1,7 @@
 package code.sma.recmmd;
 
+import java.io.Serializable;
+
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.util.EvaluationMetrics;
 
@@ -9,20 +11,23 @@ import code.sma.util.EvaluationMetrics;
  * @author Chao Chen
  * @version $Id: Recommender.java, v 0.1 2015-6-8 下午6:59:37 Exp $
  */
-public abstract class Recommender {
+public abstract class Recommender implements Serializable {
+    /** SerialVersionNum */
+    private static final long serialVersionUID = 1L;
+
     /*========================================
      * Common Variables
      *========================================*/
     /** thread id in multiple thread version */
-    public int    threadId;
+    public int                threadId;
     /** The number of users. */
-    public int    userCount;
+    public int                userCount;
     /** The number of items. */
-    public int    itemCount;
+    public int                itemCount;
     /** Maximum value of rating, existing in the dataset. */
-    public double maxValue;
+    public double             maxValue;
     /** Minimum value of rating, existing in the dataset. */
-    public double minValue;
+    public double             minValue;
 
     /*========================================
      * Model Builder

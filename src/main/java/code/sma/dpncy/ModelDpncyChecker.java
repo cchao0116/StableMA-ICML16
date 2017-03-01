@@ -38,10 +38,21 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
             MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
 
             RecConfigEnv rce = new RecConfigEnv(conf);
+            parseModelParameter(rce, auxRcmmdPath);
+
             auxRec = (MatrixFactorizationRecommender) RecommenderFactory
                 .instance((String) rce.get("ALG_NAME"), rce);
             auxRec.buildModel(tnMatrix, null);
             SerializeUtil.writeObject(auxRec, auxRcmmdPath);
+        }
+
+        // debug information
+        if (normalLogger.isDebugEnabled()) {
+            String rootDir = conf.getProperty("ROOT_DIR");
+            String testFile = rootDir + "testingset";
+            MatlabFasionSparseMatrix ttMatrix = MatrixFileUtil.reads(testFile);
+            LoggerUtil.debug(normalLogger,
+                String.format("ModelDpncyChecker:%s", auxRec.evaluate(ttMatrix).printOneLine()));
         }
 
         if (this.successor != null) {
@@ -53,13 +64,14 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
 
     protected void parseModelParameter(RecConfigEnv rce, String auxRcmmdPath) {
         //auxRcmmdPath: ../[ALG]_[LEARNING_RATE]_[REGULIRIZER].OBJ
-        int begConf = auxRcmmdPath.lastIndexOf("/]") + 1;
+        int begConf = auxRcmmdPath.lastIndexOf("/[") + 2;
         int endConf = auxRcmmdPath.lastIndexOf("].OBJ");
 
-        String[] conf = auxRcmmdPath.substring(begConf, endConf).split("]_[");
+        String[] conf = auxRcmmdPath.substring(begConf, endConf).split("\\]_\\[");
         rce.put("ALG_NAME", conf[0].trim());
-        rce.put("LEARNING_RATE_VALUE", Double.valueOf(conf[1].trim()).doubleValue() * 0.001);
-        rce.put("REGULAIZED_VALUE", Double.valueOf(conf[1].trim()).doubleValue() * 0.001);
+        rce.put("MAX_ITERATION_VALUE", Double.valueOf(conf[1].trim()).doubleValue());
+        rce.put("LEARNING_RATE_VALUE", Double.valueOf(conf[2].trim()).doubleValue() * 0.001);
+        rce.put("REGULAIZED_VALUE", Double.valueOf(conf[3].trim()).doubleValue() * 0.001);
         rce.put("VERBOSE_BOOLEAN", false);
     }
 }
