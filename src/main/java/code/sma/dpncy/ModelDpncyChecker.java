@@ -25,6 +25,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         String auxRcmmdPath = conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
         RecConfigEnv rce = new RecConfigEnv(conf);
         auxRcmmdPath = parseModelParameter(rce, auxRcmmdPath);
+        conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", auxRcmmdPath);
 
         MatrixFactorizationRecommender auxRec = null;
         if (FileUtil.exists(auxRcmmdPath)) {
