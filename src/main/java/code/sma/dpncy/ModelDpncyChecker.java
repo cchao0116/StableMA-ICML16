@@ -23,6 +23,8 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
     @Override
     public void handler(Configures conf) {
         String auxRcmmdPath = conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
+        RecConfigEnv rce = new RecConfigEnv(conf);
+        auxRcmmdPath = parseModelParameter(rce, auxRcmmdPath);
 
         MatrixFactorizationRecommender auxRec = null;
         if (FileUtil.exists(auxRcmmdPath)) {
@@ -36,9 +38,6 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
             String rootDir = conf.getProperty("ROOT_DIR");
             String trainFile = rootDir + "trainingset";
             MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-
-            RecConfigEnv rce = new RecConfigEnv(conf);
-            parseModelParameter(rce, auxRcmmdPath);
 
             auxRec = (MatrixFactorizationRecommender) RecommenderFactory
                 .instance((String) rce.get("ALG_NAME"), rce);
@@ -62,8 +61,8 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         }
     }
 
-    protected void parseModelParameter(RecConfigEnv rce, String auxRcmmdPath) {
-        //auxRcmmdPath: ../[ALG]_[LEARNING_RATE]_[REGULIRIZER].OBJ
+    protected String parseModelParameter(RecConfigEnv rce, String auxRcmmdPath) {
+        //auxRcmmdPath: ../[ALG]_[MAX_ITERATION]_[LEARNING_RATE]_[REGULIRIZER].OBJ
         int begConf = auxRcmmdPath.lastIndexOf("/[") + 2;
         int endConf = auxRcmmdPath.lastIndexOf("].OBJ");
 
@@ -73,5 +72,10 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         rce.put("LEARNING_RATE_VALUE", Double.valueOf(conf[2].trim()).doubleValue() * 0.001);
         rce.put("REGULAIZED_VALUE", Double.valueOf(conf[3].trim()).doubleValue() * 0.001);
         rce.put("VERBOSE_BOOLEAN", false);
+
+        // ../[ALG]_[FEATURE_COUNT]_[MAX_ITERATION]_[LEARNING_RATE]_[REGULIRIZER].OBJ
+        return String.format("%s%s]_[%d]_[%s]_[%s]_[%s].OBJ", auxRcmmdPath.substring(0, begConf),
+            conf[0].trim(), ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue(), conf[1].trim(),
+            conf[2].trim(), conf[3].trim());
     }
 }
