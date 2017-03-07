@@ -9,6 +9,7 @@ import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.Recommender;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
@@ -51,9 +52,12 @@ public class MultTskRECTest extends TestCase {
                 checker.handler(conf);
 
                 MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-                MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
+                MatlabFasionSparseMatrix ttMatrix = MatrixFileUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
-                RecommenderFactory.instance(algName, rce).buildModel(tnMatrix, tttMatrix);
+                Recommender rcmmd = RecommenderFactory.instance(algName, rce);
+                rcmmd.buildModel(tnMatrix, ttMatrix);
+                LoggerUtil.info(logger, String.format("%s\n%s", rcmmd.toString(),
+                    rcmmd.evaluate(ttMatrix).printOneLine()));
             }
         }
     }

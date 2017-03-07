@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.GLOMA;
 import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
@@ -91,6 +93,15 @@ public class MultTskREC extends EnsembleMFRecommender {
                 return rcmmd;
             }
         }
+    }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return String.format("Param: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", featureCount,
+            learningRate, regularizer, samplingRate, ArrayUtils.toString(lambda));
     }
 
 }
