@@ -4,8 +4,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
@@ -14,7 +12,6 @@ import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
 import code.sma.util.ExceptionUtil;
-import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -44,9 +41,6 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
     protected MatlabFasionSparseMatrix tnMatrix;
     /** testing data*/
     protected MatlabFasionSparseMatrix ttMatrix;
-
-    protected final static Logger      logger           = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     /*========================================
      * Constructors
@@ -128,7 +122,7 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
         }
         rmse = Math.sqrt(rmse / nnz);
 
-        LoggerUtil.info(logger,
+        LoggerUtil.info(resultLogger,
             String.format("ThreadId: %d\tRMSE: %,6f N[%d][%d]", ((Recommender) recmmd).threadId,
                 rmse, ((MatrixFactorizationRecommender) recmmd).trainInvlvIndces.length,
                 ((MatrixFactorizationRecommender) recmmd).testInvlvIndces.length));

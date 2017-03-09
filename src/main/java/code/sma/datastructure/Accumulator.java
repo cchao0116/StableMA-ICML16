@@ -60,4 +60,21 @@ public class Accumulator {
     public double rm(int accId) {
         return Math.sqrt(accVal[accId] / accNum[accId]);
     }
+
+    /**
+     * get the root mean value of overall data
+     * 
+     * @return  root mean value
+     */
+    public double rm() {
+        double sse = 0.0d;
+        int availNum = 0;
+        for (int accId = 0; accId < accVal.length; accId++) {
+            if (accNum[accId] != 0) {
+                sse += accVal[accId] / accNum[accId];
+                availNum++;
+            }
+        }
+        return Math.sqrt(sse / availNum);
+    }
 }
