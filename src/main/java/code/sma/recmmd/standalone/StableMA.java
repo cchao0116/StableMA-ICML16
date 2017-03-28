@@ -91,8 +91,8 @@ public class StableMA extends MatrixFactorizationRecommender {
                     double Fus = userDenseFeatures.getValue(u, s);
                     double Gis = itemDenseFeatures.getValue(i, s);
 
-                    double uGrad = -deriWRTp * Gis / rmse - regularizer * Fus;
-                    double iGrad = -deriWRTp * Fus / rmse - regularizer * Gis;
+                    double uGrad = -deriWRTp * Gis / rmse - regularizer * regType.reg(null, 0, Fus);
+                    double iGrad = -deriWRTp * Fus / rmse - regularizer * regType.reg(null, 0, Gis);
 
                     for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
                         if (rAssigmnt[kIndx][numSeq] == false) {
@@ -133,15 +133,15 @@ public class StableMA extends MatrixFactorizationRecommender {
 
         // build RSVD model
         RecConfigEnv rce = new RecConfigEnv();
-        rce.put("USER_COUNT_VALUE", userCount);
-        rce.put("ITEM_COUNT_VALUE", itemCount);
-        rce.put("MAX_RATING_VALUE", maxValue);
-        rce.put("MIN_RATING_VALUE", minValue);
+        rce.put("USER_COUNT_VALUE", userCount * 1.0);
+        rce.put("ITEM_COUNT_VALUE", itemCount * 1.0);
+        rce.put("MAX_RATING_VALUE", maxValue * 1.0);
+        rce.put("MIN_RATING_VALUE", minValue * 1.0);
 
-        rce.put("FEATURE_COUNT_VALUE", 30);
+        rce.put("FEATURE_COUNT_VALUE", 30 * 1.0);
         rce.put("LEARNING_RATE_VALUE", 0.01);
         rce.put("REGULAIZED_VALUE", 0.001);
-        rce.put("MAX_ITERATION_VALUE", 30);
+        rce.put("MAX_ITERATION_VALUE", 30 * 1.0);
         rce.put("VERBOSE_BOOLEAN", false);
 
         RegularizedSVD recmmd = new RegularizedSVD(rce);

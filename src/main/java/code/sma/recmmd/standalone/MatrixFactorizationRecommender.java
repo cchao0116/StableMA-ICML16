@@ -8,9 +8,11 @@ import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
+import code.sma.recmmd.Regularizer;
 import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
+import code.sma.util.StringUtil;
 
 /**
  * This is an abstract class implementing four matrix-factorization-based methods
@@ -53,6 +55,8 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
     public transient int[]                  testInvlvIndces;
     /** the loss funciton to measure the distance between real value and approximated value*/
     protected Loss                          lossFunction;
+    /** regularizer used to control the complexity of the method*/
+    protected Regularizer                   regType;
 
     /** user average rating*/
     protected DenseVector                   avgUser;
@@ -84,7 +88,20 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
         this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
         this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
         this.showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
-        this.lossFunction = Loss.valueOf((String) rce.get("LOSS_FUNCTION"));
+
+        String lsfnctn = (String) rce.get("LOSS_FUNCTION");
+        if (StringUtil.isNotBlank(lsfnctn)) {
+            this.lossFunction = Loss.valueOf(lsfnctn);
+        } else {
+            this.lossFunction = Loss.LOSS_RMSE;
+        }
+
+        String rtype = (String) rce.get("REG_TYPE");
+        if (StringUtil.isNotBlank(rtype)) {
+            this.regType = Regularizer.valueOf(rtype);
+        } else {
+            this.regType = Regularizer.L2;
+        }
     }
 
     /**
