@@ -39,6 +39,7 @@ public class MultTskREC extends EnsembleMFRecommender {
      *========================================*/
     public MultTskREC(RecConfigEnv rce) {
         super(rce);
+        this.rce = rce;
         this.samplingRate = (double) rce.get("SAMPLE_RATE_VALUE");
         this.auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
 
