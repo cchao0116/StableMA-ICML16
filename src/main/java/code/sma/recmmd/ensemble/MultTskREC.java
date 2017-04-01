@@ -23,6 +23,8 @@ public class MultTskREC extends EnsembleMFRecommender {
     /*========================================
      * Model specific parameters
      *========================================*/
+    /** configure environments*/
+    private RecConfigEnv        rce;
     /** the arrays containing random seeds*/
     private Queue<Long>         randSeeds;
     /** the sampling rate of randomized submatrix */
@@ -86,9 +88,7 @@ public class MultTskREC extends EnsembleMFRecommender {
 
                 MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
                     .readObject(auxRcmmdPath);
-                GLOMA rcmmd = new GLOMA(userCount, itemCount, maxValue, minValue, featureCount,
-                    learningRate, regularizer, momentum, maxIter, true, lossFunction, lambda, raf,
-                    caf, auxRec);
+                GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
                 rcmmd.threadId = tskId++;
                 return rcmmd;
             }

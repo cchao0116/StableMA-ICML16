@@ -2,7 +2,7 @@ package code.sma.recmmd.standalone;
 
 import code.sma.datastructure.Accumulator;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recmmd.Loss;
+import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.ClusterInfoUtil;
 import code.sma.util.LoggerUtil;
 
@@ -29,10 +29,9 @@ public class GLOMA extends MatrixFactorizationRecommender {
     /*========================================
      * Constructors
      *========================================*/
-    public GLOMA(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                 int iter, boolean verbose, Loss lossFunction, double[] lambda, boolean[] raf,
-                 boolean[] caf, MatrixFactorizationRecommender auxRec) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, verbose, lossFunction, null, null);
+    public GLOMA(RecConfigEnv rce, double[] lambda, boolean[] raf, boolean[] caf,
+                 MatrixFactorizationRecommender auxRec) {
+        super(rce);
         this.lambda = lambda;
         this.raf = raf;
         this.caf = caf;
