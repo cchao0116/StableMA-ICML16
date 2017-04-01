@@ -26,11 +26,11 @@ public enum Regularizer {
             case L1:
                 double alpha = 100.0;
                 return 1.0 / (1.0 + Math.exp(-1.0 * alpha * factrVal))
-                       - 1.0 / (1 + Math.exp(1.0 * alpha * factrVal));
+                       - 1.0 / (1.0 + Math.exp(1.0 * alpha * factrVal));
             case L2:
                 return factrVal;
             case L12:
-                return factrVal / accFactr.rm(accId);
+                return factrVal / accFactr.rs(accId);
             default:
                 return 0.0d;
         }
