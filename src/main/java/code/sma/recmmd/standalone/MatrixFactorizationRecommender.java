@@ -72,11 +72,6 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
     /*========================================
      * Constructors
      *========================================*/
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param rce The recommender's specific parameters
-     */
     public MatrixFactorizationRecommender(RecConfigEnv rce) {
         this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
         this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
@@ -104,23 +99,17 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
         }
     }
 
-    /**
-     * Construct a matrix-factorization-based model with the given data.
-     * 
-     * @param uc The number of users in the dataset.
-     * @param ic The number of items in the dataset.
-     * @param max The maximum rating value in the dataset.
-     * @param min The minimum rating value in the dataset.
-     * @param fc The number of features used for describing user and item profiles.
-     * @param lr Learning rate for gradient-based or iterative optimization.
-     * @param r Controlling factor for the degree of regularization. 
-     * @param m Momentum used in gradient-based or iterative optimization.
-     * @param iter The maximum number of iterations.
-     * @param verbose Indicating whether to show iteration steps and train error.
-     * @param lossFunction the loss-function used to measure the difference between two objects
-     * @param trainInvlvIndces Indices involved in training
-     * @param testInvlvIndces Indices involved in testing
-     */
+    public MatrixFactorizationRecommender(RecConfigEnv rce, DenseMatrix userDenseFeatures,
+                                          DenseMatrix itemDenseFeatures) {
+        this.userDenseFeatures = userDenseFeatures;
+        this.itemDenseFeatures = itemDenseFeatures;
+
+        this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
+        this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
+        this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
+        this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
+    }
+
     public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,
                                           double r, double m, int iter, boolean verbose,
                                           Loss lossFunction, int[] trainInvlvIndces,

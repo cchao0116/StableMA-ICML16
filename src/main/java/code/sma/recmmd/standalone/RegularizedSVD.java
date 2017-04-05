@@ -1,5 +1,6 @@
 package code.sma.recmmd.standalone;
 
+import code.sma.datastructure.DenseMatrix;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
 
@@ -22,6 +23,11 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
      *========================================*/
     public RegularizedSVD(RecConfigEnv rce) {
         super(rce);
+    }
+
+    public RegularizedSVD(RecConfigEnv rce, DenseMatrix userDenseFeatures,
+                          DenseMatrix itemDenseFeatures) {
+        super(rce, userDenseFeatures, itemDenseFeatures);
     }
 
     /*========================================

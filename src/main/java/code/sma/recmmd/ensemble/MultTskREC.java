@@ -101,8 +101,8 @@ public class MultTskREC extends EnsembleMFRecommender {
      */
     @Override
     public String toString() {
-        return String.format("Param: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", featureCount,
-            learningRate, regularizer, samplingRate, ArrayUtils.toString(lambda));
+        return String.format("Param[%d]: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", maxIter,
+            featureCount, learningRate, regularizer, samplingRate, ArrayUtils.toString(lambda));
     }
 
 }
