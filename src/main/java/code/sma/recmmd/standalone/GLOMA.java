@@ -3,6 +3,7 @@ package code.sma.recmmd.standalone;
 import code.sma.datastructure.Accumulator;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
+import code.sma.recmmd.Regularizer;
 import code.sma.util.ClusterInfoUtil;
 import code.sma.util.LoggerUtil;
 
@@ -106,65 +107,79 @@ public class GLOMA extends MatrixFactorizationRecommender {
                 double deriWRTpLuGi = lossFunction.dervWRTPrdctn(AuiReal, LuGi) / RMELuGi;
                 double deriWRTpGuLi = lossFunction.dervWRTPrdctn(AuiReal, GuLi) / RMEGuli;
 
-                for (int s = 0; s < featureCount; s++) {
-                    double Fus = userDenseFeatures.getValue(u, s);
-                    double fus = auxRec.userDenseFeatures.getValue(u, s);
-                    double Gis = itemDenseFeatures.getValue(i, s);
-                    double gis = auxRec.itemDenseFeatures.getValue(i, s);
-
+                if (round >= maxIter - 2) {
                     if (raf[u] && caf[i]) {
-                        userDenseFeatures
-                            .setValue(u,
+                        for (int s = 0; s < featureCount; s++) {
+                            double Fus = userDenseFeatures.getValue(u, s);
+                            double Gis = itemDenseFeatures.getValue(i, s);
+
+                            if (raf[u] && caf[i]) {
+                                userDenseFeatures.setValue(u, s,
+                                    Fus + learningRate
+                                          * (-deriWRTpLuLi * Gis
+                                             - 0.01 * Regularizer.L2.reg(accFactrUsr, u, Fus)),
+                                    true);
+                                itemDenseFeatures.setValue(i, s,
+                                    Gis + learningRate
+                                          * (-deriWRTpLuLi * Fus
+                                             - 0.01 * Regularizer.L2.reg(accFactrItm, i, Gis)),
+                                    true);
+
+                                accFactrUsr.update(u, s,
+                                    Math.pow(userDenseFeatures.getValue(u, s), 2.0));
+                                accFactrItm.update(i, s,
+                                    Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
+                            }
+                        }
+                    }
+                } else {
+
+                    for (int s = 0; s < featureCount; s++) {
+                        double Fus = userDenseFeatures.getValue(u, s);
+                        double fus = auxRec.userDenseFeatures.getValue(u, s);
+                        double Gis = itemDenseFeatures.getValue(i, s);
+                        double gis = auxRec.itemDenseFeatures.getValue(i, s);
+
+                        if (raf[u] && caf[i]) {
+                            userDenseFeatures.setValue(u,
                                 s, Fus + learningRate * (-deriWRTpLuLi * Gis * lambda[0]
                                                          - deriWRTpLuGi * gis * lambda[1]
                                                          - regularizer
                                                            * regType.reg(accFactrUsr, u, Fus)),
                                 true);
-                        itemDenseFeatures
-                            .setValue(i,
+                            itemDenseFeatures.setValue(i,
                                 s, Gis + learningRate * (-deriWRTpLuLi * Fus * lambda[0]
                                                          - deriWRTpGuLi * fus * lambda[2]
                                                          - regularizer
                                                            * regType.reg(accFactrItm, i, Gis)),
                                 true);
-
-                        auxRec.itemDenseFeatures.setValue(i, s,
-                            gis + learningRate * (-deriWRTpLuGi * Fus - regularizer * gis), true);
-
-                        auxRec.userDenseFeatures.setValue(u, s,
-                            fus + learningRate * (-deriWRTpGuLi * Gis - regularizer * fus), true);
-
-                        accFactrUsr.update(u, s, Math.pow(userDenseFeatures.getValue(u, s), 2.0));
-                        accFactrItm.update(i, s, Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
-                        accFactrlUsr.update(u, s,
-                            Math.pow(auxRec.userDenseFeatures.getValue(u, s), 2.0));
-                        accFactrlItm.update(i, s,
-                            Math.pow(auxRec.itemDenseFeatures.getValue(i, s), 2.0));
-                    } else if (raf[u]) {
-                        userDenseFeatures.setValue(u, s,
-                            Fus + learningRate * (-deriWRTpLuGi * gis
-                                                  - regularizer * regType.reg(accFactrUsr, u, Fus)),
-                            true);
-                        auxRec.itemDenseFeatures.setValue(i, s,
-                            gis + learningRate * (-deriWRTpLuGi * Fus - regularizer * gis), true);
-
-                        accFactrUsr.update(u, s, Math.pow(userDenseFeatures.getValue(u, s), 2.0));
-                        accFactrlItm.update(i, s,
-                            Math.pow(auxRec.itemDenseFeatures.getValue(i, s), 2.0));
-                    } else if (caf[i]) {
-                        itemDenseFeatures.setValue(i, s,
-                            Gis + learningRate * (-deriWRTpGuLi * fus
-                                                  - regularizer * regType.reg(accFactrItm, i, Gis)),
-                            true);
-                        auxRec.userDenseFeatures.setValue(u, s,
-                            fus + learningRate * (-deriWRTpGuLi * Gis - regularizer * fus), true);
-
-                        accFactrlUsr.update(u, s,
-                            Math.pow(auxRec.userDenseFeatures.getValue(u, s), 2.0));
-                        accFactrItm.update(i, s, Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
+                            accFactrUsr.update(u, s,
+                                Math.pow(userDenseFeatures.getValue(u, s), 2.0));
+                            accFactrItm.update(i, s,
+                                Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
+                        } else if (raf[u]) {
+                            userDenseFeatures.setValue(u, s,
+                                Fus + learningRate
+                                      * (-deriWRTpLuGi * gis
+                                         - regularizer * Regularizer.L2.reg(accFactrUsr, u, Fus)),
+                                true);
+                            accFactrUsr.update(u, s,
+                                Math.pow(userDenseFeatures.getValue(u, s), 2.0));
+                        } else if (caf[i]) {
+                            itemDenseFeatures.setValue(i, s,
+                                Gis + learningRate
+                                      * (-deriWRTpGuLi * fus
+                                         - regularizer * Regularizer.L2.reg(accFactrItm, i, Gis)),
+                                true);
+                            accFactrItm.update(i, s,
+                                Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
+                        }
                     }
                 }
             }
+
+            //            lambda[1]*=0.99;
+            //            lambda[2]*=0.99;
 
             prevErr = currErr;
             currErr = accErr.rm(0);
