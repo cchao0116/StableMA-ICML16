@@ -6,6 +6,8 @@ import java.util.Random;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import code.sma.datastructure.DenseVector;
+import code.sma.recmmd.KernelSmoothing;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.GLOMA;
 import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
@@ -68,6 +70,60 @@ public class MultTskREC extends EnsembleMFRecommender {
      */
     @Override
     public Object map() {
+        return kernelSmoothedMap();
+    }
+
+    protected Object kernelSmoothedMap() {
+        synchronized (MAP_MUTEX) {
+            if (randSeeds.isEmpty()) {
+                return null;
+            } else {
+                double width = 0.6d;
+                MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
+                    .readObject(auxRcmmdPath);
+                Random ran = new Random(randSeeds.poll().longValue());
+
+                // closely-related users
+                boolean[] raf = new boolean[userCount];
+                {
+                    int anchorUser = ran.nextInt(userCount);
+                    DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anchorUser);
+                    double normAnchorU = anchorVec.norm();
+                    for (int u = 0; u < userCount; u++) {
+                        DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
+                        double sim = 1 - 2.0 / Math.PI * Math
+                            .acos(anchorVec.innerProduct(uVec) / (normAnchorU * uVec.norm()));
+                        if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
+                            raf[u] = true;
+                        }
+                    }
+                }
+
+                // closely-related items
+                boolean[] caf = new boolean[itemCount];
+                {
+                    int anchorItem = ran.nextInt(itemCount);
+                    DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(anchorItem);
+                    double normAnchorI = anchrVec.norm();
+                    for (int i = 0; i < itemCount; i++) {
+                        DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(i);
+                        double sim = 1 - 2.0 / Math.PI * Math
+                            .acos(anchrVec.innerProduct(iVec) / (normAnchorI * iVec.norm()));
+
+                        if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
+                            caf[i] = true;
+                        }
+                    }
+                }
+
+                GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
+                rcmmd.threadId = tskId++;
+                return rcmmd;
+            }
+        }
+    }
+
+    protected Object ranMap() {
         synchronized (MAP_MUTEX) {
             if (randSeeds.isEmpty()) {
                 return null;

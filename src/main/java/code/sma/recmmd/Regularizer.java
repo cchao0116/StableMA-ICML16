@@ -24,7 +24,7 @@ public enum Regularizer {
     public double reg(Accumulator accFactr, int accId, double factrVal) {
         switch (this) {
             case L1:
-                double alpha = 100.0;
+                double alpha = 1000.0 * 1000.0;
                 return 1.0 / (1.0 + Math.exp(-1.0 * alpha * factrVal))
                        - 1.0 / (1.0 + Math.exp(1.0 * alpha * factrVal));
             case L2:

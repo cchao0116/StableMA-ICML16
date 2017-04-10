@@ -152,7 +152,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
     public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
                                MatlabFasionSparseMatrix tMatrix) {
         LoggerUtil.info(runningLogger,
-            "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer);
+            String.format("Param: FC:%d,LR:%.7f,R:%.7f", featureCount, learningRate, regularizer));
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
         itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
     }

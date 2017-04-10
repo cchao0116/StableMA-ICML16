@@ -107,6 +107,16 @@ public class DenseVector implements Serializable, Iterable<Double> {
         return sum;
     }
 
+    /**
+     * Euclidean norm of the vector
+     * 
+     * @return L2-norm
+     */
+
+    public double norm() {
+        return Math.sqrt(innerProduct(this));
+    }
+
     /** 
      * @see java.lang.Iterable#iterator()
      */
