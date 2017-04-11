@@ -23,23 +23,23 @@ import code.sma.util.SerializeUtil;
  */
 public class MultTskREC extends EnsembleMFRecommender {
     /** SerialVersionNum */
-    protected static final long          serialVersionUID = 1L;
+    protected static final long            serialVersionUID = 1L;
 
     /*========================================
      * Model specific parameters
      *========================================*/
     /** configure environments*/
-    private RecConfigEnv                 rce;
+    private RecConfigEnv                   rce;
     /** the arrays containing random seeds*/
-    private Queue<Long>                  randSeeds;
+    private Queue<Long>                    randSeeds;
     /** the anchors*/
-    private List<Pair<Integer, Integer>> anchors          = new ArrayList<Pair<Integer, Integer>>();
+    private List<Pair<Integer, Integer>>   anchors          = new ArrayList<Pair<Integer, Integer>>();
     /** the sampling rate of randomized submatrix */
-    private double                       samplingRate;
-    /** the path of the auxiliary model */
-    private String                       auxRcmmdPath;
+    private double                         samplingRate;
+    /** the instance of the auxiliary model */
+    private MatrixFactorizationRecommender auxRec;
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]                     lambda           = { 1.0d, 0.5d, 0.5d };
+    private double[]                       lambda           = { 1.0d, 0.5d, 0.5d };
 
     /*========================================
      * Constructors
@@ -48,7 +48,9 @@ public class MultTskREC extends EnsembleMFRecommender {
         super(rce);
         this.rce = rce;
         this.samplingRate = (double) rce.get("SAMPLE_RATE_VALUE");
-        this.auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
+
+        String auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
+        this.auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
 
         {
             String lam = (String) rce.get("LAMBDA");
@@ -99,10 +101,8 @@ public class MultTskREC extends EnsembleMFRecommender {
         int anchorItem = -1;
         double width = 0.60;
 
-        MatrixFactorizationRecommender auxRec = null;
         synchronized (MAP_MUTEX) {
             Random ran = new Random(randSeed);
-            auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
 
             if (anchors.isEmpty()) {
                 anchorUser = ran.nextInt(userCount);
@@ -240,8 +240,6 @@ public class MultTskREC extends EnsembleMFRecommender {
             }
         }
 
-        MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
-            .readObject(auxRcmmdPath);
         GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
         rcmmd.threadId = tskId++;
         return rcmmd;
