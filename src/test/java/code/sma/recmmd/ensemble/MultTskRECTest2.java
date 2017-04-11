@@ -1,5 +1,6 @@
 package code.sma.recmmd.ensemble;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -64,7 +65,8 @@ public class MultTskRECTest2 extends TestCase {
                     DenseMatrix userDenseFeature = null;
                     DenseMatrix itemDenseFeatures = null;
 
-                    List<Recommender> lRec = ((MultTskREC) rcmmd).lRec;
+                    // Here should be more considered!
+                    List<Recommender> lRec = new ArrayList<Recommender>();
                     userDenseFeature = ((MatrixFactorizationRecommender) lRec
                         .get(0)).userDenseFeatures;
                     itemDenseFeatures = ((MatrixFactorizationRecommender) lRec

@@ -1,7 +1,5 @@
 package code.sma.recmmd.ensemble;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -44,8 +42,6 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
     /** testing data*/
     protected MatlabFasionSparseMatrix ttMatrix;
 
-    public List<Recommender> lRec = new ArrayList<Recommender>();
-    
     /*========================================
      * Constructors
      *========================================*/
@@ -89,8 +85,6 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
 
         // update approximated model
         synchronized (REDUCE_MUTEX) {
-            lRec.add((Recommender) recmmd);
-            
             int[] testInvlvIndces = ((MatrixFactorizationRecommender) recmmd).testInvlvIndces;
             for (int numSeq : testInvlvIndces) {
                 int u = uIndx[numSeq];

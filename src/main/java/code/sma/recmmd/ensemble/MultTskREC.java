@@ -1,10 +1,13 @@
 package code.sma.recmmd.ensemble;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math3.util.Pair;
 
 import code.sma.datastructure.DenseVector;
 import code.sma.recmmd.KernelSmoothing;
@@ -20,21 +23,23 @@ import code.sma.util.SerializeUtil;
  */
 public class MultTskREC extends EnsembleMFRecommender {
     /** SerialVersionNum */
-    protected static final long serialVersionUID = 1L;
+    protected static final long          serialVersionUID = 1L;
 
     /*========================================
      * Model specific parameters
      *========================================*/
     /** configure environments*/
-    private RecConfigEnv        rce;
+    private RecConfigEnv                 rce;
     /** the arrays containing random seeds*/
-    private Queue<Long>         randSeeds;
+    private Queue<Long>                  randSeeds;
+    /** the anchors*/
+    private List<Pair<Integer, Integer>> anchors          = new ArrayList<Pair<Integer, Integer>>();
     /** the sampling rate of randomized submatrix */
-    private double              samplingRate;
+    private double                       samplingRate;
     /** the path of the auxiliary model */
-    private String              auxRcmmdPath;
+    private String                       auxRcmmdPath;
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]            lambda           = { 1.0d, 0.5d, 0.5d };
+    private double[]                     lambda           = { 1.0d, 0.5d, 0.5d };
 
     /*========================================
      * Constructors
@@ -70,86 +75,176 @@ public class MultTskREC extends EnsembleMFRecommender {
      */
     @Override
     public Object map() {
-        return kernelSmoothedMap();
-    }
+        long randSeed = -1;
+        boolean isOdd = true;
 
-    protected Object kernelSmoothedMap() {
         synchronized (MAP_MUTEX) {
             if (randSeeds.isEmpty()) {
                 return null;
             } else {
-                double width = 0.6d;
-                MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
-                    .readObject(auxRcmmdPath);
-                Random ran = new Random(randSeeds.poll().longValue());
+                isOdd = randSeeds.size() % 2 == 0;
+                randSeed = randSeeds.poll().longValue();
+            }
+        }
 
-                // closely-related users
-                boolean[] raf = new boolean[userCount];
+        if (isOdd) {
+            return kernelSmoothedMap(randSeed);
+        } else {
+            return ranMap(randSeed);
+        }
+    }
+
+    protected Object kernelSmoothedMap(long randSeed) {
+        int anchorUser = -1;
+        int anchorItem = -1;
+        double width = 0.60;
+
+        MatrixFactorizationRecommender auxRec = null;
+        synchronized (MAP_MUTEX) {
+            Random ran = new Random(randSeed);
+            auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
+
+            if (anchors.isEmpty()) {
+                anchorUser = ran.nextInt(userCount);
+                anchorItem = ran.nextInt(itemCount);
+            } else {
+                //choose anchor of user
                 {
-                    int anchorUser = ran.nextInt(userCount);
-                    DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anchorUser);
-                    double normAnchorU = anchorVec.norm();
+                    double[] minD = new double[userCount];
+                    double sumD = 0.0d;
+
+                    double[] anchorNorms = new double[anchors.size()];
+                    for (int a = 0; a < anchors.size(); a++) {
+                        int anLu = anchors.get(a).getKey();
+                        anchorNorms[a] = auxRec.userDenseFeatures.getRowRef(anLu).norm();
+                    }
+
                     for (int u = 0; u < userCount; u++) {
                         DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
-                        double sim = 1 - 2.0 / Math.PI * Math
-                            .acos(anchorVec.innerProduct(uVec) / (normAnchorU * uVec.norm()));
-                        if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
-                            raf[u] = true;
+                        double normuVec = uVec.norm();
+                        minD[u] = Double.MAX_VALUE;
+
+                        for (int a = 0; a < anchors.size(); a++) {
+                            int anLu = anchors.get(a).getKey();
+
+                            DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anLu);
+                            double distnt = Math
+                                .acos(anchorVec.innerProduct(uVec) / (normuVec * anchorNorms[a]));
+                            if (minD[u] > distnt) {
+                                minD[u] = distnt;
+                            }
+                        }
+                        sumD += minD[u];
+                    }
+
+                    while (true) {
+                        anchorUser = ran.nextInt(userCount);
+                        if (ran.nextFloat() < minD[anchorUser] * userCount / sumD) {
+                            break;
                         }
                     }
                 }
 
-                // closely-related items
-                boolean[] caf = new boolean[itemCount];
+                //choose anchor or item
                 {
-                    int anchorItem = ran.nextInt(itemCount);
-                    DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(anchorItem);
-                    double normAnchorI = anchrVec.norm();
-                    for (int i = 0; i < itemCount; i++) {
-                        DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(i);
-                        double sim = 1 - 2.0 / Math.PI * Math
-                            .acos(anchrVec.innerProduct(iVec) / (normAnchorI * iVec.norm()));
+                    double[] minD = new double[itemCount];
+                    double sumD = 0.0d;
 
-                        if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
-                            caf[i] = true;
+                    double[] anchorNorms = new double[anchors.size()];
+                    for (int a = 0; a < anchors.size(); a++) {
+                        int anLi = anchors.get(a).getValue();
+                        anchorNorms[a] = auxRec.itemDenseFeatures.getRowRef(anLi).norm();
+                    }
+
+                    for (int i = 0; i < itemCount; i++) {
+                        DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(i);
+                        double normAnchorI = anchrVec.norm();
+                        minD[i] = Double.MAX_VALUE;
+
+                        for (int a = 0; a < anchors.size(); a++) {
+                            {
+                                int anLi = anchors.get(a).getValue();
+                                DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(anLi);
+
+                                double distnt = Math.acos(
+                                    anchrVec.innerProduct(iVec) / (normAnchorI * anchorNorms[a]));
+                                if (minD[i] > distnt) {
+                                    minD[i] = distnt;
+                                }
+                            }
+                            sumD += minD[i];
+                        }
+
+                        while (true) {
+                            anchorItem = ran.nextInt(itemCount);
+                            if (ran.nextFloat() < minD[anchorItem] * itemCount / sumD) {
+                                break;
+                            }
                         }
                     }
                 }
+            }
 
-                GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
-                rcmmd.threadId = tskId++;
-                return rcmmd;
+            anchors.add(new Pair<Integer, Integer>(anchorUser, anchorItem));
+        }
+
+        // closely-related users
+        boolean[] raf = new boolean[userCount];
+        {
+            DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anchorUser);
+            double normAnchorU = anchorVec.norm();
+            for (int u = 0; u < userCount; u++) {
+                DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
+                double sim = 1 - 2.0 / Math.PI * Math
+                    .acos(anchorVec.innerProduct(uVec) / (normAnchorU * uVec.norm()));
+                if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
+                    raf[u] = true;
+                }
             }
         }
+
+        // closely-related items
+        boolean[] caf = new boolean[itemCount];
+        {
+            DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(anchorItem);
+            double normAnchorI = anchrVec.norm();
+            for (int i = 0; i < itemCount; i++) {
+                DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(i);
+                double sim = 1 - 2.0 / Math.PI * Math
+                    .acos(anchrVec.innerProduct(iVec) / (normAnchorI * iVec.norm()));
+
+                if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
+                    caf[i] = true;
+                }
+            }
+        }
+
+        GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
+        rcmmd.threadId = tskId++;
+        return rcmmd;
     }
 
-    protected Object ranMap() {
-        synchronized (MAP_MUTEX) {
-            if (randSeeds.isEmpty()) {
-                return null;
-            } else {
-                Random ran = new Random(randSeeds.poll().longValue());
-                boolean[] raf = new boolean[userCount];
-                for (int u = 0; u < userCount; u++) {
-                    if (ran.nextFloat() < samplingRate) {
-                        raf[u] = true;
-                    }
-                }
-
-                boolean[] caf = new boolean[itemCount];
-                for (int i = 0; i < itemCount; i++) {
-                    if (ran.nextFloat() < samplingRate) {
-                        caf[i] = true;
-                    }
-                }
-
-                MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
-                    .readObject(auxRcmmdPath);
-                GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
-                rcmmd.threadId = tskId++;
-                return rcmmd;
+    protected Object ranMap(long randSeed) {
+        Random ran = new Random(randSeed);
+        boolean[] raf = new boolean[userCount];
+        for (int u = 0; u < userCount; u++) {
+            if (ran.nextFloat() < samplingRate) {
+                raf[u] = true;
             }
         }
+
+        boolean[] caf = new boolean[itemCount];
+        for (int i = 0; i < itemCount; i++) {
+            if (ran.nextFloat() < samplingRate) {
+                caf[i] = true;
+            }
+        }
+
+        MatrixFactorizationRecommender auxRec = (MatrixFactorizationRecommender) SerializeUtil
+            .readObject(auxRcmmdPath);
+        GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
+        rcmmd.threadId = tskId++;
+        return rcmmd;
     }
 
     /** 
