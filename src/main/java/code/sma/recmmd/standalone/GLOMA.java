@@ -17,15 +17,15 @@ import code.sma.util.LoggerUtil;
  */
 public class GLOMA extends MatrixFactorizationRecommender {
     /** SerialVersionNum */
-    private static final long              serialVersionUID = 1L;
+    private static final long                        serialVersionUID = 1L;
     /**Indicator function to show whether the row is within the class*/
-    private boolean[]                      raf;
+    private boolean[]                                raf;
     /**Indicator function to show whether the column is within the class*/
-    private boolean[]                      caf;
+    private boolean[]                                caf;
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]                       lambda;
+    private double[]                                 lambda;
     /** Previously-trained model*/
-    private MatrixFactorizationRecommender auxRec;
+    private transient MatrixFactorizationRecommender auxRec;
 
     /*========================================
      * Constructors

@@ -3,6 +3,8 @@ package code.sma.datastructure;
 import java.io.Serializable;
 import java.util.Iterator;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.google.common.primitives.Doubles;
 
 /**
@@ -123,6 +125,14 @@ public class DenseVector implements Serializable, Iterable<Double> {
     @Override
     public Iterator<Double> iterator() {
         return Doubles.asList(vals).iterator();
+    }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return ArrayUtils.toString(vals);
     }
 
 }
