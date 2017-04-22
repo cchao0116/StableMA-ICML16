@@ -104,10 +104,31 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
         this.userDenseFeatures = userDenseFeatures;
         this.itemDenseFeatures = itemDenseFeatures;
 
+        
+        this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
+        this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
+        this.regularizer = ((Double) rce.get("REGULAIZED_VALUE")).doubleValue();
+        this.maxIter = ((Double) rce.get("MAX_ITERATION_VALUE")).intValue();
+
         this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
         this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
         this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
         this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
+        this.showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
+
+        String lsfnctn = (String) rce.get("LOSS_FUNCTION");
+        if (StringUtil.isNotBlank(lsfnctn)) {
+            this.lossFunction = Loss.valueOf(lsfnctn);
+        } else {
+            this.lossFunction = Loss.LOSS_RMSE;
+        }
+
+        String rtype = (String) rce.get("REG_TYPE");
+        if (StringUtil.isNotBlank(rtype)) {
+            this.regType = Regularizer.valueOf(rtype);
+        } else {
+            this.regType = Regularizer.L2;
+        }
     }
 
     public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,

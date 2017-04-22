@@ -10,6 +10,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
 import code.sma.datastructure.DenseVector;
+import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.dpncy.Discretizer;
+import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.KernelSmoothing;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.GLOMA;
@@ -22,236 +25,267 @@ import code.sma.util.SerializeUtil;
  * @version $Id: MultTskREC.java, v 0.1 2017年2月28日 下午12:32:54 Chao.Chen Exp $
  */
 public class MultTskREC extends EnsembleMFRecommender {
-    /** SerialVersionNum */
-    protected static final long            serialVersionUID = 1L;
+	/** SerialVersionNum */
+	protected static final long serialVersionUID = 1L;
 
-    /*========================================
-     * Model specific parameters
-     *========================================*/
-    /** configure environments*/
-    private RecConfigEnv                   rce;
-    /** the arrays containing random seeds*/
-    private Queue<Long>                    randSeeds;
-    /** the anchors*/
-    private List<Pair<Integer, Integer>>   anchors          = new ArrayList<Pair<Integer, Integer>>();
-    /** the sampling rate of randomized submatrix */
-    private double                         samplingRate;
-    /** the instance of the auxiliary model */
-    private MatrixFactorizationRecommender auxRec;
-    /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]                       lambda           = { 1.0d, 0.5d, 0.5d };
+	/*
+	 * ======================================== Model specific parameters
+	 * ========================================
+	 */
+	/** configure environments */
+	private RecConfigEnv rce;
+	/** the arrays containing random seeds */
+	private Queue<Long> randSeeds;
+	/** the anchors */
+	private List<Pair<Integer, Integer>> anchors = new ArrayList<Pair<Integer, Integer>>();
+	/** the sampling rate of randomized submatrix */
+	private double samplingRate;
+	/** the instance of the auxiliary model */
+	private MatrixFactorizationRecommender auxRec;
+	/** Contribution of each component, i.e., LuLi, LuGi, GuLi */
+	private double[] lambda = { 1.0d, 0.5d, 0.5d };
 
-    /*========================================
-     * Constructors
-     *========================================*/
-    public MultTskREC(RecConfigEnv rce) {
-        super(rce);
-        this.rce = rce;
-        this.samplingRate = (double) rce.get("SAMPLE_RATE_VALUE");
+	/** dicretizer */
+	protected Discretizer dctzr;
 
-        String auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
-        this.auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
+	/** the rating distribution w.r.t each user */
+	protected double[][] ensmblWeightInU;
+	/** the rating distribution w.r.t each item */
+	protected double[][] ensmblWeightInI;
 
-        {
-            String lam = (String) rce.get("LAMBDA");
-            if (lam != null) {
-                String[] lamStr = lam.split(",");
-                for (int l = 0; l < 3; l++) {
-                    lambda[l] = Double.valueOf(lamStr[l]).doubleValue();
-                }
-            }
-        }
+	/*
+	 * ======================================== Constructors
+	 * ========================================
+	 */
+	public MultTskREC(RecConfigEnv rce) {
+		super(rce);
+		this.rce = rce;
+		this.samplingRate = (double) rce.get("SAMPLE_RATE_VALUE");
+		this.dctzr = new NetflixMovieLensDiscretizer(rce);
 
-        this.randSeeds = new LinkedList<Long>();
-        {
-            String[] randSds = ((String) rce.get("RANDOM_SEED_SET")).split(",|\t| ");
-            for (String rand : randSds) {
-                long seed = Long.valueOf(rand.trim());
-                randSeeds.add(seed == -1 ? ((long) (Math.random() * Long.MAX_VALUE)) : seed);
-            }
-        }
-    }
+		String auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
+		this.auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
 
-    /** 
-     * @see code.sma.thread.TaskMsgDispatcher#map()
-     */
-    @Override
-    public Object map() {
-        long randSeed = -1;
-        boolean isOdd = true;
+		{
+			String lam = (String) rce.get("LAMBDA");
+			if (lam != null) {
+				String[] lamStr = lam.split(",");
+				for (int l = 0; l < 3; l++) {
+					lambda[l] = Double.valueOf(lamStr[l]).doubleValue();
+				}
+			}
+		}
 
-        synchronized (MAP_MUTEX) {
-            if (randSeeds.isEmpty()) {
-                return null;
-            } else {
-                isOdd = randSeeds.size() % 2 == 0;
-                randSeed = randSeeds.poll().longValue();
-            }
-        }
+		this.randSeeds = new LinkedList<Long>();
+		{
+			String[] randSds = ((String) rce.get("RANDOM_SEED_SET")).split(",|\t| ");
+			for (String rand : randSds) {
+				long seed = Long.valueOf(rand.trim());
+				randSeeds.add(seed == -1 ? ((long) (Math.random() * Long.MAX_VALUE)) : seed);
+			}
+		}
+	}
 
-        if (isOdd) {
-            return kernelSmoothedMap(randSeed);
-        } else {
-            return ranMap(randSeed);
-        }
-    }
+	@Override
+	public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+		// compute ensemble weights
+		double[][][] ensmbleWs = dctzr.cmpEnsmblWs(rateMatrix, null);
+		ensmblWeightInU = ensmbleWs[0];
+		ensmblWeightInI = ensmbleWs[1];
 
-    protected Object kernelSmoothedMap(long randSeed) {
-        int anchorUser = -1;
-        int anchorItem = -1;
-        double width = 0.60;
+		super.buildModel(rateMatrix, tMatrix);
+	}
 
-        synchronized (MAP_MUTEX) {
-            Random ran = new Random(randSeed);
+	/**
+	 * @see code.sma.thread.TaskMsgDispatcher#map()
+	 */
+	@Override
+	public Object map() {
+		long randSeed = -1;
+		boolean isOdd = true;
 
-            if (anchors.isEmpty()) {
-                anchorUser = ran.nextInt(userCount);
-                anchorItem = ran.nextInt(itemCount);
-            } else {
-                //choose anchor of user
-                {
-                    double[] minD = new double[userCount];
-                    double sumD = 0.0d;
+		synchronized (MAP_MUTEX) {
+			if (randSeeds.isEmpty()) {
+				return null;
+			} else {
+				isOdd = false;
+				randSeed = randSeeds.poll().longValue();
+			}
+		}
 
-                    double[] anchorNorms = new double[anchors.size()];
-                    for (int a = 0; a < anchors.size(); a++) {
-                        int anLu = anchors.get(a).getKey();
-                        anchorNorms[a] = auxRec.userDenseFeatures.getRowRef(anLu).norm();
-                    }
+		if (isOdd) {
+			return kernelSmoothedMap(randSeed);
+		} else {
+			return ranMap(randSeed);
+		}
+	}
 
-                    for (int u = 0; u < userCount; u++) {
-                        DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
-                        double normuVec = uVec.norm();
-                        minD[u] = Double.MAX_VALUE;
+	protected Object kernelSmoothedMap(long randSeed) {
+		int anchorUser = -1;
+		int anchorItem = -1;
+		double width = 0.60;
 
-                        for (int a = 0; a < anchors.size(); a++) {
-                            int anLu = anchors.get(a).getKey();
+		synchronized (this) {
+			Random ran = new Random(randSeed);
 
-                            DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anLu);
-                            double distnt = Math
-                                .acos(anchorVec.innerProduct(uVec) / (normuVec * anchorNorms[a]));
-                            if (minD[u] > distnt) {
-                                minD[u] = distnt;
-                            }
-                        }
-                        sumD += minD[u];
-                    }
+			if (anchors.isEmpty()) {
+				anchorUser = ran.nextInt(userCount);
+				anchorItem = ran.nextInt(itemCount);
+			} else {
+				// choose anchor of user
+				{
+					double[] minD = new double[userCount];
+					double sumD = 0.0d;
 
-                    while (true) {
-                        anchorUser = ran.nextInt(userCount);
-                        if (ran.nextFloat() < minD[anchorUser] * userCount / sumD) {
-                            break;
-                        }
-                    }
-                }
+					double[] anchorNorms = new double[anchors.size()];
+					for (int a = 0; a < anchors.size(); a++) {
+						int anLu = anchors.get(a).getKey();
+						anchorNorms[a] = auxRec.userDenseFeatures.getRowRef(anLu).norm();
+					}
 
-                //choose anchor or item
-                {
-                    double[] minD = new double[itemCount];
-                    double sumD = 0.0d;
+					for (int u = 0; u < userCount; u++) {
+						DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
+						double normuVec = uVec.norm();
+						minD[u] = Double.MAX_VALUE;
 
-                    double[] anchorNorms = new double[anchors.size()];
-                    for (int a = 0; a < anchors.size(); a++) {
-                        int anLi = anchors.get(a).getValue();
-                        anchorNorms[a] = auxRec.itemDenseFeatures.getRowRef(anLi).norm();
-                    }
+						for (int a = 0; a < anchors.size(); a++) {
+							int anLu = anchors.get(a).getKey();
 
-                    for (int i = 0; i < itemCount; i++) {
-                        DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(i);
-                        double normAnchorI = anchrVec.norm();
-                        minD[i] = Double.MAX_VALUE;
+							DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anLu);
+							double distnt = Math.acos(anchorVec.innerProduct(uVec) / (normuVec * anchorNorms[a]));
+							if (minD[u] > distnt) {
+								minD[u] = distnt;
+							}
+						}
+						sumD += minD[u];
+					}
 
-                        for (int a = 0; a < anchors.size(); a++) {
-                            {
-                                int anLi = anchors.get(a).getValue();
-                                DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(anLi);
+					while (true) {
+						anchorUser = ran.nextInt(userCount);
+						if (ran.nextFloat() < minD[anchorUser] * userCount / sumD) {
+							break;
+						}
+					}
+				}
 
-                                double distnt = Math.acos(
-                                    anchrVec.innerProduct(iVec) / (normAnchorI * anchorNorms[a]));
-                                if (minD[i] > distnt) {
-                                    minD[i] = distnt;
-                                }
-                            }
-                            sumD += minD[i];
-                        }
+				// choose anchor or item
+				{
+					double[] minD = new double[itemCount];
+					double sumD = 0.0d;
 
-                        while (true) {
-                            anchorItem = ran.nextInt(itemCount);
-                            if (ran.nextFloat() < minD[anchorItem] * itemCount / sumD) {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+					double[] anchorNorms = new double[anchors.size()];
+					for (int a = 0; a < anchors.size(); a++) {
+						int anLi = anchors.get(a).getValue();
+						anchorNorms[a] = auxRec.itemDenseFeatures.getRowRef(anLi).norm();
+					}
 
-            anchors.add(new Pair<Integer, Integer>(anchorUser, anchorItem));
-        }
+					for (int i = 0; i < itemCount; i++) {
+						DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(i);
+						double normAnchorI = anchrVec.norm();
+						minD[i] = Double.MAX_VALUE;
 
-        // closely-related users
-        boolean[] raf = new boolean[userCount];
-        {
-            DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anchorUser);
-            double normAnchorU = anchorVec.norm();
-            for (int u = 0; u < userCount; u++) {
-                DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
-                double sim = 1 - 2.0 / Math.PI * Math
-                    .acos(anchorVec.innerProduct(uVec) / (normAnchorU * uVec.norm()));
-                if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
-                    raf[u] = true;
-                }
-            }
-        }
+						for (int a = 0; a < anchors.size(); a++) {
+							{
+								int anLi = anchors.get(a).getValue();
+								DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(anLi);
 
-        // closely-related items
-        boolean[] caf = new boolean[itemCount];
-        {
-            DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(anchorItem);
-            double normAnchorI = anchrVec.norm();
-            for (int i = 0; i < itemCount; i++) {
-                DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(i);
-                double sim = 1 - 2.0 / Math.PI * Math
-                    .acos(anchrVec.innerProduct(iVec) / (normAnchorI * iVec.norm()));
+								double distnt = Math.acos(anchrVec.innerProduct(iVec) / (normAnchorI * anchorNorms[a]));
+								if (minD[i] > distnt) {
+									minD[i] = distnt;
+								}
+							}
+							sumD += minD[i];
+						}
 
-                if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
-                    caf[i] = true;
-                }
-            }
-        }
+						while (true) {
+							anchorItem = ran.nextInt(itemCount);
+							if (ran.nextFloat() < minD[anchorItem] * itemCount / sumD) {
+								break;
+							}
+						}
+					}
+				}
+			}
 
-        GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
-        rcmmd.threadId = tskId++;
-        return rcmmd;
-    }
+			anchors.add(new Pair<Integer, Integer>(anchorUser, anchorItem));
+		}
 
-    protected Object ranMap(long randSeed) {
-        Random ran = new Random(randSeed);
-        boolean[] raf = new boolean[userCount];
-        for (int u = 0; u < userCount; u++) {
-            if (ran.nextFloat() < samplingRate) {
-                raf[u] = true;
-            }
-        }
+		// closely-related users
+		boolean[] raf = new boolean[userCount];
+		{
+			DenseVector anchorVec = auxRec.userDenseFeatures.getRowRef(anchorUser);
+			double normAnchorU = anchorVec.norm();
+			for (int u = 0; u < userCount; u++) {
+				DenseVector uVec = auxRec.userDenseFeatures.getRowRef(u);
+				double sim = 1 - 2.0 / Math.PI * Math.acos(anchorVec.innerProduct(uVec) / (normAnchorU * uVec.norm()));
+				if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
+					raf[u] = true;
+				}
+			}
+		}
 
-        boolean[] caf = new boolean[itemCount];
-        for (int i = 0; i < itemCount; i++) {
-            if (ran.nextFloat() < samplingRate) {
-                caf[i] = true;
-            }
-        }
+		// closely-related items
+		boolean[] caf = new boolean[itemCount];
+		{
+			DenseVector anchrVec = auxRec.itemDenseFeatures.getRowRef(anchorItem);
+			double normAnchorI = anchrVec.norm();
+			for (int i = 0; i < itemCount; i++) {
+				DenseVector iVec = auxRec.itemDenseFeatures.getRowRef(i);
+				double sim = 1 - 2.0 / Math.PI * Math.acos(anchrVec.innerProduct(iVec) / (normAnchorI * iVec.norm()));
 
-        GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
-        rcmmd.threadId = tskId++;
-        return rcmmd;
-    }
+				if (KernelSmoothing.EPANECHNIKOV_KERNEL.kernelize(sim, width) > 0) {
+					caf[i] = true;
+				}
+			}
+		}
 
-    /** 
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return String.format("Param[%d]: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", maxIter,
-            featureCount, learningRate, regularizer, samplingRate, ArrayUtils.toString(lambda));
-    }
+		GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
+		synchronized (MultTskREC.class) {
+			rcmmd.threadId = tskId++;
+		}
+		return rcmmd;
+	}
+
+	protected Object ranMap(long randSeed) {
+		Random ran = new Random(randSeed);
+		boolean[] raf = new boolean[userCount];
+		for (int u = 0; u < userCount; u++) {
+			if (ran.nextFloat() < samplingRate) {
+				raf[u] = true;
+			}
+		}
+
+		boolean[] caf = new boolean[itemCount];
+		for (int i = 0; i < itemCount; i++) {
+			if (ran.nextFloat() < samplingRate) {
+				caf[i] = true;
+			}
+		}
+
+		GLOMA rcmmd = new GLOMA(rce, lambda, raf, caf, auxRec);
+		synchronized (MultTskREC.class) {
+			rcmmd.threadId = tskId++;
+		}
+		return rcmmd;
+	}
+
+	/**
+	 * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#ensnblWeight(int,
+	 *      int, double)
+	 */
+	@Override
+	public double ensnblWeight(int u, int i, double prediction) {
+		int indx = dctzr.convert(prediction);
+		return 1.0 + 0.6 * ensmblWeightInU[u][indx] + 0.7 * ensmblWeightInI[i][indx];
+	}
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.format("Param[%d]: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", maxIter, featureCount,
+				learningRate, regularizer, samplingRate, ArrayUtils.toString(lambda));
+	}
 
 }

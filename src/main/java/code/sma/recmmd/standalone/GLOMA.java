@@ -267,14 +267,14 @@ public class GLOMA extends MatrixFactorizationRecommender {
                 } else if (raf[u]) {
                     userDenseFeatures.setValue(u, s,
                         Fus + learningRate
-                              * (-deriWRTpLuGi * gis
+                              * (-deriWRTpLuGi * gis * 1.5
                                  - regularizer * Regularizer.L2.reg(accFactrUsr, u, Fus)),
                         true);
                     accFactrUsr.update(u, s, Math.pow(userDenseFeatures.getValue(u, s), 2.0));
                 } else if (caf[i]) {
                     itemDenseFeatures.setValue(i, s,
                         Gis + learningRate
-                              * (-deriWRTpGuLi * fus
+                              * (-deriWRTpGuLi * fus 
                                  - regularizer * Regularizer.L2.reg(accFactrItm, i, Gis)),
                         true);
                     accFactrItm.update(i, s, Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
