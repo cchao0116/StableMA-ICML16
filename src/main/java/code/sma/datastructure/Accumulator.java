@@ -10,6 +10,11 @@ public class Accumulator {
     double[]   accVal;
     int[]      accNum;
 
+    public Accumulator(int num) {
+        accVal = new double[num];
+        accNum = new int[num];
+    }
+
     public Accumulator(int num, int dimnsn) {
         indvdlVal = new double[num][dimnsn];
         accVal = new double[num];
@@ -24,7 +29,9 @@ public class Accumulator {
      * @param value the value to insert
      */
     public void insert(int accId, int vId, double value) {
-        indvdlVal[accId][vId] = value;
+        if (indvdlVal != null) {
+            indvdlVal[accId][vId] = value;
+        }
         accVal[accId] += value;
         accNum[accId]++;
     }

@@ -23,24 +23,24 @@ import code.sma.util.LoggerUtil;
 public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommender
                                             implements TaskMsgDispatcher {
     /** SerialVersionNum */
-    protected static final long        serialVersionUID = 1L;
+    protected static final long                  serialVersionUID = 1L;
     /** cumulative prediction */
-    protected SparseMatrix             cumPrediction    = null;
+    protected SparseMatrix                       cumPrediction    = null;
     /** cumulative weights */
-    protected SparseMatrix             cumWeight        = null;
+    protected SparseMatrix                       cumWeight        = null;
     /** the number of threads in training*/
-    protected int                      threadNum;
+    protected int                                threadNum;
     /** current assigned thread id*/
-    protected int                      tskId            = 0;
+    protected int                                tskId            = 0;
 
     /** mutex using in map procedure*/
-    protected static Object            MAP_MUTEX        = new Object();
+    protected static Object                      MAP_MUTEX        = new Object();
     /** mutex using in reduce procedure*/
-    protected static Object            REDUCE_MUTEX     = new Object();
+    protected static Object                      REDUCE_MUTEX     = new Object();
     /** training data*/
-    protected MatlabFasionSparseMatrix tnMatrix;
+    protected transient MatlabFasionSparseMatrix tnMatrix;
     /** testing data*/
-    protected MatlabFasionSparseMatrix ttMatrix;
+    protected transient MatlabFasionSparseMatrix ttMatrix;
 
     /*========================================
      * Constructors

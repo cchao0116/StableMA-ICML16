@@ -65,15 +65,8 @@ public class GLOMA extends MatrixFactorizationRecommender {
         Accumulator accErr = new Accumulator(3, rateCount);
         Accumulator accFactrUsr = new Accumulator(userCount, featureCount);
         Accumulator accFactrItm = new Accumulator(itemCount, featureCount);
-        Accumulator accFactrlUsr = null;
-        Accumulator accFactrlItm = null;
-        if (runningLogger.isDebugEnabled()) {
-            accFactrlUsr = new Accumulator(userCount, featureCount);
-            accFactrlItm = new Accumulator(itemCount, featureCount);
-        }
 
-        statistics(rateMatrix, trainInvlvIndces, accErr, accFactrUsr, accFactrItm, accFactrlUsr,
-            accFactrlItm);
+        statistics(rateMatrix, trainInvlvIndces, accErr, accFactrUsr, accFactrItm);
 
         // SGD
         while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter) {
@@ -89,7 +82,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
 
             // Show progress:
             if (runningLogger.isDebugEnabled()) {
-                Accumulator accTest = new Accumulator(4, testInvlvIndces.length);
+                Accumulator accTest = new Accumulator(4);
                 int testNum = 0;
                 for (int numSeq : testInvlvIndces) {
                     int u = tMatrix.getRowIndx()[numSeq];
@@ -121,11 +114,10 @@ public class GLOMA extends MatrixFactorizationRecommender {
                     testNum++;
                 }
                 LoggerUtil.info(runningLogger,
-                    String.format(
-                        "%d: %.5f,%.5f,%.5f-[%.5f],[%.5f],[%.5f],[%.5f]\t[%.5f, %.5f]-[%.5f, %.5f]",
+                    String.format("%d: %.5f,%.5f,%.5f-[%.5f],[%.5f],[%.5f],[%.5f]\t[%.5f, %.5f]",
                         round, accErr.rm(0), accErr.rm(1), accErr.rm(2), accTest.rm(0),
                         accTest.rm(1), accTest.rm(2), accTest.rm(3), accFactrUsr.rm(),
-                        accFactrItm.rm(), accFactrlUsr.rm(), accFactrlItm.rm()));
+                        accFactrItm.rm()));
             } else if (showProgress) {
                 LoggerUtil.info(runningLogger,
                     String.format("%d: %.5f,%.5f,%.5f\t[%.5f, %.5f]", round, accErr.rm(0),
@@ -274,7 +266,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
                 } else if (caf[i]) {
                     itemDenseFeatures.setValue(i, s,
                         Gis + learningRate
-                              * (-deriWRTpGuLi * fus 
+                              * (-deriWRTpGuLi * fus
                                  - regularizer * Regularizer.L2.reg(accFactrItm, i, Gis)),
                         true);
                     accFactrItm.update(i, s, Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
@@ -294,8 +286,8 @@ public class GLOMA extends MatrixFactorizationRecommender {
      * @return  the squared error of three mixture models
      */
     protected void statistics(MatlabFasionSparseMatrix rateMatrix, int[] invlvIndces,
-                              Accumulator accErr, Accumulator accFactrUsr, Accumulator accFactrItm,
-                              Accumulator accFactrlUsr, Accumulator accFactrlItm) {
+                              Accumulator accErr, Accumulator accFactrUsr,
+                              Accumulator accFactrItm) {
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
         double[] Auis = rateMatrix.getVals();
@@ -344,29 +336,6 @@ public class GLOMA extends MatrixFactorizationRecommender {
             }
         }
 
-        if (runningLogger.isDebugEnabled()) {
-            for (int u = 0; u < userCount; u++) {
-                if (auxRec.userDenseFeatures.getRowRef(u) == null) {
-                    continue;
-                }
-
-                for (int f = 0; f < featureCount; f++) {
-                    accFactrlUsr.insert(u, f,
-                        Math.pow(auxRec.userDenseFeatures.getValue(u, f), 2.0d));
-                }
-            }
-
-            for (int i = 0; i < itemCount; i++) {
-                if (auxRec.itemDenseFeatures.getRowRef(i) == null) {
-                    continue;
-                }
-
-                for (int f = 0; f < featureCount; f++) {
-                    accFactrlItm.insert(i, f,
-                        Math.pow(auxRec.itemDenseFeatures.getValue(i, f), 2.0d));
-                }
-            }
-        }
     }
 
 }
