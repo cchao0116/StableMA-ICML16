@@ -44,6 +44,9 @@ public class MultTskRECTest extends TestCase {
             String trainFile = rootDir + "trainingset";
             String testFile = rootDir + "testingset";
 
+            String aRcmmdFile = rootDir+conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
+            conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", aRcmmdFile);
+            
             String algName = conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
 
