@@ -123,9 +123,11 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
         rmse = Math.sqrt(rmse / nnz);
 
         LoggerUtil.info(resultLogger,
-            String.format("ThreadId: %d\tRMSE: %,6f N[%d][%d]", ((Recommender) recmmd).threadId,
-                rmse, ((MatrixFactorizationRecommender) recmmd).trainInvlvIndces.length,
-                ((MatrixFactorizationRecommender) recmmd).testInvlvIndces.length));
+            String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f",
+                ((Recommender) recmmd).threadId, rmse,
+                ((MatrixFactorizationRecommender) recmmd).trainInvlvIndces.length,
+                ((MatrixFactorizationRecommender) recmmd).testInvlvIndces.length,
+                ((MatrixFactorizationRecommender) recmmd).bestRMSE));
     }
 
     /** 

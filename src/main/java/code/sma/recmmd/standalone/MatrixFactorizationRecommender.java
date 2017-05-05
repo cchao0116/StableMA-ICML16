@@ -37,7 +37,7 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
     /** Maximum number of iteration. */
     public int                              maxIter;
     /** The best RMSE in test*/
-    protected double                        bestRMSE         = Double.MAX_VALUE;
+    public double                           bestRMSE         = Double.MAX_VALUE;
 
     /** Indicator whether to show progress of iteration. */
     public boolean                          showProgress;
@@ -104,7 +104,6 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
         this.userDenseFeatures = userDenseFeatures;
         this.itemDenseFeatures = itemDenseFeatures;
 
-        
         this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
         this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
         this.regularizer = ((Double) rce.get("REGULAIZED_VALUE")).doubleValue();

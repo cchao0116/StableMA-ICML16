@@ -2,6 +2,8 @@ package code.sma.recmmd.standalone;
 
 import code.sma.datastructure.Accumulator;
 import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.dpncy.Discretizer;
+import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Regularizer;
 import code.sma.util.ClusterInfoUtil;
@@ -27,6 +29,9 @@ public class GLOMA extends MatrixFactorizationRecommender {
     /** Previously-trained model*/
     private transient MatrixFactorizationRecommender auxRec;
 
+    Discretizer                                      dctzr;
+    double[]                                         tnWs;
+
     /*========================================
      * Constructors
      *========================================*/
@@ -37,6 +42,8 @@ public class GLOMA extends MatrixFactorizationRecommender {
         this.raf = raf;
         this.caf = caf;
         this.auxRec = auxRec;
+
+        dctzr = new NetflixMovieLensDiscretizer(rce);
     }
 
     /** 
@@ -61,6 +68,9 @@ public class GLOMA extends MatrixFactorizationRecommender {
         testInvlvIndces = ClusterInfoUtil.readInvolvedIndices(tMatrix, raf, caf);
         System.out.println("Thread: " + this.threadId + ", T: " + trainInvlvIndces.length);
 
+        // Compute dependencies
+        tnWs = dctzr.cmpTrainWs(rateMatrix, trainInvlvIndces);
+
         // statistics of current model
         Accumulator accErr = new Accumulator(3, rateCount);
         Accumulator accFactrUsr = new Accumulator(userCount, featureCount);
@@ -69,8 +79,8 @@ public class GLOMA extends MatrixFactorizationRecommender {
         statistics(rateMatrix, trainInvlvIndces, accErr, accFactrUsr, accFactrItm);
 
         // SGD
-        while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter) {
-            if (round < maxIter - 1) {
+        while (Math.abs(prevErr - currErr) > 0.0001 && round <= maxIter) {
+            if (round < maxIter) {
                 jointlyLearning(uIndx, iIndx, Auis, accErr, accFactrUsr, accFactrItm);
             } else {
                 specificLearning(uIndx, iIndx, Auis, accErr, accFactrUsr, accFactrItm);
@@ -81,7 +91,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
             round++;
 
             // Show progress:
-            if (runningLogger.isDebugEnabled()) {
+            if (runningLogger.isDebugEnabled() && (round % 5 == 0 || round == maxIter + 1)) {
                 Accumulator accTest = new Accumulator(4);
                 int testNum = 0;
                 for (int numSeq : testInvlvIndces) {
@@ -118,6 +128,8 @@ public class GLOMA extends MatrixFactorizationRecommender {
                         round, accErr.rm(0), accErr.rm(1), accErr.rm(2), accTest.rm(0),
                         accTest.rm(1), accTest.rm(2), accTest.rm(3), accFactrUsr.rm(),
                         accFactrItm.rm()));
+
+                this.bestRMSE = accTest.rm(3);
             } else if (showProgress) {
                 LoggerUtil.info(runningLogger,
                     String.format("%d: %.5f,%.5f,%.5f\t[%.5f, %.5f]", round, accErr.rm(0),
@@ -179,6 +191,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
 
             double RMELuLi = accErr.rm(0);
             double deriWRTpLuLi = lossFunction.dervWRTPrdctn(AuiReal, LuLi) / RMELuLi;
+            double wts = 1 + 0.4 * tnWs[dctzr.convert(AuiReal)];
 
             for (int s = 0; s < featureCount; s++) {
                 double Fus = userDenseFeatures.getValue(u, s);
@@ -186,11 +199,11 @@ public class GLOMA extends MatrixFactorizationRecommender {
 
                 if (raf[u] && caf[i]) {
                     userDenseFeatures.setValue(u, s,
-                        Fus + learningRate * (-deriWRTpLuLi * Gis
+                        Fus + learningRate * (-deriWRTpLuLi * Gis * wts
                                               - 0.01 * Regularizer.L2.reg(accFactrUsr, u, Fus)),
                         true);
                     itemDenseFeatures.setValue(i, s,
-                        Gis + learningRate * (-deriWRTpLuLi * Fus
+                        Gis + learningRate * (-deriWRTpLuLi * Fus * wts
                                               - 0.01 * Regularizer.L2.reg(accFactrItm, i, Gis)),
                         true);
 
@@ -235,6 +248,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
             double deriWRTpLuGi = lossFunction.dervWRTPrdctn(AuiReal, LuGi) / RMELuGi;
             double deriWRTpGuLi = lossFunction.dervWRTPrdctn(AuiReal, GuLi) / RMEGuli;
 
+            double wts = 1 + 0.4 * tnWs[dctzr.convert(AuiReal)];
             for (int s = 0; s < featureCount; s++) {
                 double Fus = userDenseFeatures.getValue(u, s);
                 double fus = auxRec.userDenseFeatures.getValue(u, s);
@@ -242,31 +256,29 @@ public class GLOMA extends MatrixFactorizationRecommender {
                 double gis = auxRec.itemDenseFeatures.getValue(i, s);
 
                 if (raf[u] && caf[i]) {
-                    userDenseFeatures
-                        .setValue(u, s,
-                            Fus + learningRate * (-deriWRTpLuLi * Gis * lambda[0]
-                                                  - deriWRTpLuGi * gis * lambda[1]
-                                                  - regularizer * regType.reg(accFactrUsr, u, Fus)),
-                            true);
-                    itemDenseFeatures
-                        .setValue(i, s,
-                            Gis + learningRate * (-deriWRTpLuLi * Fus * lambda[0]
-                                                  - deriWRTpGuLi * fus * lambda[2]
-                                                  - regularizer * regType.reg(accFactrItm, i, Gis)),
-                            true);
+                    userDenseFeatures.setValue(u, s,
+                        Fus + learningRate * (-deriWRTpLuLi * Gis * lambda[0] * wts
+                                              - deriWRTpLuGi * gis * lambda[1] * wts
+                                              - regularizer * regType.reg(accFactrUsr, u, Fus)),
+                        true);
+                    itemDenseFeatures.setValue(i, s,
+                        Gis + learningRate * (-deriWRTpLuLi * Fus * lambda[0] * wts
+                                              - deriWRTpGuLi * fus * lambda[2] * wts
+                                              - regularizer * regType.reg(accFactrItm, i, Gis)),
+                        true);
                     accFactrUsr.update(u, s, Math.pow(userDenseFeatures.getValue(u, s), 2.0));
                     accFactrItm.update(i, s, Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
                 } else if (raf[u]) {
                     userDenseFeatures.setValue(u, s,
                         Fus + learningRate
-                              * (-deriWRTpLuGi * gis * 1.5
+                              * (-deriWRTpLuGi * gis * 3.0
                                  - regularizer * Regularizer.L2.reg(accFactrUsr, u, Fus)),
                         true);
                     accFactrUsr.update(u, s, Math.pow(userDenseFeatures.getValue(u, s), 2.0));
                 } else if (caf[i]) {
                     itemDenseFeatures.setValue(i, s,
                         Gis + learningRate
-                              * (-deriWRTpGuLi * fus
+                              * (-deriWRTpGuLi * fus * 0.8
                                  - regularizer * Regularizer.L2.reg(accFactrItm, i, Gis)),
                         true);
                     accFactrItm.update(i, s, Math.pow(itemDenseFeatures.getValue(i, s), 2.0));
