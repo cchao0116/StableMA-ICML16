@@ -85,7 +85,22 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
             round++;
 
             // Show progress:
-            LoggerUtil.info(runningLogger, round + "\t" + currErr);
+            if (runningLogger.isDebugEnabled() && round % 5 == 0) {
+                double RMSE = 0.0d;
+                for (int numSeq : testInvlvIndces) {
+                    int u = tMatrix.getRowIndx()[numSeq];
+                    int i = tMatrix.getColIndx()[numSeq];
+                    double AuiReal = tMatrix.getVals()[numSeq];
+                    double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
+                    RMSE += Math.pow(AuiReal - AuiEst, 2.0);
+                }
+
+                bestRMSE = Math.sqrt(RMSE / testInvlvIndces.length);
+                LoggerUtil.info(runningLogger,
+                    String.format("%d\t%.6f,[%.6f]", round, currErr, bestRMSE));
+            } else if (showProgress) {
+                LoggerUtil.info(runningLogger, String.format("%d\t%.6f", round, currErr));
+            }
         }
     }
 
