@@ -6,21 +6,21 @@ import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
- * Convert the rating data in Netflix and Movielens into continuous discrete data
- * e.g,
- *      0.5, 1.0, ..., 5.0 => 0, 1, ..., 9
- *      
+ * Convert the rating data in Netflix and Movielens into continuous discrete
+ * data e.g, 0.5, 1.0, ..., 5.0 => 0, 1, ..., 9
+ * 
  * @author Chao.Chen
- * @version $Id: NetflixMovieLensDiscretizer.java, v 0.1 2016年9月28日 下午1:34:51 Chao.Chen Exp $
+ * @version $Id: NetflixMovieLensDiscretizer.java, v 0.1 2016年9月28日 下午1:34:51
+ *          Chao.Chen Exp $
  */
 public class NetflixMovieLensDiscretizer extends Discretizer {
     /** The number of users. */
     private int    userCount;
     /** The number of items. */
     private int    itemCount;
-    /** minimum value*/
+    /** minimum value */
     private double minValue;
-    /** maximum value*/
+    /** maximum value */
     private double maxValue;
 
     public NetflixMovieLensDiscretizer(RecConfigEnv rce) {
@@ -31,7 +31,7 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
         this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
     }
 
-    /** 
+    /**
      * @see code.sma.dpncy.Discretizer#convert(double)
      */
     @Override
@@ -39,27 +39,38 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
         return (int) ((val - minValue) / minValue);
     }
 
-    /** 
-     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.datastructure.MatlabFasionSparseMatrix, int[])
+    /**
+     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.datastructure.MatlabFasionSparseMatrix,
+     *      int[])
      */
     @Override
     public double[] cmpTrainWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces) {
         int tnS = (int) (maxValue / minValue);
         double[] tnWs = new double[tnS];
         double[] Auis = tnMatrix.getVals();
-        for (int numSeq : invlvIndces) {
-            tnWs[convert(Auis[numSeq])]++;
+
+        if (invlvIndces == null) {
+            int count = tnMatrix.getNnz();
+            for (int numSeq = 0; numSeq < count; numSeq++) {
+                tnWs[convert(Auis[numSeq])]++;
+            }
+        } else {
+            for (int numSeq : invlvIndces) {
+                tnWs[convert(Auis[numSeq])]++;
+            }
         }
 
         // every entry plus 1 to avoid zero condition
+        int ttlN = invlvIndces == null ? tnMatrix.getNnz() : invlvIndces.length;
         for (int t = 0; t < tnS; t++) {
-            tnWs[t] = (tnWs[t] + 1) / (invlvIndces.length + tnS);
+            tnWs[t] = (tnWs[t] + 1) / (ttlN + tnS);
         }
         return tnWs;
     }
 
-    /** 
-     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.datastructure.MatlabFasionSparseMatrix, int[])
+    /**
+     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.datastructure.MatlabFasionSparseMatrix,
+     *      int[])
      */
     @Override
     public double[][][] cmpEnsmblWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces) {
@@ -81,7 +92,7 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
             emWs[1][iId][label]++;
         }
 
-        //user side
+        // user side
         for (int uId = 0; uId < userCount; uId++) {
             double sum = StatUtils.sum(emWs[0][uId]);
             if (sum == 0.0d) {

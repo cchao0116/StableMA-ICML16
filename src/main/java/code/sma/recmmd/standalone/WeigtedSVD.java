@@ -2,7 +2,7 @@ package code.sma.recmmd.standalone;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.dpncy.Discretizer;
-import code.sma.recmmd.Loss;
+import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -25,11 +25,9 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
     /*========================================
      * Constructors
      *========================================*/
-    public WeigtedSVD(int uc, int ic, double max, double min, int fc, double lr, double r, double m,
-                      int iter, Loss lossFunction, int[] trainInvlvIndces, int[] testInvlvIndces,
-                      double b0, Discretizer dctzr) {
-        super(uc, ic, max, min, fc, lr, r, m, iter, true, lossFunction, trainInvlvIndces,
-            testInvlvIndces);
+    public WeigtedSVD(RecConfigEnv rce, int[] trainInvlvIndces, int[] testInvlvIndces, double b0,
+                      Discretizer dctzr) {
+        super(rce, trainInvlvIndces, testInvlvIndces);
         this.beta0 = b0;
         this.dctzr = dctzr;
     }

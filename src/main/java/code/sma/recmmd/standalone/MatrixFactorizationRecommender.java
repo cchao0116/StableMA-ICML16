@@ -73,37 +73,25 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
      * Constructors
      *========================================*/
     public MatrixFactorizationRecommender(RecConfigEnv rce) {
-        this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
-        this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
-        this.regularizer = ((Double) rce.get("REGULAIZED_VALUE")).doubleValue();
-        this.maxIter = ((Double) rce.get("MAX_ITERATION_VALUE")).intValue();
-
-        this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
-        this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
-        this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
-        this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
-        this.showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
-
-        String lsfnctn = (String) rce.get("LOSS_FUNCTION");
-        if (StringUtil.isNotBlank(lsfnctn)) {
-            this.lossFunction = Loss.valueOf(lsfnctn);
-        } else {
-            this.lossFunction = Loss.LOSS_RMSE;
-        }
-
-        String rtype = (String) rce.get("REG_TYPE");
-        if (StringUtil.isNotBlank(rtype)) {
-            this.regType = Regularizer.valueOf(rtype);
-        } else {
-            this.regType = Regularizer.L2;
-        }
+        commonParse(rce);
     }
 
     public MatrixFactorizationRecommender(RecConfigEnv rce, DenseMatrix userDenseFeatures,
                                           DenseMatrix itemDenseFeatures) {
+        commonParse(rce);
         this.userDenseFeatures = userDenseFeatures;
         this.itemDenseFeatures = itemDenseFeatures;
+    }
 
+    public MatrixFactorizationRecommender(RecConfigEnv rce, int[] trainInvlvIndces,
+                                          int[] testInvlvIndces) {
+        commonParse(rce);
+
+        this.trainInvlvIndces = trainInvlvIndces;
+        this.testInvlvIndces = testInvlvIndces;
+    }
+
+    private void commonParse(RecConfigEnv rce) {
         this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
         this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
         this.regularizer = ((Double) rce.get("REGULAIZED_VALUE")).doubleValue();
@@ -128,27 +116,6 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
         } else {
             this.regType = Regularizer.L2;
         }
-    }
-
-    public MatrixFactorizationRecommender(int uc, int ic, double max, double min, int fc, double lr,
-                                          double r, double m, int iter, boolean verbose,
-                                          Loss lossFunction, int[] trainInvlvIndces,
-                                          int[] testInvlvIndces) {
-        userCount = uc;
-        itemCount = ic;
-        maxValue = max;
-        minValue = min;
-
-        featureCount = fc;
-        learningRate = lr;
-        regularizer = r;
-        momentum = m;
-        maxIter = iter;
-
-        showProgress = verbose;
-        this.lossFunction = lossFunction;
-        this.trainInvlvIndces = trainInvlvIndces;
-        this.testInvlvIndces = testInvlvIndces;
     }
 
     /*========================================

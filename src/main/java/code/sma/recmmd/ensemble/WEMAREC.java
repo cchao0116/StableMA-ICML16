@@ -115,9 +115,8 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
 
                 int clusterNum = clusteringSize[0] * clusteringSize[1];
                 for (int c = 0; c < clusterNum; c++) {
-                    Recommender wsvd = new WeigtedSVD(userCount, itemCount, maxValue, minValue,
-                        featureCount, learningRate, regularizer, momentum, maxIter, lossFunction,
-                        tnInvlvedIndcs[c], ttInvlvedIndcs[c], beta0, dctzr);
+                    Recommender wsvd = new WeigtedSVD(rce, tnInvlvedIndcs[c], ttInvlvedIndcs[c],
+                        beta0, dctzr);
                     wsvd.threadId = tskId++;
                     recmmdsBuffer.add(wsvd);
                 }

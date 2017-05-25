@@ -32,6 +32,8 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
     protected int                                threadNum;
     /** current assigned thread id*/
     protected int                                tskId            = 0;
+    /** algorithm environment*/
+    protected transient RecConfigEnv             rce;
 
     /** mutex using in map procedure*/
     protected static Object                      MAP_MUTEX        = new Object();
@@ -47,6 +49,7 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
      *========================================*/
     public EnsembleMFRecommender(RecConfigEnv rce) {
         super(rce);
+        this.rce = rce;
         threadNum = ((Double) rce.get("THREAD_NUMBER_VALUE")).intValue();
         cumPrediction = new SparseMatrix(userCount, itemCount);
         cumWeight = new SparseMatrix(userCount, itemCount);
