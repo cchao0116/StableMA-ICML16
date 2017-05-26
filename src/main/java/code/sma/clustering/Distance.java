@@ -1,6 +1,6 @@
 package code.sma.clustering;
 
-import code.sma.datastructure.SparseVector;
+import code.sma.core.impl.SparseVector;
 
 /**
  * measure distance between two data point

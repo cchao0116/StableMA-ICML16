@@ -1,6 +1,6 @@
 package code.sma.recmmd;
 
-import code.sma.datastructure.Accumulator;
+import code.sma.core.Accumulator;
 
 /**
  * regularizer

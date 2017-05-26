@@ -2,7 +2,7 @@ package code.sma.dpncy;
 
 import org.apache.commons.math3.stat.StatUtils;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
@@ -40,11 +40,11 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.datastructure.MatlabFasionSparseMatrix,
+     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.core.Tuples,
      *      int[])
      */
     @Override
-    public double[] cmpTrainWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces) {
+    public double[] cmpTrainWs(Tuples tnMatrix, int[] invlvIndces) {
         int tnS = (int) (maxValue / minValue);
         double[] tnWs = new double[tnS];
         double[] Auis = tnMatrix.getVals();
@@ -69,11 +69,11 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.datastructure.MatlabFasionSparseMatrix,
+     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.core.Tuples,
      *      int[])
      */
     @Override
-    public double[][][] cmpEnsmblWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces) {
+    public double[][][] cmpEnsmblWs(Tuples tnMatrix, int[] invlvIndces) {
         int tnS = (int) (maxValue / minValue);
         double[][][] emWs = new double[2][0][0];
         emWs[0] = new double[userCount][tnS]; // user-related weights

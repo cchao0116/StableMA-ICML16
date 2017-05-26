@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
@@ -67,10 +67,10 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildGloblModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildGloblModel(code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         tnMatrix = rateMatrix;
         ttMatrix = tMatrix;
 

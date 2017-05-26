@@ -1,8 +1,8 @@
 package code.sma.util;
 
 import code.sma.clustering.Cluster;
-import code.sma.datastructure.DynIntArr;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.DynIntArr;
+import code.sma.core.Tuples;
 
 /**
  * This class is used to read the clustering structure from the setting files
@@ -28,7 +28,7 @@ public final class ClusterInfoUtil {
      * @param specClusterIndx   the target cluster index
      * @return                  the involved indices
      */
-    public static int[] readInvolvedIndices(MatlabFasionSparseMatrix mfMatrix, boolean[] raf,
+    public static int[] readInvolvedIndices(Tuples mfMatrix, boolean[] raf,
                                             boolean[] caf) {
         int[] involvedIndices = new int[0];
         {
@@ -60,7 +60,7 @@ public final class ClusterInfoUtil {
      * @param specClusterIndx   the target cluster index
      * @return                  the involved indices
      */
-    public static int[] readInvolvedIndicesExpanded(MatlabFasionSparseMatrix mfMatrix,
+    public static int[] readInvolvedIndicesExpanded(Tuples mfMatrix,
                                                     boolean[] raf, boolean[] caf) {
         int[] involvedIndices = new int[0];
         {
@@ -92,7 +92,7 @@ public final class ClusterInfoUtil {
      * @param clusteringSize    clustering size
      * @return                  the involved indices
      */
-    public static int[][] readInvolvedIndices(MatlabFasionSparseMatrix mfMatrix, int[] raf,
+    public static int[][] readInvolvedIndices(Tuples mfMatrix, int[] raf,
                                               int[] caf, int[] clusteringSize) {
         int clusterNum = clusteringSize[0] * clusteringSize[1];
         int[][] involvedIndices = new int[clusterNum][0];

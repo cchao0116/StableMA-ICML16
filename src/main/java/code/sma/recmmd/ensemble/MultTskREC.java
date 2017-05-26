@@ -9,8 +9,8 @@ import java.util.Random;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
-import code.sma.datastructure.DenseVector;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseVector;
 import code.sma.dpncy.Discretizer;
 import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.KernelSmoothing;
@@ -87,7 +87,7 @@ public class MultTskREC extends EnsembleMFRecommender {
     }
 
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         // compute ensemble weights
         double[][][] ensmbleWs = dctzr.cmpEnsmblWs(rateMatrix, null);
         ensmblWeightInU = ensmbleWs[0];

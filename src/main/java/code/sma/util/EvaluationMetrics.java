@@ -8,10 +8,10 @@ import org.ujmp.core.util.MathUtil;
 
 import com.google.common.collect.MinMaxPriorityQueue;
 
-import code.sma.datastructure.DynIntArr;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.SparseVector;
+import code.sma.core.DynIntArr;
+import code.sma.core.Tuples;
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.SparseVector;
 import code.sma.recmmd.Recommender;
 
 /**
@@ -36,14 +36,14 @@ public class EvaluationMetrics {
     /** Recommender to produce prediction*/
     private Recommender recmmd;
 
-    public EvaluationMetrics(Recommender recmmd, MatlabFasionSparseMatrix ttMatrix) {
+    public EvaluationMetrics(Recommender recmmd, Tuples ttMatrix) {
         super();
         this.recmmd = recmmd;
         build(ttMatrix, null);
     }
 
-    public EvaluationMetrics(Recommender recmmd, MatlabFasionSparseMatrix ttMatrix,
-                             MatlabFasionSparseMatrix trMatrix, int N) {
+    public EvaluationMetrics(Recommender recmmd, Tuples ttMatrix,
+                             Tuples trMatrix, int N) {
         super();
         this.recmmd = recmmd;
         this.N = N;
@@ -55,7 +55,7 @@ public class EvaluationMetrics {
      * 
      * @param ttMatrix  test data
      */
-    protected void build(MatlabFasionSparseMatrix ttMatrix, MatlabFasionSparseMatrix trMatrix) {
+    protected void build(Tuples ttMatrix, Tuples trMatrix) {
         // Rating Prediction evaluation
         int totlCount = ttMatrix.getNnz();
         int[] uIndx = ttMatrix.getRowIndx();

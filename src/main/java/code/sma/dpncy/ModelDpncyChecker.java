@@ -1,6 +1,6 @@
 package code.sma.dpncy;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;
@@ -38,7 +38,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
 
             String rootDir = conf.getProperty("ROOT_DIR");
             String trainFile = rootDir + "trainingset";
-            MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
+            Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
 
             auxRec = (MFRecommender) RecommenderFactory
                 .instance((String) rce.get("ALG_NAME"), rce);
@@ -50,7 +50,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         if (normalLogger.isDebugEnabled()) {
             String rootDir = conf.getProperty("ROOT_DIR");
             String testFile = rootDir + "testingset";
-            MatlabFasionSparseMatrix ttMatrix = MatrixFileUtil.reads(testFile);
+            Tuples ttMatrix = MatrixFileUtil.reads(testFile);
             LoggerUtil.debug(normalLogger,
                 String.format("ModelDpncyChecker:%s", auxRec.evaluate(ttMatrix).printOneLine()));
         }

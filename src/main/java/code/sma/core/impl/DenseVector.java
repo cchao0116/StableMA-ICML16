@@ -1,9 +1,11 @@
-package code.sma.datastructure;
+package code.sma.core.impl;
 
 import java.util.Iterator;
 
 import org.apache.commons.lang3.ArrayUtils;
 import com.google.common.primitives.Floats;
+
+import code.sma.core.AbstractVector;
 
 /**
  * Dense Vector used to represent the features
@@ -41,7 +43,7 @@ public class DenseVector extends AbstractVector implements Iterable<Float> {
     //          Getter/Setter
     // ========================================
     /**
-     * @see code.sma.datastructure.AbstractVector#getValue(int)
+     * @see code.sma.core.AbstractVector#getValue(int)
      */
     @Override
     public float getValue(int i) {
@@ -53,7 +55,7 @@ public class DenseVector extends AbstractVector implements Iterable<Float> {
     }
 
     /**
-     * @see code.sma.datastructure.AbstractVector#setValue(int, double)
+     * @see code.sma.core.AbstractVector#setValue(int, double)
      */
     @Override
     public void setValue(int i, double value) {
@@ -63,7 +65,7 @@ public class DenseVector extends AbstractVector implements Iterable<Float> {
     }
 
     /**
-     * @see code.sma.datastructure.AbstractVector#setValue(int, double)
+     * @see code.sma.core.AbstractVector#setValue(int, double)
      */
     @Override
     public void setValue(int i, float value) {
@@ -73,7 +75,7 @@ public class DenseVector extends AbstractVector implements Iterable<Float> {
     }
 
     /** 
-     * @see code.sma.datastructure.AbstractVector#length()
+     * @see code.sma.core.AbstractVector#length()
      */
     @Override
     public int length() {

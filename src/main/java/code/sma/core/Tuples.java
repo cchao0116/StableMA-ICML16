@@ -1,13 +1,15 @@
-package code.sma.datastructure;
+package code.sma.core;
 
 import java.util.Arrays;
+
+import code.sma.core.impl.SparseMatrix;
 
 /**
  * 
  * @author Chao Chen
  * @version $Id: MatlabFasionSparseMatrix.java, v 0.1 2015-5-16 下午2:55:00 Exp $
  */
-public class MatlabFasionSparseMatrix {
+public class Tuples {
     /** */
     int[]    rowIndx;
     /** */
@@ -17,7 +19,7 @@ public class MatlabFasionSparseMatrix {
     /** */
     int      nnz;
 
-    public MatlabFasionSparseMatrix(int nnz) {
+    public Tuples(int nnz) {
         rowIndx = new int[nnz];
         colIndx = new int[nnz];
         vals = new double[nnz];

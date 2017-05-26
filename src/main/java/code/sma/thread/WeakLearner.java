@@ -1,6 +1,6 @@
 package code.sma.thread;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.recmmd.Recommender;
 
 /**
@@ -13,17 +13,17 @@ public class WeakLearner extends Thread {
     /** learning task dispatcher*/
     private TaskMsgDispatcher        dispatcher;
     /** training data*/
-    private MatlabFasionSparseMatrix trainMatrix;
+    private Tuples trainMatrix;
     /** testing data*/
-    private MatlabFasionSparseMatrix testMatrix;
+    private Tuples testMatrix;
 
     /**
      * @param recmmnd       cf learner
      * @param trainMatrix   training data
      * @param testMatrix    testing data
      */
-    public WeakLearner(TaskMsgDispatcher dispatcher, MatlabFasionSparseMatrix trainMatrix,
-                       MatlabFasionSparseMatrix testMatrix) {
+    public WeakLearner(TaskMsgDispatcher dispatcher, Tuples trainMatrix,
+                       Tuples testMatrix) {
         super();
         this.dispatcher = dispatcher;
         this.trainMatrix = trainMatrix;

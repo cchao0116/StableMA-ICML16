@@ -1,97 +1,80 @@
-package code.sma.datastructure;
+package code.sma.core.impl;
 
-import org.ujmp.core.Matrix;
-import org.ujmp.core.calculation.Calculation.Ret;
+import code.sma.core.AbstractVector;
+import it.unimi.dsi.fastutil.ints.Int2FloatLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2FloatMap;
 
 /**
- * This class implements dense vector with array-based implementation.
- * Note that we use UJMP package (http://www.ujmp.org) to implement this class.
+ * This class implements sparse vector, containing empty values for most space.
  * 
  * @author Joonseok Lee
  * @since 2012. 4. 20
  * @version 1.1
  */
-public class UJMPDenseVector {
-    /** The UJMP matrix to store data. */
-    private Matrix map;
+public class SparseVector extends AbstractVector {
+    private static final long serialVersionUID = 1L;
+
     /** The length (maximum number of items to be stored) of sparse vector. */
-    private int    N;
+    private int               N;
+    /** Data map for <index, value> pairs. */
+    private Int2FloatMap      map;
 
     /*========================================
      * Constructors
      *========================================*/
     /**
-     * Construct an empty dense vector, with capacity 0.
+     * Construct an empty sparse vector, with capacity 0.
      * Capacity can be reset with setLength method later.
      */
-    public UJMPDenseVector() {
+    public SparseVector() {
         this.N = 0;
-        this.map = org.ujmp.core.DenseMatrix.Factory.emptyMatrix();
-        ;
+        this.map = new Int2FloatLinkedOpenHashMap();
     }
 
     /**
-     * Construct a new dense vector with size n.
+     * Construct a new sparse vector with size n.
      * 
-     * @param n The capacity of new dense vector.
+     * @param n The capacity of new sparse vector.
      */
-    public UJMPDenseVector(int n) {
+    public SparseVector(int n) {
         this.N = n;
-        this.map = org.ujmp.core.DenseMatrix.Factory.zeros(n, 1);
-        ;
-    }
-
-    /**
-     * Construct a new dense vector, having same data with the given UJMP matrix.
-     * 
-     * @param m An UJMP matrix.
-     */
-    public UJMPDenseVector(Matrix m) {
-        this.N = (int) (m.getSize())[0];
-        this.map = m;
+        this.map = new Int2FloatLinkedOpenHashMap();
     }
 
     /*========================================
      * Getter/Setter
      *========================================*/
     /**
-     * Get an UJMP matrix.
-     * Note that the Matrix class is implemented like a vector, by UJMP.
-     * 
-     * @return UJMP matrix.
+     * @see code.sma.core.AbstractVector#setValue(int, float)
      */
-    public Matrix getVector() {
-        return map;
+    @Override
+    public void setValue(int i, float value) {
+        if (value == 0.0)
+            map.remove(i);
+        else
+            map.put(i, value);
     }
 
     /**
-     * Set a new value at the given index.
-     * 
-     * @param i The index to store new value.
-     * @param value The value to store.
-     * @throws ArrayIndexOutOfBoundsException when the index is out of range.
+     * @see code.sma.core.AbstractVector#setValue(int, double)
      */
+    @Override
     public void setValue(int i, double value) {
-        if (i < 0 || i >= this.N) {
-            throw new ArrayIndexOutOfBoundsException("Out of index range: " + i);
-        }
-
-        map.setAsDouble(value, i, 0);
+        if (value == 0.0)
+            map.remove(i);
+        else
+            map.put(i, (float) value);
     }
 
     /**
-     * Retrieve a stored value from the given index.
-     * 
-     * @param i The index to retrieve.
-     * @return The value stored at the given index.
-     * @throws ArrayIndexOutOfBoundsException when the index is out of range.
+     * @see code.sma.core.AbstractVector#getValue(int)
      */
-    public double getValue(int i) {
-        if (i < 0 || i >= this.N) {
-            throw new ArrayIndexOutOfBoundsException("Out of index range: " + i);
-        }
-
-        return map.getAsDouble(i, 0);
+    @Override
+    public float getValue(int i) {
+        if (map.containsKey(i))
+            return map.get(i);
+        else
+            return 0.0f;
     }
 
     /**
@@ -100,17 +83,19 @@ public class UJMPDenseVector {
      * @param i The index to delete the value in it.
      */
     public void remove(int i) {
-        map.setAsDouble(0.0, i);
+        if (map.containsKey(i))
+            map.remove(i);
     }
 
     /**
-     * Copy the whole dense vector and make a clone.
+     * Copy the whole sparse vector and make a clone.
      * 
-     * @return A clone of the current dense vector, containing same values.
+     * @return A clone of the current sparse vector, containing same values.
      */
-    public UJMPDenseVector copy() {
-        UJMPDenseVector newVector = new UJMPDenseVector(N);
-        for (int i : this.indexList()) {
+    public SparseVector copy() {
+        SparseVector newVector = new SparseVector(this.N);
+
+        for (int i : this.map.keySet()) {
             newVector.setValue(i, this.getValue(i));
         }
 
@@ -127,10 +112,30 @@ public class UJMPDenseVector {
         if (this.itemCount() == 0)
             return null;
 
-        int idx = 0;
         int[] result = new int[this.itemCount()];
-        for (long[] c : map.availableCoordinates()) {
-            result[idx] = (int) c[0];
+        int idx = 0;
+        for (int i : this.map.keySet()) {
+            result[idx] = i;
+            idx++;
+        }
+
+        return result;
+    }
+
+    /**
+     * Get a list of existing values in array form.
+     * The order of data is compatible with the index list returned by indexList method.
+     * 
+     * @return An array of data values contained in the vector.
+     */
+    public double[] valueList() {
+        if (this.itemCount() == 0)
+            return null;
+
+        double[] result = new double[this.itemCount()];
+        int idx = 0;
+        for (int i : this.map.keySet()) {
+            result[idx] = this.getValue(i);
             idx++;
         }
 
@@ -143,8 +148,9 @@ public class UJMPDenseVector {
      * @param value The value to assign to every element.
      */
     public void initialize(double value) {
-        for (int i = 0; i < N; i++) {
-            this.setValue(i, value);
+        float _value = (float) value;
+        for (int i = 0; i < this.N; i++) {
+            this.setValue(i, _value);
         }
     }
 
@@ -155,58 +161,26 @@ public class UJMPDenseVector {
      * @param value The new value to be assigned.
      */
     public void initialize(int[] index, double value) {
+        float _value = (float) value;
         for (int i = 0; i < index.length; i++) {
-            this.setValue(index[i], value);
+            this.setValue(index[i], _value);
         }
     }
 
     /**
-     * Convert the vector into the sparse vector.
-     * 
-     * @return The sparse vector with the same data.
+     * remove all elements 
      */
-    public SparseVector toSparseVector() {
-        SparseVector v = new SparseVector(this.N);
-
-        for (int i = 0; i < this.N; i++) {
-            double value = this.getValue(i);
-
-            if (value != 0.0) {
-                v.setValue(i, value);
-            }
-        }
-
-        return v;
-    }
-
-    /**
-     * Convert the vector into a sparse vector, but only with the selected indices.
-     * 
-     * @param indexList The list of indices converting to sparse vector.
-     * @return The sparse vector with the same data, with given indices. 
-     */
-    public UJMPDenseVector toDenseSubset(int[] indexList) {
-        if (indexList == null || indexList.length == 0)
-            return null;
-
-        UJMPDenseVector m = new UJMPDenseVector(indexList.length);
-
-        int x = 0;
-        for (int i : indexList) {
-            m.setValue(x, this.getValue(i));
-            x++;
-        }
-
-        return m;
+    public void clear() {
+        this.map.clear();
     }
 
     /*========================================
      * Properties
      *========================================*/
     /**
-     * Capacity of this vector
+     * Capacity of this vector.
      * 
-     * @return The length of dense vector
+     * @return The length of sparse vector
      */
     public int length() {
         return N;
@@ -218,7 +192,7 @@ public class UJMPDenseVector {
      * @return The number of items in the vector.
      */
     public int itemCount() {
-        return (int) map.getValueCount();
+        return map.size();
     }
 
     /**
@@ -239,9 +213,16 @@ public class UJMPDenseVector {
      * @param alpha The scalar value to be added to the original vector.
      * @return The resulting vector, added by alpha.
      */
-    public UJMPDenseVector add(double alpha) {
-        map = map.plus(alpha);
-        return this;
+    public SparseVector add(double alpha) {
+        SparseVector a = this;
+        SparseVector c = new SparseVector(N);
+
+        float _alpha = (float) alpha;
+        for (int i : a.map.keySet()) {
+            c.setValue(i, _alpha + a.getValue(i));
+        }
+
+        return c;
     }
 
     /**
@@ -250,9 +231,16 @@ public class UJMPDenseVector {
      * @param alpha The scalar value to be subtracted from the original vector.
      * @return The resulting vector, subtracted by alpha.
      */
-    public UJMPDenseVector sub(double alpha) {
-        map = map.minus(alpha);
-        return this;
+    public SparseVector sub(double alpha) {
+        SparseVector a = this;
+        SparseVector c = new SparseVector(N);
+
+        float _alpha = (float) alpha;
+        for (int i : a.map.keySet()) {
+            c.setValue(i, a.getValue(i) - _alpha);
+        }
+
+        return c;
     }
 
     /**
@@ -261,9 +249,16 @@ public class UJMPDenseVector {
      * @param alpha The scalar value to be multiplied to the original vector.
      * @return The resulting vector, multiplied by alpha.
      */
-    public UJMPDenseVector scale(double alpha) {
-        map = map.times(alpha);
-        return this;
+    public SparseVector scale(double alpha) {
+        SparseVector a = this;
+        SparseVector c = new SparseVector(N);
+
+        float _alpha = (float) alpha;
+        for (int i : a.map.keySet()) {
+            c.setValue(i, _alpha * a.getValue(i));
+        }
+
+        return c;
     }
 
     /**
@@ -272,12 +267,16 @@ public class UJMPDenseVector {
      * @param alpha The scalar value to be powered to the original vector.
      * @return The resulting vector, powered by alpha.
      */
-    public UJMPDenseVector power(double alpha) {
-        for (int i : this.indexList()) {
-            this.setValue(i, Math.pow(this.getValue(i), alpha));
+    public SparseVector power(double alpha) {
+        SparseVector a = this;
+        SparseVector c = new SparseVector(N);
+
+        float _alpha = (float) alpha;
+        for (int i : a.map.keySet()) {
+            c.setValue(i, Math.pow(a.getValue(i), _alpha));
         }
 
-        return this;
+        return c;
     }
 
     /**
@@ -286,12 +285,16 @@ public class UJMPDenseVector {
      * @param alpha The exponent.
      * @return The resulting exponential vector.
      */
-    public UJMPDenseVector exp(double alpha) {
-        for (int i : this.indexList()) {
-            this.setValue(i, Math.pow(alpha, this.getValue(i)));
+    public SparseVector exp(double alpha) {
+        SparseVector a = this;
+        SparseVector c = new SparseVector(N);
+
+        float _alpha = (float) alpha;
+        for (int i : a.map.keySet()) {
+            c.setValue(i, Math.pow(_alpha, a.getValue(i)));
         }
 
-        return this;
+        return c;
     }
 
     /**
@@ -300,7 +303,8 @@ public class UJMPDenseVector {
      * @return 2-norm value of the vector.
      */
     public double norm() {
-        return Math.sqrt(this.innerProduct(this));
+        SparseVector a = this;
+        return Math.sqrt(a.innerProduct(a));
     }
 
     /**
@@ -309,8 +313,50 @@ public class UJMPDenseVector {
      * @return Sum value of every element.
      */
     public double sum() {
-        Matrix colSum = map.sum(Ret.LINK, 0, true);
-        return colSum.getAsDouble(0, 0);
+        SparseVector a = this;
+
+        double sum = 0.0;
+        for (int i : a.map.keySet()) {
+            sum += a.getValue(i);
+        }
+
+        return sum;
+    }
+
+    /**
+     * The value of maximum element in the vector.
+     * 
+     * @return Maximum value in the vector.
+     */
+    public double max() {
+        SparseVector a = this;
+
+        double curr = Double.MIN_VALUE;
+        for (int i : a.map.keySet()) {
+            if (a.getValue(i) > curr) {
+                curr = a.getValue(i);
+            }
+        }
+
+        return curr;
+    }
+
+    /**
+     * The value of minimum element in the vector.
+     * 
+     * @return Minimum value in the vector.
+     */
+    public double min() {
+        SparseVector a = this;
+
+        double curr = Double.MAX_VALUE;
+        for (int i : a.map.keySet()) {
+            if (a.getValue(i) < curr) {
+                curr = a.getValue(i);
+            }
+        }
+
+        return curr;
     }
 
     /**
@@ -319,9 +365,11 @@ public class UJMPDenseVector {
      * @return Sum of absolute value of every element.
      */
     public double absoluteSum() {
+        SparseVector a = this;
+
         double sum = 0.0;
-        for (int i : this.indexList()) {
-            sum += Math.abs(this.getValue(i));
+        for (int i : a.map.keySet()) {
+            sum += Math.abs(a.getValue(i));
         }
 
         return sum;
@@ -333,7 +381,9 @@ public class UJMPDenseVector {
      * @return The average value.
      */
     public double average() {
-        return this.sum() / (double) this.itemCount();
+        SparseVector a = this;
+
+        return a.sum() / (double) a.itemCount();
     }
 
     /**
@@ -345,7 +395,7 @@ public class UJMPDenseVector {
         double avg = this.average();
         double sum = 0.0;
 
-        for (int i : this.indexList()) {
+        for (int i : this.map.keySet()) {
             sum += Math.pow(this.getValue(i) - avg, 2);
         }
 
@@ -369,17 +419,19 @@ public class UJMPDenseVector {
      * 
      * @param b The vector to be added to this vector.
      * @return The resulting vector after summation.
-     * @throws RuntimeException when vector lengths disagree.
      */
-    public UJMPDenseVector plus(UJMPDenseVector b) {
-        UJMPDenseVector a = this;
+    public SparseVector plus(SparseVector b) {
+        SparseVector a = this;
         if (a.N != b.N)
             throw new RuntimeException("Vector lengths disagree");
 
-        Matrix v1 = map;
-        Matrix v2 = b.getVector();
+        SparseVector c = new SparseVector(N);
+        for (int i : a.map.keySet())
+            c.setValue(i, a.getValue(i)); // c = a
+        for (int i : b.map.keySet())
+            c.setValue(i, b.getValue(i) + c.getValue(i)); // c = c + b
 
-        return new UJMPDenseVector(v1.plus(v2));
+        return c;
     }
 
     /**
@@ -387,17 +439,19 @@ public class UJMPDenseVector {
      * 
      * @param b The vector to be subtracted from this vector.
      * @return The resulting vector after subtraction.
-     * @throws RuntimeException when vector lengths disagree.
      */
-    public UJMPDenseVector minus(UJMPDenseVector b) {
-        UJMPDenseVector a = this;
+    public SparseVector minus(SparseVector b) {
+        SparseVector a = this;
         if (a.N != b.N)
             throw new RuntimeException("Vector lengths disagree");
 
-        Matrix v1 = map;
-        Matrix v2 = b.getVector();
+        SparseVector c = new SparseVector(N);
+        for (int i : a.map.keySet())
+            c.setValue(i, a.getValue(i)); // c = a
+        for (int i : b.map.keySet())
+            c.setValue(i, c.getValue(i) - b.getValue(i)); // c = c - b
 
-        return new UJMPDenseVector(v1.minus(v2));
+        return c;
     }
 
     /**
@@ -407,20 +461,20 @@ public class UJMPDenseVector {
      * @param b The vector to be subtracted from this vector.
      * @return The resulting vector after subtraction.
      */
-    public UJMPDenseVector commonMinus(UJMPDenseVector b) {
-        UJMPDenseVector a = this;
+    public SparseVector commonMinus(SparseVector b) {
+        SparseVector a = this;
         //		if (a.N != b.N)
         //			throw new RuntimeException("Vector lengths disagree");
 
-        UJMPDenseVector c = new UJMPDenseVector(N);
+        SparseVector c = new SparseVector(N);
         if (a.itemCount() <= b.itemCount()) {
-            for (int i : a.indexList()) {
-                if (b.map.containsDouble(i))
+            for (int i : a.map.keySet()) {
+                if (b.map.containsKey(i))
                     c.setValue(i, a.getValue(i) - b.getValue(i));
             }
         } else {
-            for (int i : b.indexList()) {
-                if (a.map.containsDouble(i))
+            for (int i : b.map.keySet()) {
+                if (a.map.containsKey(i))
                     c.setValue(i, a.getValue(i) - b.getValue(i));
             }
         }
@@ -434,17 +488,24 @@ public class UJMPDenseVector {
      * @param b The vector to be inner-producted with this vector.
      * @return The inner-product value.
      */
-    public double innerProduct(UJMPDenseVector b) {
-        if (this.N != b.N)
+    public double innerProduct(SparseVector b) {
+        SparseVector a = this;
+        double sum = 0.0;
+
+        if (a.N != b.N)
             throw new RuntimeException("Vector lengths disagree");
 
-        Matrix v1 = map;
-        Matrix v2 = b.getVector();
-
-        Matrix times = v1.times(v2);
-        double sum = 0.0;
-        for (long[] i : times.availableCoordinates()) {
-            sum += times.getAsDouble(i);
+        // iterate over the vector with the fewer items
+        if (a.itemCount() <= b.itemCount()) {
+            for (int i : a.map.keySet()) {
+                if (b.map.containsKey(i))
+                    sum += a.getValue(i) * b.getValue(i);
+            }
+        } else {
+            for (int i : b.map.keySet()) {
+                if (a.map.containsKey(i))
+                    sum += a.getValue(i) * b.getValue(i);
+            }
         }
 
         return sum;
@@ -456,8 +517,8 @@ public class UJMPDenseVector {
      * @param b The vector to be outer-producted with this vector.
      * @return The resulting outer-product matrix. 
      */
-    public UJMPDenseMatrix outerProduct(UJMPDenseVector b) {
-        UJMPDenseMatrix A = new UJMPDenseMatrix(this.N, b.N);
+    public SparseMatrix outerProduct(SparseVector b) {
+        SparseMatrix A = new SparseMatrix(this.N, b.N);
 
         for (int i = 0; i < this.N; i++) {
             for (int j = 0; j < b.N; j++) {
@@ -476,10 +537,9 @@ public class UJMPDenseVector {
      * 
      * @param b The vector to be added to this vector.
      * @param indexList The list of indices to be applied summation.
-     * @throws RuntimeException when vector lengths disagree.
      * @return The resulting vector after summation.
      */
-    public UJMPDenseVector partPlus(UJMPDenseVector b, int[] indexList) {
+    public SparseVector partPlus(SparseVector b, int[] indexList) {
         if (indexList == null)
             return this;
 
@@ -497,10 +557,9 @@ public class UJMPDenseVector {
      * 
      * @param b The vector to be subtracted from this vector.
      * @param indexList The list of indices to be applied subtraction.
-     * @throws RuntimeException when vector lengths disagree.
      * @return The resulting vector after subtraction.
      */
-    public UJMPDenseVector partMinus(UJMPDenseVector b, int[] indexList) {
+    public SparseVector partMinus(SparseVector b, int[] indexList) {
         if (indexList == null)
             return this;
 
@@ -520,7 +579,7 @@ public class UJMPDenseVector {
      * @param indexList The list of indices to be applied inner-product.
      * @return The inner-product value.
      */
-    public double partInnerProduct(UJMPDenseVector b, int[] indexList) {
+    public double partInnerProduct(SparseVector b, int[] indexList) {
         double sum = 0.0;
 
         if (indexList != null) {
@@ -532,24 +591,26 @@ public class UJMPDenseVector {
         return sum;
     }
 
-    /*========================================
-     * Binary Vector operations without creating new Variable
-     *========================================*/
     /**
-     * Vector sum (a + b)
+     * Outer-product for indices only in the given indices.
      * 
-     * @param b The vector to be added to this vector.
-     * @return The resulting vector after summation.
-     * @throws RuntimeException when vector lengths disagree.
+     * @param b The vector to be outer-producted with this vector.
+     * @param indexList The list of indices to be applied outer-product.
+     * @return The outer-product value.
      */
-    public void plusW(UJMPDenseVector b) {
-        UJMPDenseVector a = this;
-        if (a.N != b.N)
-            throw new RuntimeException("Vector lengths disagree");
+    public SparseMatrix partOuterProduct(SparseVector b, int[] indexList) {
+        if (indexList == null)
+            return null;
 
-        for (int n = 0; n < N; n++) {
-            a.setValue(n, a.getValue(n) + b.getValue(n));
+        SparseMatrix A = new SparseMatrix(b.length(), b.length());
+
+        for (int i : indexList) {
+            for (int j : indexList) {
+                A.setValue(i, j, this.getValue(i) * b.getValue(j));
+            }
         }
+
+        return A;
     }
 
     /**
@@ -560,8 +621,8 @@ public class UJMPDenseVector {
     @Override
     public String toString() {
         String s = "";
-        for (int i : this.indexList()) {
-            s += "(" + i + ": " + map.getAsDouble(i, 0) + ") ";
+        for (int i : this.map.keySet()) {
+            s += "(" + i + ": " + map.get(i) + ") ";
         }
         return s;
     }

@@ -7,8 +7,8 @@ import java.util.Queue;
 
 import org.apache.log4j.Logger;
 
-import code.sma.datastructure.DenseVector;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;
@@ -119,8 +119,8 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
      */
     @Override
-    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
-                       MatlabFasionSparseMatrix ttMatrix) {
+    public void reduce(Object recmmd, Tuples tnMatrix,
+                       Tuples ttMatrix) {
         LoggerUtil.info(normalLogger, (new StringBuilder(recmmd.toString())).append(": ")
             .append((((Recommender) recmmd).evaluate(ttMatrix)).printOneLine()));
     }

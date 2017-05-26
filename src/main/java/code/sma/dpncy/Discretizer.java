@@ -1,6 +1,6 @@
 package code.sma.dpncy;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 
 /**
  * convert continuous values into discrete values   
@@ -25,7 +25,7 @@ public abstract class Discretizer {
      * @param invlvIndces         involved data indices
      * @return
      */
-    public abstract double[] cmpTrainWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces);
+    public abstract double[] cmpTrainWs(Tuples tnMatrix, int[] invlvIndces);
 
     /**
      * compute the ensemble weights using in WEMAREC
@@ -34,5 +34,5 @@ public abstract class Discretizer {
      * @param invlvIndces        involved data indices
      * @return
      */
-    public abstract double[][][] cmpEnsmblWs(MatlabFasionSparseMatrix tnMatrix, int[] invlvIndces);
+    public abstract double[][][] cmpEnsmblWs(Tuples tnMatrix, int[] invlvIndces);
 }

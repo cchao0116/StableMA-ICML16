@@ -1,4 +1,4 @@
-package code.sma.datastructure;
+package code.sma.core;
 
 /**
  * 

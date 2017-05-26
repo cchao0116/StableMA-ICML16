@@ -1,7 +1,7 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.datastructure.DenseMatrix;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseMatrix;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
@@ -34,10 +34,10 @@ public class RegularizedSVD extends MFRecommender {
      * Model Builder
      *========================================*/
     /**
-     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         super.buildModel(rateMatrix, tMatrix);
 
         // Gradient Descent:

@@ -9,9 +9,9 @@ import java.io.LineNumberReader;
 
 import org.apache.commons.io.IOUtils;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.SparseVector;
+import code.sma.core.Tuples;
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.SparseVector;
 
 /**
  * Matrix write utilities
@@ -79,18 +79,18 @@ public final class MatrixFileUtil {
      * @param parser        the parser to parse the data structure
      * @return
      */
-    public static MatlabFasionSparseMatrix reads(String filePath) {
+    public static Tuples reads(String filePath) {
         LineNumberReader lnr = null;
         BufferedReader reader = null;
 
-        MatlabFasionSparseMatrix result = null;
+        Tuples result = null;
         try {
             File file = new File(filePath);
             lnr = new LineNumberReader(new FileReader(file));
             lnr.skip(Long.MAX_VALUE);
             int nnz = lnr.getLineNumber();
 
-            result = new MatlabFasionSparseMatrix(nnz);
+            result = new Tuples(nnz);
             reader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = reader.readLine()) != null) {

@@ -1,6 +1,6 @@
 package code.sma.util;
 
-import code.sma.datastructure.DenseVector;
+import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 
 /**

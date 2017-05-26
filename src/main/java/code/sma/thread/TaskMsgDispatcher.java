@@ -1,6 +1,6 @@
 package code.sma.thread;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 
 /**
  * The learning task dispatcher
@@ -24,7 +24,7 @@ public interface TaskMsgDispatcher {
      * @param tnMatrix  the training data
      * @param ttMatrix  the testing data
      */
-    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
-                       MatlabFasionSparseMatrix ttMatrix);
+    public void reduce(Object recmmd, Tuples tnMatrix,
+                       Tuples ttMatrix);
 
 }

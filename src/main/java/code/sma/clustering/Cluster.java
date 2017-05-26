@@ -10,8 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.SparseVector;
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.SparseVector;
 
 /**
  * The cluster in K-mean with the matrix index

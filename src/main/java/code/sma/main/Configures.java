@@ -2,7 +2,7 @@ package code.sma.main;
 
 import java.util.Properties;
 
-import code.sma.datastructure.DenseVector;
+import code.sma.core.impl.DenseVector;
 
 /**
  * 

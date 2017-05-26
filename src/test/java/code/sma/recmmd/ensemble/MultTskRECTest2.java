@@ -6,9 +6,9 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import code.sma.datastructure.DenseMatrix;
-import code.sma.datastructure.DenseVector;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseMatrix;
+import code.sma.core.impl.DenseVector;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;
@@ -54,8 +54,8 @@ public class MultTskRECTest2 extends TestCase {
                 AbstractDpncyChecker checker = new ModelDpncyChecker();
                 checker.handler(conf);
 
-                MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-                MatlabFasionSparseMatrix ttMatrix = MatrixFileUtil.reads(testFile);
+                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
+                Tuples ttMatrix = MatrixFileUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
                 Recommender rcmmd = RecommenderFactory.instance(algName, rce);
                 rcmmd.buildModel(tnMatrix, ttMatrix);

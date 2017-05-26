@@ -1,6 +1,6 @@
 package code.sma.recmmd.rank;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.util.EvaluationMetrics;
@@ -15,7 +15,7 @@ public class RankBasedMFRecommender extends MFRecommender {
     /** Top-N recommendations*/
     protected int                      topN;
     /** Training data*/
-    protected MatlabFasionSparseMatrix rateMatrix;
+    protected Tuples rateMatrix;
     /**  serialVersionUID */
     private static final long          serialVersionUID = 1L;
 
@@ -28,19 +28,19 @@ public class RankBasedMFRecommender extends MFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         super.buildModel(rateMatrix, tMatrix);
         this.rateMatrix = rateMatrix;
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#evaluate(code.sma.core.Tuples)
      */
     @Override
-    public EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix) {
+    public EvaluationMetrics evaluate(Tuples testMatrix) {
         return new EvaluationMetrics(this, testMatrix, rateMatrix, topN);
     }
 

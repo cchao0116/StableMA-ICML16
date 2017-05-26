@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import code.sma.datastructure.DenseMatrix;
-import code.sma.datastructure.DenseVector;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseMatrix;
+import code.sma.core.impl.DenseVector;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;
@@ -58,7 +58,7 @@ public class FeatureTest {
                 AbstractDpncyChecker checker = new ModelDpncyChecker();
                 checker.handler(conf);
 
-                MatlabFasionSparseMatrix ttMatrix = MatrixFileUtil.reads(testFile);
+                Tuples ttMatrix = MatrixFileUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
                 RegularizedSVD rcmmd = extctGlbl(rce);
                 SerializeUtil.writeObject(rcmmd, String.format(NEW_EMBD_W_PATTERN, ITER_SEQ));

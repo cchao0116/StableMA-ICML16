@@ -7,8 +7,8 @@ package code.sma.clustering;
 import org.apache.commons.math3.distribution.UniformIntegerDistribution;
 import org.apache.log4j.Logger;
 
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.SparseVector;
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.SparseVector;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 

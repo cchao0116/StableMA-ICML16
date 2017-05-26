@@ -3,7 +3,7 @@ package code.sma.recmmd.rank;
 import java.util.HashSet;
 import java.util.Set;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
@@ -26,10 +26,10 @@ public class SMARank extends RankBasedMFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         super.buildModel(rateMatrix, tMatrix);
 
         // Collect user observations
@@ -102,7 +102,7 @@ public class SMARank extends RankBasedMFRecommender {
      * @param rateMatrix    training data
      * @param uObsvtn       the observations for every user
      */
-    protected void formUserObservations(MatlabFasionSparseMatrix rateMatrix, UserObsvtn[] uObsvtn) {
+    protected void formUserObservations(Tuples rateMatrix, UserObsvtn[] uObsvtn) {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();

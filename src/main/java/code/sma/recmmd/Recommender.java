@@ -2,7 +2,7 @@ package code.sma.recmmd;
 
 import java.io.Serializable;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.util.EvaluationMetrics;
 
 /**
@@ -39,8 +39,8 @@ public abstract class Recommender implements Serializable {
      * @param rateMatrix
      * @param tMatrix
      */
-    public abstract void buildModel(MatlabFasionSparseMatrix rateMatrix,
-                                    MatlabFasionSparseMatrix tMatrix);
+    public abstract void buildModel(Tuples rateMatrix,
+                                    Tuples tMatrix);
 
     /**
      * Build a model with given training set.
@@ -48,8 +48,8 @@ public abstract class Recommender implements Serializable {
      * @param rateMatrix
      * @param tMatrix
      */
-    public abstract void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
-                                        MatlabFasionSparseMatrix tMatrix);
+    public abstract void buildloclModel(Tuples rateMatrix,
+                                        Tuples tMatrix);
 
     /*========================================
      * Prediction
@@ -61,7 +61,7 @@ public abstract class Recommender implements Serializable {
      * 
      * @return The result of evaluation, such as MAE, RMSE, and rank-score.
      */
-    public abstract EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix);
+    public abstract EvaluationMetrics evaluate(Tuples testMatrix);
 
     /**
      * return the predicted rating

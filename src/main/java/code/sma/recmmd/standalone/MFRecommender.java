@@ -2,9 +2,9 @@ package code.sma.recmmd.standalone;
 
 import org.apache.log4j.Logger;
 
-import code.sma.datastructure.DenseMatrix;
-import code.sma.datastructure.DenseVector;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseMatrix;
+import code.sma.core.impl.DenseVector;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
@@ -122,10 +122,10 @@ public abstract class MFRecommender extends Recommender {
      * Model Builder
      *========================================*/
     /**
-     * @see edu.tongji.ml.Recommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.Recommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         LoggerUtil.info(runningLogger,
             "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer);
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
@@ -133,11 +133,11 @@ public abstract class MFRecommender extends Recommender {
     }
 
     /**
-     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
-                               MatlabFasionSparseMatrix tMatrix) {
+    public void buildloclModel(Tuples rateMatrix,
+                               Tuples tMatrix) {
         LoggerUtil.info(runningLogger,
             String.format("Param: FC:%d,LR:%.7f,R:%.7f", featureCount, learningRate, regularizer));
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
@@ -155,7 +155,7 @@ public abstract class MFRecommender extends Recommender {
      * @param currErr       the current training error
      * @return              true to stop, false to continue
      */
-    protected boolean recordLoggerAndDynamicStop(int round, MatlabFasionSparseMatrix tMatrix,
+    protected boolean recordLoggerAndDynamicStop(int round, Tuples tMatrix,
                                                  double currErr) {
         if (showProgress && (round % 5 == 0) && tMatrix != null) {
             EvaluationMetrics metric = evaluate(tMatrix);
@@ -178,10 +178,10 @@ public abstract class MFRecommender extends Recommender {
      *========================================*/
 
     /**
-     * @see code.sma.recmmd.Recommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.Recommender#evaluate(code.sma.core.Tuples)
      */
     @Override
-    public EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix) {
+    public EvaluationMetrics evaluate(Tuples testMatrix) {
         return new EvaluationMetrics(this, testMatrix);
     }
 

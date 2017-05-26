@@ -1,4 +1,4 @@
-package code.sma.datastructure;
+package code.sma.core.impl;
 
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;

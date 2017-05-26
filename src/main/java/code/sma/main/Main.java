@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import code.sma.datastructure.DenseVector;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.DenseVector;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ClusteringDpncyChecker;
 import code.sma.recmmd.RecConfigEnv;
@@ -56,8 +56,8 @@ public class Main {
                 AbstractDpncyChecker checker = new ClusteringDpncyChecker();
                 checker.handler(conf);
 
-                MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-                MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
+                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
+                Tuples tttMatrix = MatrixFileUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
                 RecommenderFactory.instance(algName, rce).buildModel(tnMatrix, tttMatrix);
             } else if (StringUtil.equalsIgnoreCase(algName, "GBMA")) {
@@ -65,8 +65,8 @@ public class Main {
                 int userCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
                 int itemCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
 
-                MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-                MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
+                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
+                Tuples tttMatrix = MatrixFileUtil.reads(testFile);
 
                 DenseVector avgUser = new DenseVector(userCount);
                 DenseVector avgItem = new DenseVector(itemCount);
@@ -90,8 +90,8 @@ public class Main {
                 TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
                 int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
 
-                MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-                MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
+                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
+                Tuples tttMatrix = MatrixFileUtil.reads(testFile);
 
                 try {
                     ExecutorService exec = Executors.newCachedThreadPool();
@@ -107,7 +107,7 @@ public class Main {
         }
     }
 
-    protected static void avgRatingAndAdjustData(MatlabFasionSparseMatrix tnMatrix, int userCount,
+    protected static void avgRatingAndAdjustData(Tuples tnMatrix, int userCount,
                                                  int itemCount, DenseVector avgUser,
                                                  DenseVector avgItem) {
         int rateCount = tnMatrix.getNnz();

@@ -1,6 +1,6 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
@@ -36,11 +36,11 @@ public class WeigtedSVD extends MFRecommender {
      * Model Builder
      *========================================*/
     /**
-     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
-                               MatlabFasionSparseMatrix tMatrix) {
+    public void buildloclModel(Tuples rateMatrix,
+                               Tuples tMatrix) {
         super.buildloclModel(rateMatrix, null);
 
         // Compute dependencies

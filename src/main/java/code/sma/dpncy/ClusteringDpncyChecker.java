@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 import code.sma.clustering.Cluster;
 import code.sma.clustering.CoclusterUtil;
 import code.sma.clustering.Distance;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.datastructure.SparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.SparseMatrix;
 import code.sma.main.Configures;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ClusterInfoUtil;
@@ -91,11 +91,11 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
-                       MatlabFasionSparseMatrix ttMatrix) {
+    public void reduce(Object recmmd, Tuples tnMatrix,
+                       Tuples ttMatrix) {
     }
 
     protected class ClusteringLearner extends Thread {

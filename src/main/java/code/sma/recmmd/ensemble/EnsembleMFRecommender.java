@@ -4,8 +4,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.datastructure.SparseMatrix;
+import code.sma.core.Tuples;
+import code.sma.core.impl.SparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.standalone.MFRecommender;
@@ -40,9 +40,9 @@ public abstract class EnsembleMFRecommender extends MFRecommender
     /** mutex using in reduce procedure*/
     protected static Object                      REDUCE_MUTEX     = new Object();
     /** training data*/
-    protected transient MatlabFasionSparseMatrix tnMatrix;
+    protected transient Tuples tnMatrix;
     /** testing data*/
-    protected transient MatlabFasionSparseMatrix ttMatrix;
+    protected transient Tuples ttMatrix;
 
     /*========================================
      * Constructors
@@ -56,10 +56,10 @@ public abstract class EnsembleMFRecommender extends MFRecommender
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         tnMatrix = rateMatrix;
         ttMatrix = tMatrix;
 
@@ -80,8 +80,8 @@ public abstract class EnsembleMFRecommender extends MFRecommender
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
      */
     @Override
-    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
-                       MatlabFasionSparseMatrix ttMatrix) {
+    public void reduce(Object recmmd, Tuples tnMatrix,
+                       Tuples ttMatrix) {
         int[] uIndx = ttMatrix.getRowIndx();
         int[] iIndx = ttMatrix.getColIndx();
         double[] vals = ttMatrix.getVals();

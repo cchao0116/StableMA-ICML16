@@ -1,10 +1,10 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.datastructure.DynIntArr;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.UJMPDenseMatrix;
-import code.sma.datastructure.UJMPDenseVector;
+import code.sma.core.DynIntArr;
+import code.sma.core.Tuples;
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.UJMPDenseMatrix;
+import code.sma.core.impl.UJMPDenseVector;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
@@ -51,10 +51,10 @@ public class GroupSparsityMF extends MFRecommender {
     }
 
     /** 
-     * @see MFRecommender.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see MFRecommender.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(Tuples.tongji.data.MatlabFasionSparseMatrix, Tuples.tongji.data.MatlabFasionSparseMatrix)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         //1. initialize features
         initFeatures();
 
@@ -111,7 +111,7 @@ public class GroupSparsityMF extends MFRecommender {
         }
     }
 
-    protected void initParam(int[] itemAssigm, MatlabFasionSparseMatrix rateMatrix) {
+    protected void initParam(int[] itemAssigm, Tuples rateMatrix) {
         // dividing rating matrix into l pieces
         for (int i = 0; i < itemCount; i++) {
             itemAssigm[i] = (int) (Math.random() * L);
@@ -134,7 +134,7 @@ public class GroupSparsityMF extends MFRecommender {
         }
     }
 
-    protected void updateU(MatlabFasionSparseMatrix rateMatrix) {
+    protected void updateU(Tuples rateMatrix) {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
@@ -164,7 +164,7 @@ public class GroupSparsityMF extends MFRecommender {
         }
     }
 
-    protected void updateI(MatlabFasionSparseMatrix rateMatrix, int[] itemAssigm) {
+    protected void updateI(Tuples rateMatrix, int[] itemAssigm) {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
@@ -214,7 +214,7 @@ public class GroupSparsityMF extends MFRecommender {
         }
     }
 
-    protected double trainError(MatlabFasionSparseMatrix rateMatrix) {
+    protected double trainError(Tuples rateMatrix) {
         double sum = 0.0d;
 
         int rateCount = rateMatrix.getNnz();

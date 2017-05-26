@@ -3,7 +3,8 @@ package code.sma.recmmd.standalone;
 import java.util.Arrays;
 
 import org.apache.commons.math3.stat.StatUtils;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+
+import code.sma.core.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
@@ -31,10 +32,10 @@ public class StableMA extends MFRecommender {
     }
 
     /** 
-     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
+    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
         super.buildModel(rateMatrix, tMatrix);
 
         // Gradient Descent:
@@ -127,7 +128,7 @@ public class StableMA extends MFRecommender {
      * @param numInSubset       the number of ratings in different partitions
      * @return
      */
-    protected double assignStable(MatlabFasionSparseMatrix rateMatrix, boolean[][] rAssigmnt,
+    protected double assignStable(Tuples rateMatrix, boolean[][] rAssigmnt,
                                   double[] errors, double[] seInSubset, int[] numInSubset) {
         int rateCount = rateMatrix.getNnz();
 
@@ -190,7 +191,7 @@ public class StableMA extends MFRecommender {
      * @param numInSubset       the number of ratings in different partitions
      * @return
      */
-    protected double initialStatParam(MatlabFasionSparseMatrix rateMatrix, boolean[][] rAssigmnt,
+    protected double initialStatParam(Tuples rateMatrix, boolean[][] rAssigmnt,
                                       double[] errors, double[] seInSubset, int[] numInSubset) {
         // refresh statistical parameters
         Arrays.fill(errors, 0.0d);

@@ -1,7 +1,7 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.datastructure.Accumulator;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Accumulator;
+import code.sma.core.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.RecConfigEnv;
@@ -47,11 +47,11 @@ public class GLOMA extends MFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildloclModel(code.sma.core.Tuples, code.sma.core.Tuples)
      */
     @Override
-    public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
-                               MatlabFasionSparseMatrix tMatrix) {
+    public void buildloclModel(Tuples rateMatrix,
+                               Tuples tMatrix) {
         super.buildloclModel(rateMatrix, tMatrix);
 
         // Gradient Descent:
@@ -297,7 +297,7 @@ public class GLOMA extends MFRecommender {
      * @param invlvCounts   item count of three mixture models respectively
      * @return  the squared error of three mixture models
      */
-    protected void statistics(MatlabFasionSparseMatrix rateMatrix, int[] invlvIndces,
+    protected void statistics(Tuples rateMatrix, int[] invlvIndces,
                               Accumulator accErr, Accumulator accFactrUsr,
                               Accumulator accFactrItm) {
         int[] uIndx = rateMatrix.getRowIndx();

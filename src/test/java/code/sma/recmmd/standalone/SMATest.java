@@ -9,7 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
+import code.sma.core.Tuples;
 import code.sma.main.Configures;
 import code.sma.thread.SimpleLearner;
 import code.sma.thread.SimpleTaskMsgDispatcherImpl;
@@ -54,8 +54,8 @@ public class SMATest {
             TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
             int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
 
-            MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
-            MatlabFasionSparseMatrix tttMatrix = MatrixFileUtil.reads(testFile);
+            Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
+            Tuples tttMatrix = MatrixFileUtil.reads(testFile);
 
             try {
                 ExecutorService exec = Executors.newCachedThreadPool();
