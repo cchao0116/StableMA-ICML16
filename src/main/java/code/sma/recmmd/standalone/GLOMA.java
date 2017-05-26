@@ -17,7 +17,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: GLOMA.java, v 0.1 2017年2月28日 下午1:46:27 Chao.Chen Exp $
  */
-public class GLOMA extends MatrixFactorizationRecommender {
+public class GLOMA extends MFRecommender {
     /** SerialVersionNum */
     private static final long                        serialVersionUID = 1L;
     /**Indicator function to show whether the row is within the class*/
@@ -27,7 +27,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
     private double[]                                 lambda;
     /** Previously-trained model*/
-    private transient MatrixFactorizationRecommender auxRec;
+    private transient MFRecommender auxRec;
 
     Discretizer                                      dctzr;
     double[]                                         tnWs;
@@ -36,7 +36,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
      * Constructors
      *========================================*/
     public GLOMA(RecConfigEnv rce, double[] lambda, boolean[] raf, boolean[] caf,
-                 MatrixFactorizationRecommender auxRec) {
+                 MFRecommender auxRec) {
         super(rce);
         this.lambda = lambda;
         this.raf = raf;
@@ -47,7 +47,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildloclModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
@@ -140,7 +140,7 @@ public class GLOMA extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#predict(int, int)
+     * @see code.sma.recmmd.standalone.MFRecommender#predict(int, int)
      */
     @Override
     public double predict(int u, int i) {

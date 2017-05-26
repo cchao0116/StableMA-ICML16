@@ -8,7 +8,7 @@ import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.datastructure.SparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
-import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
 import code.sma.util.ExceptionUtil;
@@ -20,7 +20,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: EnsembleMFRecommender.java, v 0.1 2016年9月26日 下午4:22:14 Chao.Chen Exp $
  */
-public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommender
+public abstract class EnsembleMFRecommender extends MFRecommender
                                             implements TaskMsgDispatcher {
     /** SerialVersionNum */
     protected static final long                  serialVersionUID = 1L;
@@ -56,7 +56,7 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
@@ -88,14 +88,14 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
 
         // update approximated model
         synchronized (REDUCE_MUTEX) {
-            int[] testInvlvIndces = ((MatrixFactorizationRecommender) recmmd).testInvlvIndces;
+            int[] testInvlvIndces = ((MFRecommender) recmmd).testInvlvIndces;
             for (int numSeq : testInvlvIndces) {
                 int u = uIndx[numSeq];
                 int i = iIndx[numSeq];
 
                 // update global approximation model
-                if (((MatrixFactorizationRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
-                    || ((MatrixFactorizationRecommender) recmmd).itemDenseFeatures
+                if (((MFRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
+                    || ((MFRecommender) recmmd).itemDenseFeatures
                         .getRowRef(i) == null) {
                     continue;
                 }
@@ -128,13 +128,13 @@ public abstract class EnsembleMFRecommender extends MatrixFactorizationRecommend
         LoggerUtil.info(resultLogger,
             String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f",
                 ((Recommender) recmmd).threadId, rmse,
-                ((MatrixFactorizationRecommender) recmmd).trainInvlvIndces.length,
-                ((MatrixFactorizationRecommender) recmmd).testInvlvIndces.length,
-                ((MatrixFactorizationRecommender) recmmd).bestRMSE));
+                ((MFRecommender) recmmd).trainInvlvIndces.length,
+                ((MFRecommender) recmmd).testInvlvIndces.length,
+                ((MFRecommender) recmmd).bestRMSE));
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#predict(int, int)
+     * @see code.sma.recmmd.standalone.MFRecommender#predict(int, int)
      */
     @Override
     public double predict(int u, int i) {

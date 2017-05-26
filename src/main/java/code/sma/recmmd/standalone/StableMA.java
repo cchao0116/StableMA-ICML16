@@ -16,7 +16,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao Chen
  * @version $Id: StableSVD.java, v 0.1 Dec 22, 2015 11:43:15 AM Exp $
  */
-public class StableMA extends MatrixFactorizationRecommender {
+public class StableMA extends MFRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
     /** Number of hard-predictable subsets */
@@ -31,7 +31,7 @@ public class StableMA extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see edu.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {

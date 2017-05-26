@@ -22,7 +22,7 @@ import code.sma.util.StringUtil;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public abstract class MatrixFactorizationRecommender extends Recommender {
+public abstract class MFRecommender extends Recommender {
     /** SerialVersionNum */
     protected static final long             serialVersionUID = 1L;
 
@@ -72,18 +72,18 @@ public abstract class MatrixFactorizationRecommender extends Recommender {
     /*========================================
      * Constructors
      *========================================*/
-    public MatrixFactorizationRecommender(RecConfigEnv rce) {
+    public MFRecommender(RecConfigEnv rce) {
         commonParse(rce);
     }
 
-    public MatrixFactorizationRecommender(RecConfigEnv rce, DenseMatrix userDenseFeatures,
+    public MFRecommender(RecConfigEnv rce, DenseMatrix userDenseFeatures,
                                           DenseMatrix itemDenseFeatures) {
         commonParse(rce);
         this.userDenseFeatures = userDenseFeatures;
         this.itemDenseFeatures = itemDenseFeatures;
     }
 
-    public MatrixFactorizationRecommender(RecConfigEnv rce, int[] trainInvlvIndces,
+    public MFRecommender(RecConfigEnv rce, int[] trainInvlvIndces,
                                           int[] testInvlvIndces) {
         commonParse(rce);
 

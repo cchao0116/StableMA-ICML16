@@ -1,8 +1,7 @@
 package code.sma.datastructure;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.ints.Int2FloatLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2FloatMap;
 
 /**
  * This class implements sparse vector, containing empty values for most space.
@@ -11,14 +10,13 @@ import java.util.Map;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public class SparseVector implements Serializable {
-    /** SerialVersionNum */
-    private static final long    serialVersionUID = 8002;
+public class SparseVector extends AbstractVector {
+    private static final long serialVersionUID = 1L;
 
     /** The length (maximum number of items to be stored) of sparse vector. */
-    private int                  N;
+    private int               N;
     /** Data map for <index, value> pairs. */
-    private Map<Integer, Double> map;
+    private Int2FloatMap      map;
 
     /*========================================
      * Constructors
@@ -29,7 +27,7 @@ public class SparseVector implements Serializable {
      */
     public SparseVector() {
         this.N = 0;
-        this.map = new HashMap<Integer, Double>(0);
+        this.map = new Int2FloatLinkedOpenHashMap();
     }
 
     /**
@@ -39,19 +37,17 @@ public class SparseVector implements Serializable {
      */
     public SparseVector(int n) {
         this.N = n;
-        this.map = new HashMap<Integer, Double>(0);
+        this.map = new Int2FloatLinkedOpenHashMap();
     }
 
     /*========================================
      * Getter/Setter
      *========================================*/
     /**
-     * Set a new value at the given index.
-     * 
-     * @param i The index to store new value.
-     * @param value The value to store.
+     * @see code.sma.datastructure.AbstractVector#setValue(int, float)
      */
-    public void setValue(int i, double value) {
+    @Override
+    public void setValue(int i, float value) {
         if (value == 0.0)
             map.remove(i);
         else
@@ -59,16 +55,25 @@ public class SparseVector implements Serializable {
     }
 
     /**
-     * Retrieve a stored value from the given index.
-     * 
-     * @param i The index to retrieve.
-     * @return The value stored at the given index.
+     * @see code.sma.datastructure.AbstractVector#setValue(int, double)
      */
-    public double getValue(int i) {
+    @Override
+    public void setValue(int i, double value) {
+        if (value == 0.0)
+            map.remove(i);
+        else
+            map.put(i, (float) value);
+    }
+
+    /**
+     * @see code.sma.datastructure.AbstractVector#getValue(int)
+     */
+    @Override
+    public float getValue(int i) {
         if (map.containsKey(i))
             return map.get(i);
         else
-            return 0.0;
+            return 0.0f;
     }
 
     /**
@@ -142,8 +147,9 @@ public class SparseVector implements Serializable {
      * @param value The value to assign to every element.
      */
     public void initialize(double value) {
+        float _value = (float) value;
         for (int i = 0; i < this.N; i++) {
-            this.setValue(i, value);
+            this.setValue(i, _value);
         }
     }
 
@@ -154,8 +160,9 @@ public class SparseVector implements Serializable {
      * @param value The new value to be assigned.
      */
     public void initialize(int[] index, double value) {
+        float _value = (float) value;
         for (int i = 0; i < index.length; i++) {
-            this.setValue(index[i], value);
+            this.setValue(index[i], _value);
         }
     }
 
@@ -209,8 +216,9 @@ public class SparseVector implements Serializable {
         SparseVector a = this;
         SparseVector c = new SparseVector(N);
 
+        float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, alpha + a.getValue(i));
+            c.setValue(i, _alpha + a.getValue(i));
         }
 
         return c;
@@ -226,8 +234,9 @@ public class SparseVector implements Serializable {
         SparseVector a = this;
         SparseVector c = new SparseVector(N);
 
+        float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, a.getValue(i) - alpha);
+            c.setValue(i, a.getValue(i) - _alpha);
         }
 
         return c;
@@ -243,8 +252,9 @@ public class SparseVector implements Serializable {
         SparseVector a = this;
         SparseVector c = new SparseVector(N);
 
+        float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, alpha * a.getValue(i));
+            c.setValue(i, _alpha * a.getValue(i));
         }
 
         return c;
@@ -260,8 +270,9 @@ public class SparseVector implements Serializable {
         SparseVector a = this;
         SparseVector c = new SparseVector(N);
 
+        float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, Math.pow(a.getValue(i), alpha));
+            c.setValue(i, Math.pow(a.getValue(i), _alpha));
         }
 
         return c;
@@ -277,8 +288,9 @@ public class SparseVector implements Serializable {
         SparseVector a = this;
         SparseVector c = new SparseVector(N);
 
+        float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, Math.pow(alpha, a.getValue(i)));
+            c.setValue(i, Math.pow(_alpha, a.getValue(i)));
         }
 
         return c;

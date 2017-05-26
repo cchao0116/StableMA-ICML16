@@ -62,7 +62,7 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
         if (!suffArrKeys.isEmpty()) {
             // Deep-First-Search: the ARR-end configure entries
             int maxLayer = suffArrKeys.size();
-            int lastLayerWidth = suffArrVals.get(maxLayer - 1).len();
+            int lastLayerWidth = suffArrVals.get(maxLayer - 1).length();
             List<Integer> nodes = new ArrayList<Integer>();
             nodes.add(0);
 
@@ -92,7 +92,7 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
                     }
 
                     int nextLayerPivot = nodes.get(nextLayer) + 1;
-                    if (nextLayerPivot < suffArrVals.get(nextLayer).len()) {
+                    if (nextLayerPivot < suffArrVals.get(nextLayer).length()) {
                         nodes.set(nextLayer, nextLayerPivot);
                         break;
                     }

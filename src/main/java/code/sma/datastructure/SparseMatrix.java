@@ -1,7 +1,6 @@
 package code.sma.datastructure;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 /**
  * This class implements sparse matrix, containing empty values for most space.
@@ -15,13 +14,13 @@ public class SparseMatrix implements Serializable {
     private static final long serialVersionUID = 8003;
 
     /** The number of rows. */
-    private int            M;
+    private int               M;
     /** The number of columns. */
-    private int            N;
+    private int               N;
     /** The array of row references. */
-    private SparseVector[] rows;
+    private SparseVector[]    rows;
     /** The array of column references. */
-    private SparseVector[] cols;
+    private SparseVector[]    cols;
 
     /*========================================
      * Constructors
@@ -321,11 +320,12 @@ public class SparseMatrix implements Serializable {
     public SparseMatrix scale(double alpha) {
         SparseMatrix A = new SparseMatrix(this.M, this.N);
 
+        float _alpha = (float) alpha;
         for (int i = 0; i < A.M; i++) {
-            A.rows[i] = this.getRowRef(i).scale(alpha);
+            A.rows[i] = this.getRowRef(i).scale(_alpha);
         }
         for (int j = 0; j < A.N; j++) {
-            A.cols[j] = this.getColRef(j).scale(alpha);
+            A.cols[j] = this.getColRef(j).scale(_alpha);
         }
 
         return A;
@@ -356,11 +356,12 @@ public class SparseMatrix implements Serializable {
     public SparseMatrix add(double alpha) {
         SparseMatrix A = new SparseMatrix(this.M, this.N);
 
+        float _alpha = (float) alpha;
         for (int i = 0; i < A.M; i++) {
-            A.rows[i] = this.getRowRef(i).add(alpha);
+            A.rows[i] = this.getRowRef(i).add(_alpha);
         }
         for (int j = 0; j < A.N; j++) {
-            A.cols[j] = this.getColRef(j).add(alpha);
+            A.cols[j] = this.getColRef(j).add(_alpha);
         }
 
         return A;
@@ -782,116 +783,6 @@ public class SparseMatrix implements Serializable {
         }
 
         return b;
-    }
-
-    /**
-     * compute the probability w.r.t the element in each row or column
-     * 
-     * @param rows
-     * @param cols
-     * @param maxValue
-     * @param minValue
-     * @param isRow
-     * @return
-     */
-    public double[][] probability(int[] rows, int[] cols, double maxValue, double minValue,
-                                  boolean isRow) {
-        double[][] probs = null;
-        int weightSize = Double.valueOf(maxValue / minValue).intValue();
-
-        if (rows == null && cols == null) {
-            rows = new int[M];
-            for (int i = 0; i < M; i++) {
-                rows[i] = i;
-            }
-
-            cols = new int[N];
-            for (int i = 0; i < N; i++) {
-                cols[i] = i;
-            }
-        }
-
-        if (isRow) {
-
-            //construct row map to show whether the row is in given rows
-            boolean[] colTable = new boolean[N];
-            for (int col : cols) {
-                colTable[col] = true;
-            }
-
-            //construct probabilities with Lagrange Smoothing
-            probs = new double[M][0];
-
-            //compute the probabilities 
-            for (int row : rows) {
-                SparseVector Fu = getRowRef(row);
-                int[] indexList = Fu.indexList();
-
-                //count
-                double[] localPro = new double[weightSize];
-                Arrays.fill(localPro, 1.0d);
-
-                int total = weightSize;
-                if (indexList != null) {
-                    for (int j : indexList) {
-                        if (!colTable[j]) {
-                            continue;
-                        }
-
-                        int weightIndx = Double.valueOf(Fu.getValue(j) / minValue - 1).intValue();
-                        localPro[weightIndx] += 1;
-                        total++;
-                    }
-                }
-
-                //average
-                for (int indx = 0; indx < weightSize; indx++) {
-                    localPro[indx] /= total;
-                }
-                probs[row] = localPro;
-            }
-
-        } else {
-            //construct row map to show whether the row is in given rows
-            boolean[] rowTable = new boolean[M];
-            for (int row : rows) {
-                rowTable[row] = true;
-            }
-
-            //construct probabilities with Lagrange Smoothing
-            probs = new double[N][0];
-
-            //compute the probabilities
-            for (int col : cols) {
-                SparseVector Gi = this.getColRef(col);
-                int[] indexList = Gi.indexList();
-
-                //count
-                double[] localPro = new double[weightSize];
-                Arrays.fill(localPro, 1.0d);
-
-                int total = weightSize;
-                if (indexList != null) {
-                    for (int j : indexList) {
-                        if (!rowTable[j]) {
-                            continue;
-                        }
-
-                        int weightIndx = Double.valueOf(Gi.getValue(j) / minValue - 1).intValue();
-                        localPro[weightIndx] += 1;
-                        total++;
-                    }
-                }
-
-                //average
-                for (int indx = 0; indx < weightSize; indx++) {
-                    localPro[indx] /= total;
-                }
-                probs[col] = localPro;
-            }
-        }
-
-        return probs;
     }
 
     /**

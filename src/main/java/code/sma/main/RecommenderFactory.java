@@ -10,7 +10,6 @@ import code.sma.recmmd.Recommender;
 import code.sma.recmmd.ensemble.MultTskREC;
 import code.sma.recmmd.ensemble.WEMAREC;
 import code.sma.recmmd.rank.SMARank;
-import code.sma.recmmd.standalone.GradientBoostedMA;
 import code.sma.recmmd.standalone.GroupSparsityMF;
 import code.sma.recmmd.standalone.RegularizedSVD;
 import code.sma.recmmd.standalone.StableMA;
@@ -54,8 +53,6 @@ public final class RecommenderFactory {
         } else if (StringUtil.equalsIgnoreCase(algName, "SMARank")) {
             // unpublished
             return new SMARank(rce);
-        } else if (StringUtil.equalsIgnoreCase(algName, "GBMA")) {
-            return new GradientBoostedMA(rce);
         } else {
             return null;
         }

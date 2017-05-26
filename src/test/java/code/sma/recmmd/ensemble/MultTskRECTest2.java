@@ -15,7 +15,7 @@ import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
-import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.recmmd.standalone.RegularizedSVD;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.LoggerDefineConstant;
@@ -67,9 +67,9 @@ public class MultTskRECTest2 extends TestCase {
 
                     // Here should be more considered!
                     List<Recommender> lRec = new ArrayList<Recommender>();
-                    userDenseFeature = ((MatrixFactorizationRecommender) lRec
+                    userDenseFeature = ((MFRecommender) lRec
                         .get(0)).userDenseFeatures;
-                    itemDenseFeatures = ((MatrixFactorizationRecommender) lRec
+                    itemDenseFeatures = ((MFRecommender) lRec
                         .get(0)).itemDenseFeatures;
 
                     // user
@@ -79,7 +79,7 @@ public class MultTskRECTest2 extends TestCase {
                     for (int u = 0; u < userCount; u++) {
                         int c = 0;
                         for (int l = 1; l < lRec.size(); l++) {
-                            MatrixFactorizationRecommender lrc = (MatrixFactorizationRecommender) lRec
+                            MFRecommender lrc = (MFRecommender) lRec
                                 .get(l);
                             DenseVector uFeatre = lrc.userDenseFeatures.getRowRef(u);
                             if (uFeatre == null) {
@@ -103,7 +103,7 @@ public class MultTskRECTest2 extends TestCase {
                     for (int i = 0; i < itemCount; i++) {
                         int c = 0;
                         for (int l = 1; l < lRec.size(); l++) {
-                            MatrixFactorizationRecommender lrc = (MatrixFactorizationRecommender) lRec
+                            MFRecommender lrc = (MFRecommender) lRec
                                 .get(l);
                             DenseVector iFeatre = lrc.itemDenseFeatures.getRowRef(i);
                             if (iFeatre == null) {

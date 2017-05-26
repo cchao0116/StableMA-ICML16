@@ -17,7 +17,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao Chen
  * @version $Id: GSMF.java, v 0.1 Jan 28, 2016 1:05:24 PM Exp $
  */
-public class GroupSparsityMF extends MatrixFactorizationRecommender {
+public class GroupSparsityMF extends MFRecommender {
     /**  SerialVersionNum */
     private static final long serialVersionUID = 1L;
 
@@ -51,7 +51,7 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see edu.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see MFRecommender.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
@@ -232,7 +232,7 @@ public class GroupSparsityMF extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see edu.tongji.ml.matrix.MatrixFactorizationRecommender#predict(int, int)
+     * @see MFRecommender.tongji.ml.matrix.MatrixFactorizationRecommender#predict(int, int)
      */
     @Override
     public double predict(int u, int i) {

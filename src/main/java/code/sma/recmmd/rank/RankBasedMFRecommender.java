@@ -2,7 +2,7 @@ package code.sma.recmmd.rank;
 
 import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.recmmd.RecConfigEnv;
-import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.util.EvaluationMetrics;
 
 /**
@@ -11,7 +11,7 @@ import code.sma.util.EvaluationMetrics;
  * @author Chao.Chen
  * @version $Id: RankBasedMFRecommender.java, v 0.1 2016年9月30日 上午10:49:35 Chao.Chen Exp $
  */
-public class RankBasedMFRecommender extends MatrixFactorizationRecommender {
+public class RankBasedMFRecommender extends MFRecommender {
     /** Top-N recommendations*/
     protected int                      topN;
     /** Training data*/
@@ -28,7 +28,7 @@ public class RankBasedMFRecommender extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {
@@ -37,7 +37,7 @@ public class RankBasedMFRecommender extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#evaluate(code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public EvaluationMetrics evaluate(MatlabFasionSparseMatrix testMatrix) {
@@ -45,7 +45,7 @@ public class RankBasedMFRecommender extends MatrixFactorizationRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#predict(int, int)
+     * @see code.sma.recmmd.standalone.MFRecommender#predict(int, int)
      */
     @Override
     public double predict(int u, int i) {

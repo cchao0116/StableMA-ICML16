@@ -4,7 +4,7 @@ import code.sma.datastructure.MatlabFasionSparseMatrix;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;
-import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.util.FileUtil;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixFileUtil;
@@ -27,9 +27,9 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         auxRcmmdPath = parseModelParameter(rce, auxRcmmdPath);
         conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", auxRcmmdPath);
 
-        MatrixFactorizationRecommender auxRec = null;
+        MFRecommender auxRec = null;
         if (FileUtil.exists(auxRcmmdPath)) {
-            auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
+            auxRec = (MFRecommender) SerializeUtil.readObject(auxRcmmdPath);
         }
 
         // failed in reading the object or these object doesn't exist
@@ -40,7 +40,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
             String trainFile = rootDir + "trainingset";
             MatlabFasionSparseMatrix tnMatrix = MatrixFileUtil.reads(trainFile);
 
-            auxRec = (MatrixFactorizationRecommender) RecommenderFactory
+            auxRec = (MFRecommender) RecommenderFactory
                 .instance((String) rce.get("ALG_NAME"), rce);
             auxRec.buildModel(tnMatrix, null);
             SerializeUtil.writeObject(auxRec, auxRcmmdPath);

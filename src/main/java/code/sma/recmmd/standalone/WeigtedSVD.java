@@ -14,7 +14,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao Chen
  * @version $Id: WeigtedRSVD.java, v 0.1 2014-10-19 上午11:20:27 chench Exp $
  */
-public class WeigtedSVD extends MatrixFactorizationRecommender {
+public class WeigtedSVD extends MFRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
     /** parameter used in training*/
@@ -36,7 +36,7 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
      * Model Builder
      *========================================*/
     /**
-     * @see edu.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildloclModel(MatlabFasionSparseMatrix rateMatrix,
@@ -89,6 +89,11 @@ public class WeigtedSVD extends MatrixFactorizationRecommender {
                     int u = tMatrix.getRowIndx()[numSeq];
                     int i = tMatrix.getColIndx()[numSeq];
                     double AuiReal = tMatrix.getVals()[numSeq];
+
+                    if (userDenseFeatures.getRowRef(u) == null
+                        || itemDenseFeatures.getRowRef(i) == null) {
+                        continue;
+                    }
                     double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
                     RMSE += Math.pow(AuiReal - AuiEst, 2.0);
                 }

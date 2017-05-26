@@ -14,7 +14,7 @@ import code.sma.recmmd.RecConfigEnv;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public class RegularizedSVD extends MatrixFactorizationRecommender {
+public class RegularizedSVD extends MFRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
 
@@ -34,7 +34,7 @@ public class RegularizedSVD extends MatrixFactorizationRecommender {
      * Model Builder
      *========================================*/
     /**
-     * @see edu.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
+     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.MatlabFasionSparseMatrix, edu.tongji.data.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {

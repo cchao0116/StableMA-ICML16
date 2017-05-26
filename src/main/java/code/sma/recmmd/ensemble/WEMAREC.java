@@ -67,7 +67,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MatrixFactorizationRecommender#buildGloblModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildGloblModel(code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
      */
     @Override
     public void buildModel(MatlabFasionSparseMatrix rateMatrix, MatlabFasionSparseMatrix tMatrix) {

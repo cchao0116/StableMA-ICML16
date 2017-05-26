@@ -16,7 +16,7 @@ import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.KernelSmoothing;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.GLOMA;
-import code.sma.recmmd.standalone.MatrixFactorizationRecommender;
+import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.util.SerializeUtil;
 
 /**
@@ -41,7 +41,7 @@ public class MultTskREC extends EnsembleMFRecommender {
     /** the sampling rate of randomized submatrix */
     private double                                   samplingRate;
     /** the instance of the auxiliary model */
-    private transient MatrixFactorizationRecommender auxRec;
+    private transient MFRecommender auxRec;
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
     private double[]                                 lambda           = { 1.0d, 0.5d, 0.5d };
 
@@ -64,7 +64,7 @@ public class MultTskREC extends EnsembleMFRecommender {
         this.dctzr = new NetflixMovieLensDiscretizer(rce);
 
         String auxRcmmdPath = (String) rce.get("AUXILIARY_RCMMD_MODEL_PATH");
-        this.auxRec = (MatrixFactorizationRecommender) SerializeUtil.readObject(auxRcmmdPath);
+        this.auxRec = (MFRecommender) SerializeUtil.readObject(auxRcmmdPath);
 
         {
             String lam = (String) rce.get("LAMBDA");
