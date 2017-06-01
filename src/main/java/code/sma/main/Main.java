@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.DenseVector;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ClusteringDpncyChecker;
 import code.sma.recmmd.RecConfigEnv;
@@ -107,13 +107,12 @@ public class Main {
         }
     }
 
-    protected static void avgRatingAndAdjustData(Tuples tnMatrix, int userCount,
-                                                 int itemCount, DenseVector avgUser,
-                                                 DenseVector avgItem) {
+    protected static void avgRatingAndAdjustData(Tuples tnMatrix, int userCount, int itemCount,
+                                                 DenseVector avgUser, DenseVector avgItem) {
         int rateCount = tnMatrix.getNnz();
         int[] uIndx = tnMatrix.getRowIndx();
         int[] iIndx = tnMatrix.getColIndx();
-        double[] Auis = tnMatrix.getVals();
+        float[] Auis = tnMatrix.getVals();
 
         // user average rating
         {
@@ -153,7 +152,7 @@ public class Main {
         for (int numSeq = 0; numSeq < rateCount; numSeq++) {
             int u = uIndx[numSeq];
             int i = iIndx[numSeq];
-            Auis[numSeq] = Auis[numSeq] - (avgUser.getValue(u) + avgItem.getValue(i)) / 2.0;
+            Auis[numSeq] = (float) (Auis[numSeq] - (avgUser.getValue(u) + avgItem.getValue(i)) / 2.0);
         }
     }
 

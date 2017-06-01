@@ -2,7 +2,7 @@ package code.sma.util;
 
 import code.sma.clustering.Cluster;
 import code.sma.core.DynIntArr;
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 
 /**
  * This class is used to read the clustering structure from the setting files

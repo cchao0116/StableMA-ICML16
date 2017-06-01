@@ -2,7 +2,7 @@ package code.sma.dpncy;
 
 import org.apache.commons.math3.stat.StatUtils;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
@@ -40,14 +40,14 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.core.Tuples,
+     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.core.impl.Tuples,
      *      int[])
      */
     @Override
     public double[] cmpTrainWs(Tuples tnMatrix, int[] invlvIndces) {
         int tnS = (int) (maxValue / minValue);
         double[] tnWs = new double[tnS];
-        double[] Auis = tnMatrix.getVals();
+        float[] Auis = tnMatrix.getVals();
 
         if (invlvIndces == null) {
             int count = tnMatrix.getNnz();
@@ -69,7 +69,7 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.core.Tuples,
+     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.core.impl.Tuples,
      *      int[])
      */
     @Override
@@ -82,7 +82,7 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
         int nnz = tnMatrix.getNnz();
         int[] uIndx = tnMatrix.getRowIndx();
         int[] iIndx = tnMatrix.getColIndx();
-        double[] Auis = tnMatrix.getVals();
+        float[] Auis = tnMatrix.getVals();
         for (int numSeq = 0; numSeq < nnz; numSeq++) {
             int uId = uIndx[numSeq];
             int iId = iIndx[numSeq];

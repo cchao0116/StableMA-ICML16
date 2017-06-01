@@ -7,8 +7,8 @@ import java.util.Queue;
 
 import org.apache.log4j.Logger;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.DenseVector;
+import code.sma.core.impl.Tuples;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;

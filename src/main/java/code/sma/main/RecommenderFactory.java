@@ -11,7 +11,7 @@ import code.sma.recmmd.ensemble.MultTskREC;
 import code.sma.recmmd.ensemble.WEMAREC;
 import code.sma.recmmd.rank.SMARank;
 import code.sma.recmmd.standalone.GroupSparsityMF;
-import code.sma.recmmd.standalone.RegularizedSVD;
+import code.sma.recmmd.standalone.RegSVD;
 import code.sma.recmmd.standalone.StableMA;
 import code.sma.util.StringUtil;
 
@@ -28,7 +28,7 @@ public final class RecommenderFactory {
     public static Recommender instance(String algName, RecConfigEnv rce) {
         if (StringUtil.equalsIgnoreCase(algName, "RegSVD")) {
             // Improving Regularized Singular Value Decomposition Collaborative Filtering
-            return new RegularizedSVD(rce);
+            return new RegSVD(rce);
         } else if (StringUtil.equalsIgnoreCase(algName, "SMA")) {
             // Stable Matrix Approximation
             return new StableMA(rce);

@@ -1,7 +1,7 @@
 package code.sma.recmmd.standalone;
 
 import code.sma.core.Accumulator;
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.RecConfigEnv;
@@ -19,18 +19,18 @@ import code.sma.util.LoggerUtil;
  */
 public class GLOMA extends MFRecommender {
     /** SerialVersionNum */
-    private static final long                        serialVersionUID = 1L;
+    private static final long       serialVersionUID = 1L;
     /**Indicator function to show whether the row is within the class*/
-    private boolean[]                                raf;
+    private boolean[]               raf;
     /**Indicator function to show whether the column is within the class*/
-    private boolean[]                                caf;
+    private boolean[]               caf;
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]                                 lambda;
+    private double[]                lambda;
     /** Previously-trained model*/
     private transient MFRecommender auxRec;
 
-    Discretizer                                      dctzr;
-    double[]                                         tnWs;
+    Discretizer                     dctzr;
+    double[]                        tnWs;
 
     /*========================================
      * Constructors
@@ -47,11 +47,10 @@ public class GLOMA extends MFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildloclModel(code.sma.core.Tuples, code.sma.core.Tuples)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildloclModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
-    public void buildloclModel(Tuples rateMatrix,
-                               Tuples tMatrix) {
+    public void buildloclModel(Tuples rateMatrix, Tuples tMatrix) {
         super.buildloclModel(rateMatrix, tMatrix);
 
         // Gradient Descent:
@@ -61,7 +60,7 @@ public class GLOMA extends MFRecommender {
         double currErr = 9999;
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         // Compute the involved entries
         trainInvlvIndces = ClusterInfoUtil.readInvolvedIndicesExpanded(rateMatrix, raf, caf);
@@ -173,7 +172,7 @@ public class GLOMA extends MFRecommender {
 
     }
 
-    protected void specificLearning(int[] uIndx, int[] iIndx, double[] Auis, Accumulator accErr,
+    protected void specificLearning(int[] uIndx, int[] iIndx, float[] Auis, Accumulator accErr,
                                     Accumulator accFactrUsr, Accumulator accFactrItm) {
         for (int numSeq : trainInvlvIndces) {
             int u = uIndx[numSeq];
@@ -215,7 +214,7 @@ public class GLOMA extends MFRecommender {
 
     }
 
-    protected void jointlyLearning(int[] uIndx, int[] iIndx, double[] Auis, Accumulator accErr,
+    protected void jointlyLearning(int[] uIndx, int[] iIndx, float[] Auis, Accumulator accErr,
                                    Accumulator accFactrUsr, Accumulator accFactrItm) {
         for (int numSeq : trainInvlvIndces) {
             int u = uIndx[numSeq];
@@ -297,12 +296,11 @@ public class GLOMA extends MFRecommender {
      * @param invlvCounts   item count of three mixture models respectively
      * @return  the squared error of three mixture models
      */
-    protected void statistics(Tuples rateMatrix, int[] invlvIndces,
-                              Accumulator accErr, Accumulator accFactrUsr,
-                              Accumulator accFactrItm) {
+    protected void statistics(Tuples rateMatrix, int[] invlvIndces, Accumulator accErr,
+                              Accumulator accFactrUsr, Accumulator accFactrItm) {
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         // initialize accumulator about ERROR
         for (int numSeq : invlvIndces) {

@@ -1,6 +1,6 @@
 package code.sma.thread;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.Recommender;
 
 /**

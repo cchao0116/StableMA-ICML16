@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
@@ -67,7 +67,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildGloblModel(code.sma.core.Tuples, code.sma.core.Tuples)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildGloblModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
     public void buildModel(Tuples rateMatrix, Tuples tMatrix) {

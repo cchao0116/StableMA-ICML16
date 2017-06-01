@@ -1,6 +1,6 @@
 package code.sma.dpncy;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;

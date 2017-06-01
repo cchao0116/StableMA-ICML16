@@ -4,8 +4,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.standalone.MFRecommender;
@@ -20,29 +20,28 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: EnsembleMFRecommender.java, v 0.1 2016年9月26日 下午4:22:14 Chao.Chen Exp $
  */
-public abstract class EnsembleMFRecommender extends MFRecommender
-                                            implements TaskMsgDispatcher {
+public abstract class EnsembleMFRecommender extends MFRecommender implements TaskMsgDispatcher {
     /** SerialVersionNum */
-    protected static final long                  serialVersionUID = 1L;
+    protected static final long      serialVersionUID = 1L;
     /** cumulative prediction */
-    protected SparseMatrix                       cumPrediction    = null;
+    protected SparseMatrix           cumPrediction    = null;
     /** cumulative weights */
-    protected SparseMatrix                       cumWeight        = null;
+    protected SparseMatrix           cumWeight        = null;
     /** the number of threads in training*/
-    protected int                                threadNum;
+    protected int                    threadNum;
     /** current assigned thread id*/
-    protected int                                tskId            = 0;
+    protected int                    tskId            = 0;
     /** algorithm environment*/
-    protected transient RecConfigEnv             rce;
+    protected transient RecConfigEnv rce;
 
     /** mutex using in map procedure*/
-    protected static Object                      MAP_MUTEX        = new Object();
+    protected static Object          MAP_MUTEX        = new Object();
     /** mutex using in reduce procedure*/
-    protected static Object                      REDUCE_MUTEX     = new Object();
+    protected static Object          REDUCE_MUTEX     = new Object();
     /** training data*/
-    protected transient Tuples tnMatrix;
+    protected transient Tuples       tnMatrix;
     /** testing data*/
-    protected transient Tuples ttMatrix;
+    protected transient Tuples       ttMatrix;
 
     /*========================================
      * Constructors
@@ -56,7 +55,7 @@ public abstract class EnsembleMFRecommender extends MFRecommender
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.Tuples, code.sma.core.Tuples)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
     public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
@@ -80,11 +79,10 @@ public abstract class EnsembleMFRecommender extends MFRecommender
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
      */
     @Override
-    public void reduce(Object recmmd, Tuples tnMatrix,
-                       Tuples ttMatrix) {
+    public void reduce(Object recmmd, Tuples tnMatrix, Tuples ttMatrix) {
         int[] uIndx = ttMatrix.getRowIndx();
         int[] iIndx = ttMatrix.getColIndx();
-        double[] vals = ttMatrix.getVals();
+        float[] vals = ttMatrix.getVals();
 
         // update approximated model
         synchronized (REDUCE_MUTEX) {
@@ -95,8 +93,7 @@ public abstract class EnsembleMFRecommender extends MFRecommender
 
                 // update global approximation model
                 if (((MFRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
-                    || ((MFRecommender) recmmd).itemDenseFeatures
-                        .getRowRef(i) == null) {
+                    || ((MFRecommender) recmmd).itemDenseFeatures.getRowRef(i) == null) {
                     continue;
                 }
 
@@ -125,12 +122,9 @@ public abstract class EnsembleMFRecommender extends MFRecommender
         }
         rmse = Math.sqrt(rmse / nnz);
 
-        LoggerUtil.info(resultLogger,
-            String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f",
-                ((Recommender) recmmd).threadId, rmse,
-                ((MFRecommender) recmmd).trainInvlvIndces.length,
-                ((MFRecommender) recmmd).testInvlvIndces.length,
-                ((MFRecommender) recmmd).bestRMSE));
+        LoggerUtil.info(resultLogger, String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f",
+            ((Recommender) recmmd).threadId, rmse, ((MFRecommender) recmmd).trainInvlvIndces.length,
+            ((MFRecommender) recmmd).testInvlvIndces.length, ((MFRecommender) recmmd).bestRMSE));
     }
 
     /** 

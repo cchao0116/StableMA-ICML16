@@ -2,9 +2,9 @@ package code.sma.recmmd.standalone;
 
 import org.apache.log4j.Logger;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
@@ -77,14 +77,13 @@ public abstract class MFRecommender extends Recommender {
     }
 
     public MFRecommender(RecConfigEnv rce, DenseMatrix userDenseFeatures,
-                                          DenseMatrix itemDenseFeatures) {
+                         DenseMatrix itemDenseFeatures) {
         commonParse(rce);
         this.userDenseFeatures = userDenseFeatures;
         this.itemDenseFeatures = itemDenseFeatures;
     }
 
-    public MFRecommender(RecConfigEnv rce, int[] trainInvlvIndces,
-                                          int[] testInvlvIndces) {
+    public MFRecommender(RecConfigEnv rce, int[] trainInvlvIndces, int[] testInvlvIndces) {
         commonParse(rce);
 
         this.trainInvlvIndces = trainInvlvIndces;
@@ -92,15 +91,15 @@ public abstract class MFRecommender extends Recommender {
     }
 
     private void commonParse(RecConfigEnv rce) {
-        this.featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
-        this.learningRate = ((Double) rce.get("LEARNING_RATE_VALUE")).doubleValue();
-        this.regularizer = ((Double) rce.get("REGULAIZED_VALUE")).doubleValue();
-        this.maxIter = ((Double) rce.get("MAX_ITERATION_VALUE")).intValue();
+        this.featureCount = ((Float) rce.get("FEATURE_COUNT_VALUE")).intValue();
+        this.learningRate = ((Float) rce.get("LEARNING_RATE_VALUE")).doubleValue();
+        this.regularizer = ((Float) rce.get("REGULAIZED_VALUE")).doubleValue();
+        this.maxIter = ((Float) rce.get("MAX_ITERATION_VALUE")).intValue();
 
-        this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
-        this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
-        this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
-        this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
+        this.userCount = ((Float) rce.get("USER_COUNT_VALUE")).intValue();
+        this.itemCount = ((Float) rce.get("ITEM_COUNT_VALUE")).intValue();
+        this.maxValue = ((Float) rce.get("MAX_RATING_VALUE")).doubleValue();
+        this.minValue = ((Float) rce.get("MIN_RATING_VALUE")).doubleValue();
         this.showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
 
         String lsfnctn = (String) rce.get("LOSS_FUNCTION");
@@ -125,19 +124,18 @@ public abstract class MFRecommender extends Recommender {
      * @see edu.tongji.ml.Recommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
-        LoggerUtil.info(runningLogger,
-            "Param: FC: " + featureCount + "\tLR: " + learningRate + "\tR: " + regularizer);
+    public void buildModel(Tuples train, Tuples test) {
+        LoggerUtil.info(runningLogger, String.format("Param: FC:%d\tLR:%.5f\tR:%.5f", featureCount,
+            learningRate, regularizer));
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
         itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
     }
 
     /**
-     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.Tuples, code.sma.core.Tuples)
+     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
-    public void buildloclModel(Tuples rateMatrix,
-                               Tuples tMatrix) {
+    public void buildloclModel(Tuples rateMatrix, Tuples tMatrix) {
         LoggerUtil.info(runningLogger,
             String.format("Param: FC:%d,LR:%.7f,R:%.7f", featureCount, learningRate, regularizer));
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
@@ -155,8 +153,7 @@ public abstract class MFRecommender extends Recommender {
      * @param currErr       the current training error
      * @return              true to stop, false to continue
      */
-    protected boolean recordLoggerAndDynamicStop(int round, Tuples tMatrix,
-                                                 double currErr) {
+    protected boolean recordLoggerAndDynamicStop(int round, Tuples tMatrix, double currErr) {
         if (showProgress && (round % 5 == 0) && tMatrix != null) {
             EvaluationMetrics metric = evaluate(tMatrix);
             LoggerUtil.info(runningLogger,
@@ -178,7 +175,7 @@ public abstract class MFRecommender extends Recommender {
      *========================================*/
 
     /**
-     * @see code.sma.recmmd.Recommender#evaluate(code.sma.core.Tuples)
+     * @see code.sma.recmmd.Recommender#evaluate(code.sma.core.impl.Tuples)
      */
     @Override
     public EvaluationMetrics evaluate(Tuples testMatrix) {

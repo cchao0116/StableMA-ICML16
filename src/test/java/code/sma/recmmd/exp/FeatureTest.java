@@ -9,15 +9,15 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.GLOMA;
-import code.sma.recmmd.standalone.RegularizedSVD;
+import code.sma.recmmd.standalone.RegSVD;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.FileUtil;
@@ -60,7 +60,7 @@ public class FeatureTest {
 
                 Tuples ttMatrix = MatrixFileUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
-                RegularizedSVD rcmmd = extctGlbl(rce);
+                RegSVD rcmmd = extctGlbl(rce);
                 SerializeUtil.writeObject(rcmmd, String.format(NEW_EMBD_W_PATTERN, ITER_SEQ));
                 LoggerUtil.info(logger, String.format("%s\n%s", rcmmd.toString(),
                     rcmmd.evaluate(ttMatrix).printOneLine()));
@@ -70,8 +70,8 @@ public class FeatureTest {
 
     }
 
-    protected RegularizedSVD extctGlbl(RecConfigEnv rce) {
-        RegularizedSVD auxRec = (RegularizedSVD) SerializeUtil
+    protected RegSVD extctGlbl(RecConfigEnv rce) {
+        RegSVD auxRec = (RegSVD) SerializeUtil
             .readObject(String.format(OLD_EMBD_R_PATTERN, ITER_SEQ - 1));
         List<GLOMA> modls = new ArrayList<GLOMA>();
         for (int i = 0; i < 30; i++) {
@@ -119,12 +119,12 @@ public class FeatureTest {
             ExceptionUtil.caught(e, "Item Features");
         }
 
-        return new RegularizedSVD(rce, userFeature, itemFeature);
+        return new RegSVD(rce, userFeature, itemFeature);
     }
 
     public static class MultThread extends Thread {
         public static List<GLOMA>    modls;
-        public static RegularizedSVD auxRec;
+        public static RegSVD auxRec;
         public static int            maxID;
         public static boolean        isU;
         private static final Object  MUTEX = new Object();
@@ -190,7 +190,7 @@ public class FeatureTest {
             }
         }
 
-        protected String getUFeats(List<GLOMA> modls, RegularizedSVD auxRec, int u) {
+        protected String getUFeats(List<GLOMA> modls, RegSVD auxRec, int u) {
             DenseVector avec = auxRec.userDenseFeatures.getRowRef(u);
 
             StringBuilder uFeats = new StringBuilder();
@@ -208,7 +208,7 @@ public class FeatureTest {
             return uFeats.toString();
         }
 
-        protected String getVFeats(List<GLOMA> modls, RegularizedSVD auxRec, int i) {
+        protected String getVFeats(List<GLOMA> modls, RegSVD auxRec, int i) {
             DenseVector avec = auxRec.itemDenseFeatures.getRowRef(i);
 
             StringBuilder uFeats = new StringBuilder();

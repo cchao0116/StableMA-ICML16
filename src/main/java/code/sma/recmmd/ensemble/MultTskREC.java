@@ -9,8 +9,8 @@ import java.util.Random;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.DenseVector;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.dpncy.NetflixMovieLensDiscretizer;
 import code.sma.recmmd.KernelSmoothing;

@@ -9,9 +9,9 @@ import java.io.LineNumberReader;
 
 import org.apache.commons.io.IOUtils;
 
-import code.sma.core.Tuples;
 import code.sma.core.impl.SparseMatrix;
 import code.sma.core.impl.SparseVector;
+import code.sma.core.impl.Tuples;
 
 /**
  * Matrix write utilities

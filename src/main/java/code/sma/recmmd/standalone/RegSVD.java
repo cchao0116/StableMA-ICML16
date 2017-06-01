@@ -1,7 +1,8 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.core.Tuples;
+import code.sma.core.DataElem;
 import code.sma.core.impl.DenseMatrix;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
@@ -14,19 +15,18 @@ import code.sma.recmmd.RecConfigEnv;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public class RegularizedSVD extends MFRecommender {
+public class RegSVD extends MFRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
 
     /*========================================
      * Constructors
      *========================================*/
-    public RegularizedSVD(RecConfigEnv rce) {
+    public RegSVD(RecConfigEnv rce) {
         super(rce);
     }
 
-    public RegularizedSVD(RecConfigEnv rce, DenseMatrix userDenseFeatures,
-                          DenseMatrix itemDenseFeatures) {
+    public RegSVD(RecConfigEnv rce, DenseMatrix userDenseFeatures, DenseMatrix itemDenseFeatures) {
         super(rce, userDenseFeatures, itemDenseFeatures);
     }
 
@@ -46,20 +46,16 @@ public class RegularizedSVD extends MFRecommender {
         double prevErr = 99999;
         double currErr = 9999;
 
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
-
         boolean isCollaps = false;
         while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter && !isCollaps) {
             double sum = 0.0;
 
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                int u = uIndx[numSeq];
-                int i = iIndx[numSeq];
+            for (DataElem e : rateMatrix) {
+                int u = e.getIndex_global()[0];
+                int i = e.getIndex_global()[1];
 
                 //global model
-                double AuiReal = Auis[numSeq];
+                double AuiReal = e.getLabel();
                 double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
                 sum += lossFunction.diff(AuiReal, AuiEst);
 

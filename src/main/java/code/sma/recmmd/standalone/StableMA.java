@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import org.apache.commons.math3.stat.StatUtils;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
 
@@ -46,7 +46,7 @@ public class StableMA extends MFRecommender {
 
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         // rating assignment
         // pre-compute the rmse
@@ -128,8 +128,8 @@ public class StableMA extends MFRecommender {
      * @param numInSubset       the number of ratings in different partitions
      * @return
      */
-    protected double assignStable(Tuples rateMatrix, boolean[][] rAssigmnt,
-                                  double[] errors, double[] seInSubset, int[] numInSubset) {
+    protected double assignStable(Tuples rateMatrix, boolean[][] rAssigmnt, double[] errors,
+                                  double[] seInSubset, int[] numInSubset) {
         int rateCount = rateMatrix.getNnz();
 
         // build RSVD model
@@ -145,14 +145,14 @@ public class StableMA extends MFRecommender {
         rce.put("MAX_ITERATION_VALUE", 30 * 1.0);
         rce.put("VERBOSE_BOOLEAN", false);
 
-        RegularizedSVD recmmd = new RegularizedSVD(rce);
+        RegSVD recmmd = new RegSVD(rce);
         recmmd.buildModel(rateMatrix, null);
         double recRMSE = recmmd.evaluate(rateMatrix).getRMSE();
 
         // compute a probability for every rating
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         double[] diffArr = new double[rateCount];
         for (int numSeq = 0; numSeq < rateCount; numSeq++) {
@@ -191,8 +191,8 @@ public class StableMA extends MFRecommender {
      * @param numInSubset       the number of ratings in different partitions
      * @return
      */
-    protected double initialStatParam(Tuples rateMatrix, boolean[][] rAssigmnt,
-                                      double[] errors, double[] seInSubset, int[] numInSubset) {
+    protected double initialStatParam(Tuples rateMatrix, boolean[][] rAssigmnt, double[] errors,
+                                      double[] seInSubset, int[] numInSubset) {
         // refresh statistical parameters
         Arrays.fill(errors, 0.0d);
         Arrays.fill(seInSubset, 0.0d);
@@ -201,7 +201,7 @@ public class StableMA extends MFRecommender {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         double se = 0.0d;
         for (int numSeq = 0; numSeq < rateCount; numSeq++) {

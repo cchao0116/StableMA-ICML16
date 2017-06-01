@@ -9,9 +9,9 @@ import org.ujmp.core.util.MathUtil;
 import com.google.common.collect.MinMaxPriorityQueue;
 
 import code.sma.core.DynIntArr;
-import code.sma.core.Tuples;
 import code.sma.core.impl.SparseMatrix;
 import code.sma.core.impl.SparseVector;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.Recommender;
 
 /**
@@ -42,8 +42,7 @@ public class EvaluationMetrics {
         build(ttMatrix, null);
     }
 
-    public EvaluationMetrics(Recommender recmmd, Tuples ttMatrix,
-                             Tuples trMatrix, int N) {
+    public EvaluationMetrics(Recommender recmmd, Tuples ttMatrix, Tuples trMatrix, int N) {
         super();
         this.recmmd = recmmd;
         this.N = N;
@@ -60,7 +59,7 @@ public class EvaluationMetrics {
         int totlCount = ttMatrix.getNnz();
         int[] uIndx = ttMatrix.getRowIndx();
         int[] iIndx = ttMatrix.getColIndx();
-        double[] Auis = ttMatrix.getVals();
+        float[] Auis = ttMatrix.getVals();
         for (int numSeq = 0; numSeq < totlCount; numSeq++) {
             int u = uIndx[numSeq];
             int i = iIndx[numSeq];

@@ -1,6 +1,6 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.Discretizer;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.util.LoggerUtil;
@@ -39,8 +39,7 @@ public class WeigtedSVD extends MFRecommender {
      * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildloclModel(Tuples rateMatrix,
-                               Tuples tMatrix) {
+    public void buildloclModel(Tuples rateMatrix, Tuples tMatrix) {
         super.buildloclModel(rateMatrix, null);
 
         // Compute dependencies
@@ -54,7 +53,7 @@ public class WeigtedSVD extends MFRecommender {
 
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
         while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter) {
             double sum = 0.0;
 

@@ -1,8 +1,8 @@
 package code.sma.recmmd.standalone;
 
 import code.sma.core.DynIntArr;
-import code.sma.core.Tuples;
 import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.Tuples;
 import code.sma.core.impl.UJMPDenseMatrix;
 import code.sma.core.impl.UJMPDenseVector;
 import code.sma.recmmd.RecConfigEnv;
@@ -138,7 +138,7 @@ public class GroupSparsityMF extends MFRecommender {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         // the right vector term for every user
         UJMPDenseMatrix rightSideMtx = new UJMPDenseMatrix(userCount, featureCount);
@@ -168,7 +168,7 @@ public class GroupSparsityMF extends MFRecommender {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
 
         // the right vector term for every item
         UJMPDenseMatrix rightSideMtx = new UJMPDenseMatrix(itemCount, featureCount);
@@ -220,7 +220,7 @@ public class GroupSparsityMF extends MFRecommender {
         int rateCount = rateMatrix.getNnz();
         int[] uIndx = rateMatrix.getRowIndx();
         int[] iIndx = rateMatrix.getColIndx();
-        double[] Auis = rateMatrix.getVals();
+        float[] Auis = rateMatrix.getVals();
         for (int numSeq = 0; numSeq < rateCount; numSeq++) {
             int u = uIndx[numSeq];
             int i = iIndx[numSeq];

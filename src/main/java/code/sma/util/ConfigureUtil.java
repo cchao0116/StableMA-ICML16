@@ -46,11 +46,11 @@ public final class ConfigureUtil {
                     int num = elmnts.length;
                     DenseVector dv = new DenseVector(num);
                     for (int n = 0; n < num; n++) {
-                        dv.setValue(n, Double.valueOf(elmnts[n].trim()));
+                        dv.setValue(n, Float.valueOf(elmnts[n].trim()));
                     }
                     conf.setVector(key, dv);
                 } else if (key.endsWith("_VALUE")) {
-                    conf.put(key, Double.valueOf(val.trim()));
+                    conf.put(key, Float.valueOf(val.trim()));
                 } else if (key.endsWith("_BOOLEAN")) {
                     conf.put(key, Boolean.valueOf(val.trim()));
                 } else {

@@ -5,8 +5,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import code.sma.core.impl.Tuples;
@@ -23,23 +21,15 @@ import code.sma.util.MatrixFileUtil;
 /**
  * 
  * @author Chao.Chen
- * @version $Id: SMATest.java, v 0.1 2017年3月28日 下午1:14:34 Chao.Chen Exp $
+ * @version $Id: RegSVDTest.java, v 0.1 2017年6月1日 下午2:08:30 Chao.Chen Exp $
  */
-public class SMATest {
+public class RegSVDTest {
     /** the logger instance*/
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
-    /**
-     * 
-     * @throws java.lang.Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testAlg() {
-        Configures conf = ConfigureUtil.read("src/main/resources/samples/SMA.properties");
+    public void test() {
+        Configures conf = ConfigureUtil.read("src/main/resources/samples/RSVD.properties");
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
         for (String rootDir : rootDirs) {
@@ -52,7 +42,7 @@ public class SMATest {
             LoggerUtil.info(logger, "2. running " + algName);
 
             TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
-            int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
+            int threadNum = ((Float) conf.get("THREAD_NUMBER_VALUE")).intValue();
 
             Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
             Tuples tttMatrix = MatrixFileUtil.reads(testFile);
@@ -68,14 +58,6 @@ public class SMATest {
                 ExceptionUtil.caught(e, "Stand-alone model Thead!");
             }
         }
-    }
-
-    /**
-     * 
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception {
     }
 
 }

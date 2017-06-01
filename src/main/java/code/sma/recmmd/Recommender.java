@@ -2,7 +2,7 @@ package code.sma.recmmd;
 
 import java.io.Serializable;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.util.EvaluationMetrics;
 
 /**

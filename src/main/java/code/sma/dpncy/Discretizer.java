@@ -1,6 +1,6 @@
 package code.sma.dpncy;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 
 /**
  * convert continuous values into discrete values   

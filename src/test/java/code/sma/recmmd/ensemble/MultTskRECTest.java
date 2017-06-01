@@ -3,7 +3,7 @@ package code.sma.recmmd.ensemble;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;

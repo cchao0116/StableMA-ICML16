@@ -3,7 +3,7 @@ package code.sma.recmmd.rank;
 import java.util.HashSet;
 import java.util.Set;
 
-import code.sma.core.Tuples;
+import code.sma.core.impl.Tuples;
 import code.sma.recmmd.RecConfigEnv;
 
 /**
@@ -26,7 +26,7 @@ public class SMARank extends RankBasedMFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.Tuples, code.sma.core.Tuples)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
     public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
