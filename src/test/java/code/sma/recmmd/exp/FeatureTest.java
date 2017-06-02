@@ -41,7 +41,7 @@ public class FeatureTest {
     protected final static String PYTHON_PATH          = "C:/Users/Administrator/AppData/Local/Programs/Python/Python36/python";
 
     @Test
-    public void test() {
+    public void testAlg() {
 
         Configures conf = ConfigureUtil.read("src/main/resources/samples/MTREC.properties");
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");

@@ -18,10 +18,10 @@ public class DataElem {
 
     /** array of global feature index*/
     protected int[]   index_global;
-    /** array of user feature index*/
-    protected short[] index_user;
-    /** array of item feature index*/
-    protected short[] index_item;
+    /** array of user feature index, i.e., uIDs*/
+    protected int[]   index_user;
+    /** array of item feature index, i.e., iIDs*/
+    protected int[]   index_item;
 
     /** array of global feature value */
     protected float[] value_global;
@@ -33,22 +33,6 @@ public class DataElem {
     public DataElem(float label) {
         super();
         this.label = label;
-    }
-
-    public DataElem(float label, short num_global, short num_ufactor, short num_ifacotr,
-                    int[] index_global, short[] index_user, short[] index_item,
-                    float[] value_global, float[] value_ufactor, float[] value_ifactor) {
-        super();
-        this.label = label;
-        this.num_global = num_global;
-        this.num_ufactor = num_ufactor;
-        this.num_ifacotr = num_ifacotr;
-        this.index_global = index_global;
-        this.index_user = index_user;
-        this.index_item = index_item;
-        this.value_global = value_global;
-        this.value_ufactor = value_ufactor;
-        this.value_ifactor = value_ifactor;
     }
 
     /**
@@ -200,7 +184,7 @@ public class DataElem {
      * 
      * @return property value of index_user
      */
-    public short[] getIndex_user() {
+    public int[] getIndex_user() {
         return index_user;
     }
 
@@ -209,7 +193,7 @@ public class DataElem {
      * 
      * @param index_user value to be assigned to property index_user
      */
-    public void setIndex_user(short[] index_user) {
+    public void setIndex_user(int[] index_user) {
         this.index_user = index_user;
     }
 
@@ -218,7 +202,7 @@ public class DataElem {
      * 
      * @return property value of index_item
      */
-    public short[] getIndex_item() {
+    public int[] getIndex_item() {
         return index_item;
     }
 
@@ -227,7 +211,7 @@ public class DataElem {
      * 
      * @param index_item value to be assigned to property index_item
      */
-    public void setIndex_item(short[] index_item) {
+    public void setIndex_item(int[] index_item) {
         this.index_item = index_item;
     }
 

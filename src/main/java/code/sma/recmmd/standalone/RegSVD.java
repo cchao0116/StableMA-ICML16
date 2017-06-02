@@ -37,12 +37,12 @@ public class RegSVD extends MFRecommender {
      * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
      */
     @Override
-    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
-        super.buildModel(rateMatrix, tMatrix);
+    public void buildModel(Tuples train, Tuples test) {
+        super.buildModel(train, test);
 
         // Gradient Descent:
         int round = 0;
-        int rateCount = rateMatrix.getNnz();
+        int rateCount = train.getNnz();
         double prevErr = 99999;
         double currErr = 9999;
 
@@ -50,7 +50,7 @@ public class RegSVD extends MFRecommender {
         while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter && !isCollaps) {
             double sum = 0.0;
 
-            for (DataElem e : rateMatrix) {
+            for (DataElem e : train) {
                 int u = e.getIndex_global()[0];
                 int i = e.getIndex_global()[1];
 
@@ -78,7 +78,7 @@ public class RegSVD extends MFRecommender {
             round++;
 
             // Show progress:
-            isCollaps = recordLoggerAndDynamicStop(round, tMatrix, currErr);
+            isCollaps = recordLoggerAndDynamicStop(round, test, currErr);
         }
     }
 

@@ -28,7 +28,7 @@ public class RegSVDTest {
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     @Test
-    public void test() {
+    public void testAlg() {
         Configures conf = ConfigureUtil.read("src/main/resources/samples/RSVD.properties");
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 

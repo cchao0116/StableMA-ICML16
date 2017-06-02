@@ -135,7 +135,7 @@ public abstract class MFRecommender extends Recommender {
      * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
-    public void buildloclModel(Tuples rateMatrix, Tuples tMatrix) {
+    public void buildloclModel(Tuples train, Tuples test) {
         LoggerUtil.info(runningLogger,
             String.format("Param: FC:%d,LR:%.7f,R:%.7f", featureCount, learningRate, regularizer));
         userDenseFeatures = new DenseMatrix(userCount, featureCount);

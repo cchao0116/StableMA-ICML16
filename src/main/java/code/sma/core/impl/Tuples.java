@@ -2,9 +2,15 @@ package code.sma.core.impl;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Scanner;
 
+import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
+
+import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
+import code.sma.util.StringUtil;
 
 /**
  * 
@@ -12,22 +18,23 @@ import code.sma.core.DataElem;
  * @version $Id: MatlabFasionSparseMatrix.java, v 0.1 2015-5-16 下午2:55:00 Exp $
  */
 public class Tuples extends AbstractMatrix {
+    /**  number of rows in the sparse matrix */
+    protected int     num_row;
+    /**  number of nonzero entries in sparse matrix */
+    protected int     num_val;
+
     /** array of user id*/
     protected int[]   rowIndx;
     /** array of item id*/
     protected int[]   colIndx;
     /** array of labels*/
     protected float[] vals;
-    /** number of non-zero labels*/
-    protected int     nnz;
-
-    /** index of next element to return*/
 
     public Tuples(int nnz) {
         this.rowIndx = new int[nnz];
         this.colIndx = new int[nnz];
         this.vals = new float[nnz];
-        this.nnz = 0;
+        this.num_val = 0;
     }
 
     /**
@@ -35,10 +42,10 @@ public class Tuples extends AbstractMatrix {
      */
     @Override
     public void setValue(int i, int j, double value) {
-        rowIndx[nnz] = i;
-        colIndx[nnz] = j;
-        vals[nnz] = (float) value;
-        nnz++;
+        rowIndx[num_val] = i;
+        colIndx[num_val] = j;
+        vals[num_val] = (float) value;
+        num_val++;
     }
 
     /** 
@@ -50,6 +57,30 @@ public class Tuples extends AbstractMatrix {
     }
 
     /** 
+     * @see code.sma.core.AbstractMatrix#loadNext(java.lang.String)
+     */
+    @Override
+    public void loadNext(String line) {
+        Assert.assertTrue("Line must not be blank", StringUtil.isNotBlank(line));
+        Scanner scanner = new Scanner(line);
+        scanner.skip("^(\\d+\\s+){4}");
+        scanner.useDelimiter(":+|\\s+");
+
+        int uId = scanner.nextInt();
+        scanner.nextFloat();
+
+        while (scanner.hasNextInt()) {
+            rowIndx[num_val] = uId;
+            colIndx[num_val] = scanner.nextInt();
+            vals[num_val] = scanner.nextFloat();
+            num_val++;
+        }
+
+        num_row++;
+        IOUtils.closeQuietly(scanner);
+    }
+
+    /** 
      * @see java.lang.Iterable#iterator()
      */
     @Override
@@ -57,17 +88,14 @@ public class Tuples extends AbstractMatrix {
         return new Iter();
     }
 
-    protected class Iter implements Iterator<DataElem> {
-        protected int cursor  = 0;
-        /** index of last element returned; -1 if no such*/
-        protected int lastRet = -1;
+    protected class Iter extends AbstractIterator {
 
         /** 
          * @see java.util.Iterator#hasNext()
          */
         @Override
         public boolean hasNext() {
-            return cursor != nnz;
+            return cursor != num_row;
         }
 
         /** 
@@ -86,21 +114,13 @@ public class Tuples extends AbstractMatrix {
             return e;
         }
 
-        /** 
-         * @see java.util.Iterator#remove()
-         */
-        @Override
-        public void remove() {
-            throw new RuntimeException("This method has not been implemented in Tuples!");
-        }
-
     }
 
     public void reduceMem() {
-        if (nnz < rowIndx.length) {
-            rowIndx = Arrays.copyOf(rowIndx, nnz);
-            colIndx = Arrays.copyOf(colIndx, nnz);
-            vals = Arrays.copyOf(vals, nnz);
+        if (num_val < rowIndx.length) {
+            rowIndx = Arrays.copyOf(rowIndx, num_val);
+            colIndx = Arrays.copyOf(colIndx, num_val);
+            vals = Arrays.copyOf(vals, num_val);
         }
     }
 
@@ -137,12 +157,12 @@ public class Tuples extends AbstractMatrix {
      * @return property value of nnz
      */
     public int getNnz() {
-        return nnz;
+        return num_val;
     }
 
     public SparseMatrix toSparseMatrix(int m, int n) {
         SparseMatrix sm = new SparseMatrix(m, n);
-        for (int indx = 0; indx < nnz; indx++) {
+        for (int indx = 0; indx < num_val; indx++) {
             int u = rowIndx[indx];
             int i = colIndx[indx];
             float AuiReal = vals[indx];

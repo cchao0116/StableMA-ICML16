@@ -25,4 +25,11 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
      */
     public abstract void setValue(int i, int j, double value);
 
+    /**
+     * Load one-row data. For example, <br/>
+     * [LABEL] #GLOBAL_FEAT #USER_FEAT #ITEM_FEAT {gIndex:gVal} {uIndex:uVal} {iIndex:iVal}
+     * @param line One line containing one-row data
+     */
+    public abstract void loadNext(String line);
+
 }

@@ -36,20 +36,18 @@ public abstract class Recommender implements Serializable {
     /**
      * Build a model with given training set.
      * 
-     * @param rateMatrix
-     * @param tMatrix
+     * @param train
+     * @param test
      */
-    public abstract void buildModel(Tuples rateMatrix,
-                                    Tuples tMatrix);
+    public abstract void buildModel(Tuples train, Tuples test);
 
     /**
      * Build a model with given training set.
      * 
-     * @param rateMatrix
-     * @param tMatrix
+     * @param train
+     * @param test
      */
-    public abstract void buildloclModel(Tuples rateMatrix,
-                                        Tuples tMatrix);
+    public abstract void buildloclModel(Tuples train, Tuples test);
 
     /*========================================
      * Prediction
