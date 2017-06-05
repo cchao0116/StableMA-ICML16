@@ -34,7 +34,17 @@ public abstract class AbstractVector implements Serializable {
      * @param i The index to retrieve.
      * @return The value stored at the given index.
      */
-    public abstract float getValue(int i);
+    public abstract float floatValue(int i);
+
+    /**
+     * Retrieve a stored value from the given index.
+     * 
+     * @param i The index to retrieve.
+     * @return The value stored at the given index.
+     */
+    public int intValue(int i) {
+        throw new RuntimeException("This method has not been implemented in AbstractVector!");
+    }
 
     /**
      * Capacity of this vector.
@@ -50,15 +60,15 @@ public abstract class AbstractVector implements Serializable {
      * @return The inner-product value.
      */
     public double innerProduct(AbstractVector b) {
-        if (this.length() != b.length()) {
-            throw new RuntimeException("The dimentions of two vector are inequate");
-        }
+        assert (this != null && b != null) : "1D Tensor should not be null";
+        assert this.length() == b.length() : "The dimentions of two vector are inequate";
 
         int len = this.length();
         double sum = 0.0d;
         for (int i = 0; i < len; i++) {
-            sum += this.getValue(i) * b.getValue(i);
+            sum += this.floatValue(i) * b.floatValue(i);
         }
+
         return sum;
     }
 }

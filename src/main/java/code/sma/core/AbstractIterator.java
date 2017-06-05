@@ -2,6 +2,8 @@ package code.sma.core;
 
 import java.util.Iterator;
 
+import code.sma.core.impl.CRefVector;
+
 /**
  * 
  * @author Chao.Chen
@@ -9,7 +11,23 @@ import java.util.Iterator;
  */
 public abstract class AbstractIterator implements Iterator<DataElem> {
     /** index of next element to return*/
-    protected int cursor = 0;
+    protected int      cursor;
+    /** the reusable instance*/
+    protected DataElem e;
+
+    protected AbstractIterator() {
+        cursor = 0;
+
+        e = new DataElem();
+        e.setIndex_global(new CRefVector((int[]) null, 0, 0));
+        e.setValue_global(new CRefVector((float[]) null, 0, 0));
+
+        e.setIndex_user(new CRefVector((int[]) null, 0, 0));
+        e.setValue_ufactor(new CRefVector((float[]) null, 0, 0));
+
+        e.setIndex_item(new CRefVector((int[]) null, 0, 0));
+        e.setValue_ifactor(new CRefVector((float[]) null, 0, 0));
+    }
 
     /**
      * refresh the iterator for re-use

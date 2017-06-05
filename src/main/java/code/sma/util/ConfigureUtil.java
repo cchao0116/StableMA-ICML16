@@ -1,5 +1,12 @@
 package code.sma.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+
+import com.google.common.io.Files;
+
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 
@@ -23,12 +30,13 @@ public final class ConfigureUtil {
      * 
      * @param fileName
      * @return
+     * @throws IOException 
      */
-    public static Configures read(String fileName) {
+    public static Configures read(String fileName) throws IOException {
         Configures conf = new Configures();
 
         // parsing files
-        String[] lines = FileUtil.readLines(fileName);
+        List<String> lines = Files.readLines(new File(fileName), Charset.defaultCharset());
         StringBuilder anonymousParam = new StringBuilder();
         for (String line : lines) {
             if (StringUtil.isBlank(line) | line.startsWith("#")) {

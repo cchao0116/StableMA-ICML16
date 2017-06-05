@@ -50,32 +50,32 @@ public class GLOMA extends MFRecommender {
      * @see code.sma.recmmd.standalone.MFRecommender#buildloclModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
      */
     @Override
-    public void buildloclModel(Tuples rateMatrix, Tuples tMatrix) {
-        super.buildloclModel(rateMatrix, tMatrix);
+    public void buildloclModel(Tuples train, Tuples test) {
+        super.buildloclModel(train, test);
 
         // Gradient Descent:
         int round = 0;
-        int rateCount = rateMatrix.getNnz();
+        int rateCount = train.getNnz();
         double prevErr = 99999;
         double currErr = 9999;
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
+        int[] uIndx = train.getRowIndx();
+        int[] iIndx = train.getColIndx();
+        float[] Auis = train.getVals();
 
         // Compute the involved entries
-        trainInvlvIndces = ClusterInfoUtil.readInvolvedIndicesExpanded(rateMatrix, raf, caf);
-        testInvlvIndces = ClusterInfoUtil.readInvolvedIndices(tMatrix, raf, caf);
+        trainInvlvIndces = ClusterInfoUtil.readInvolvedIndicesExpanded(train, raf, caf);
+        testInvlvIndces = ClusterInfoUtil.readInvolvedIndices(test, raf, caf);
         System.out.println("Thread: " + this.threadId + ", T: " + trainInvlvIndces.length);
 
         // Compute dependencies
-        tnWs = dctzr.cmpTrainWs(rateMatrix, trainInvlvIndces);
+        tnWs = dctzr.cmpTrainWs(train, trainInvlvIndces);
 
         // statistics of current model
         Accumulator accErr = new Accumulator(3, rateCount);
         Accumulator accFactrUsr = new Accumulator(userCount, featureCount);
         Accumulator accFactrItm = new Accumulator(itemCount, featureCount);
 
-        statistics(rateMatrix, trainInvlvIndces, accErr, accFactrUsr, accFactrItm);
+        statistics(train, trainInvlvIndces, accErr, accFactrUsr, accFactrItm);
 
         // SGD
         while (Math.abs(prevErr - currErr) > 0.0001 && round <= maxIter) {
@@ -94,9 +94,9 @@ public class GLOMA extends MFRecommender {
                 Accumulator accTest = new Accumulator(4);
                 int testNum = 0;
                 for (int numSeq : testInvlvIndces) {
-                    int u = tMatrix.getRowIndx()[numSeq];
-                    int i = tMatrix.getColIndx()[numSeq];
-                    double AuiReal = tMatrix.getVals()[numSeq];
+                    int u = test.getRowIndx()[numSeq];
+                    int i = test.getColIndx()[numSeq];
+                    double AuiReal = test.getVals()[numSeq];
 
                     if (raf[u] && caf[i]) {
                         double LuLi = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
@@ -146,7 +146,7 @@ public class GLOMA extends MFRecommender {
 
         // compute the prediction by using inner product 
         if (avgUser != null && avgItem != null) {
-            this.offset = (avgUser.getValue(u) + avgItem.getValue(i)) / 2.0;
+            this.offset = (avgUser.floatValue(u) + avgItem.floatValue(i)) / 2.0;
         }
 
         double prediction = this.offset;
@@ -289,18 +289,18 @@ public class GLOMA extends MFRecommender {
     /**
      * calculate the error and count w.r.t individual entry of current model
      * 
-     * @param rateMatrix    training model
+     * @param train    training model
      * @param invlvIndces   involved indices
      * @param indvdlErr     individual error of three mixture models respectively
      * @param squrError     square error of three mixture models respectively
      * @param invlvCounts   item count of three mixture models respectively
      * @return  the squared error of three mixture models
      */
-    protected void statistics(Tuples rateMatrix, int[] invlvIndces, Accumulator accErr,
+    protected void statistics(Tuples train, int[] invlvIndces, Accumulator accErr,
                               Accumulator accFactrUsr, Accumulator accFactrItm) {
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
+        int[] uIndx = train.getRowIndx();
+        int[] iIndx = train.getColIndx();
+        float[] Auis = train.getVals();
 
         // initialize accumulator about ERROR
         for (int numSeq : invlvIndces) {

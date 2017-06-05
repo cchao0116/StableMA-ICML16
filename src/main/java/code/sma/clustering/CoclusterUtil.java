@@ -252,7 +252,7 @@ public final class CoclusterUtil {
                 for (int v : itemList) {
                     int Vc = colAssigmnt[v];
 
-                    double ZuvReal = ZuReal.getValue(v);
+                    double ZuvReal = ZuReal.floatValue(v);
                     // compute Zuv w.r.t constraints
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
@@ -348,7 +348,7 @@ public final class CoclusterUtil {
                 for (int v : itemList) {
                     int Vc = colAssigmnt[v];
 
-                    double ZuvReal = ZuReal.getValue(v);
+                    double ZuvReal = ZuReal.floatValue(v);
                     // compute Zuv w.r.t constraints
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
@@ -476,7 +476,7 @@ public final class CoclusterUtil {
                     int Uc = rowAssigmnt[u];
 
                     // compute Zuv w.r.t constraints
-                    double ZuvReal = ZvReal.getValue(u);
+                    double ZuvReal = ZvReal.floatValue(u);
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
                         case C_1:
@@ -573,7 +573,7 @@ public final class CoclusterUtil {
                     int Uc = rowAssigmnt[u];
 
                     // compute Zuv w.r.t constraints
-                    double ZuvReal = ZvReal.getValue(u);
+                    double ZuvReal = ZvReal.floatValue(u);
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
                         case C_1:
@@ -778,7 +778,7 @@ public final class CoclusterUtil {
                 int itemCount = 0;
                 double sum = 0.0d;
                 for (int v : colLocal) {
-                    double val = Ru.getValue(v);
+                    double val = Ru.floatValue(v);
                     if (val != 0.0d) {
                         sum += val;
                         itemCount++;
@@ -797,7 +797,7 @@ public final class CoclusterUtil {
                 int itemCount = 0;
                 double sum = 0.0d;
                 for (int u : rowLocal) {
-                    double val = Rv.getValue(u);
+                    double val = Rv.floatValue(u);
                     if (val != 0.0d) {
                         sum += val;
                         itemCount++;

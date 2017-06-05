@@ -1,9 +1,6 @@
 package code.sma.core.impl;
 
-import java.util.Iterator;
-
 import org.apache.commons.lang3.ArrayUtils;
-import com.google.common.primitives.Floats;
 
 import code.sma.core.AbstractVector;
 
@@ -13,7 +10,7 @@ import code.sma.core.AbstractVector;
  * @author Chao.Chen
  * @version $Id: DenseVector.java, v 0.1 2016年9月26日 下午1:44:48 Chao.Chen Exp $
  */
-public class DenseVector extends AbstractVector implements Iterable<Float> {
+public class DenseVector extends AbstractVector {
     private static final long serialVersionUID = 1L;
 
     /** The number of columns. */
@@ -43,10 +40,10 @@ public class DenseVector extends AbstractVector implements Iterable<Float> {
     //          Getter/Setter
     // ========================================
     /**
-     * @see code.sma.core.AbstractVector#getValue(int)
+     * @see code.sma.core.AbstractVector#floatValue(int)
      */
     @Override
-    public float getValue(int i) {
+    public float floatValue(int i) {
         if (i >= N) {
             return 0.0f;
         } else {
@@ -89,14 +86,6 @@ public class DenseVector extends AbstractVector implements Iterable<Float> {
      */
     public double norm() {
         return Math.sqrt(innerProduct(this));
-    }
-
-    /** 
-     * @see java.lang.Iterable#iterator()
-     */
-    @Override
-    public Iterator<Float> iterator() {
-        return Floats.asList(vals).iterator();
     }
 
     /** 

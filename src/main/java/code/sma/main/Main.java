@@ -1,5 +1,6 @@
 package code.sma.main;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,7 @@ import code.sma.util.ConfigureUtil;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
-import code.sma.util.MatrixFileUtil;
+import code.sma.util.MatrixIOUtil;
 import code.sma.util.StringUtil;
 
 /**
@@ -38,72 +39,76 @@ public class Main {
      * @param args
      */
     public static void main(String[] args) {
-        //load dataset configure file
-        Configures conf = ConfigureUtil.read("src/main/resources/rcmd.properties");
-        String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
+        try {
+            //load dataset configure file
+            Configures conf = ConfigureUtil.read("src/main/resources/rcmd.properties");
+            String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
-        for (String rootDir : rootDirs) {
-            LoggerUtil.info(logger, "1. loading " + rootDir);
-            conf.setProperty("ROOT_DIR", rootDir);
-            String trainFile = rootDir + "trainingset";
-            String testFile = rootDir + "testingset";
+            for (String rootDir : rootDirs) {
+                LoggerUtil.info(logger, "1. loading " + rootDir);
+                conf.setProperty("ROOT_DIR", rootDir);
+                String trainFile = rootDir + "trainingset";
+                String testFile = rootDir + "testingset";
 
-            String algName = conf.getProperty("ALG_NAME");
-            LoggerUtil.info(logger, "2. running " + algName);
-            if (StringUtil.isBlank(algName)) {
-                continue;
-            } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
-                AbstractDpncyChecker checker = new ClusteringDpncyChecker();
-                checker.handler(conf);
+                String algName = conf.getProperty("ALG_NAME");
+                LoggerUtil.info(logger, "2. running " + algName);
+                if (StringUtil.isBlank(algName)) {
+                    continue;
+                } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
+                    AbstractDpncyChecker checker = new ClusteringDpncyChecker();
+                    checker.handler(conf);
 
-                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
-                Tuples tttMatrix = MatrixFileUtil.reads(testFile);
-                RecConfigEnv rce = new RecConfigEnv(conf);
-                RecommenderFactory.instance(algName, rce).buildModel(tnMatrix, tttMatrix);
-            } else if (StringUtil.equalsIgnoreCase(algName, "GBMA")) {
-                int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
-                int userCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
-                int itemCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
+                    Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
+                    Tuples tttMatrix = MatrixIOUtil.reads(testFile);
+                    RecConfigEnv rce = new RecConfigEnv(conf);
+                    RecommenderFactory.instance(algName, rce).buildModel(tnMatrix, tttMatrix);
+                } else if (StringUtil.equalsIgnoreCase(algName, "GBMA")) {
+                    int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
+                    int userCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
+                    int itemCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
 
-                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
-                Tuples tttMatrix = MatrixFileUtil.reads(testFile);
+                    Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
+                    Tuples tttMatrix = MatrixIOUtil.reads(testFile);
 
-                DenseVector avgUser = new DenseVector(userCount);
-                DenseVector avgItem = new DenseVector(itemCount);
-                avgRatingAndAdjustData(tnMatrix, userCount, itemCount, avgUser, avgItem);
-                conf.setVector("AVG_USER", avgUser);
-                conf.setVector("AVG_ITEM", avgItem);
+                    DenseVector avgUser = new DenseVector(userCount);
+                    DenseVector avgItem = new DenseVector(itemCount);
+                    avgRatingAndAdjustData(tnMatrix, userCount, itemCount, avgUser, avgItem);
+                    conf.setVector("AVG_USER", avgUser);
+                    conf.setVector("AVG_ITEM", avgItem);
 
-                TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
-                try {
-                    ExecutorService exec = Executors.newCachedThreadPool();
-                    for (int t = 0; t < threadNum; t++) {
-                        exec.execute(new SimpleLearner(stkmImpl, tnMatrix, tttMatrix));
+                    TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
+                    try {
+                        ExecutorService exec = Executors.newCachedThreadPool();
+                        for (int t = 0; t < threadNum; t++) {
+                            exec.execute(new SimpleLearner(stkmImpl, tnMatrix, tttMatrix));
+                        }
+                        exec.shutdown();
+                        exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+                    } catch (InterruptedException e) {
+                        ExceptionUtil.caught(e, "Stand-alone model Thead!");
                     }
-                    exec.shutdown();
-                    exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-                } catch (InterruptedException e) {
-                    ExceptionUtil.caught(e, "Stand-alone model Thead!");
-                }
 
-            } else {
-                TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
-                int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
+                } else {
+                    TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
+                    int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
 
-                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
-                Tuples tttMatrix = MatrixFileUtil.reads(testFile);
+                    Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
+                    Tuples tttMatrix = MatrixIOUtil.reads(testFile);
 
-                try {
-                    ExecutorService exec = Executors.newCachedThreadPool();
-                    for (int t = 0; t < threadNum; t++) {
-                        exec.execute(new SimpleLearner(stkmImpl, tnMatrix, tttMatrix));
+                    try {
+                        ExecutorService exec = Executors.newCachedThreadPool();
+                        for (int t = 0; t < threadNum; t++) {
+                            exec.execute(new SimpleLearner(stkmImpl, tnMatrix, tttMatrix));
+                        }
+                        exec.shutdown();
+                        exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+                    } catch (InterruptedException e) {
+                        ExceptionUtil.caught(e, "Stand-alone model Thead!");
                     }
-                    exec.shutdown();
-                    exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-                } catch (InterruptedException e) {
-                    ExceptionUtil.caught(e, "Stand-alone model Thead!");
                 }
             }
+        } catch (IOException e) {
+            ExceptionUtil.caught(e, "FILE: src/main/resources/rcmd.properties");
         }
     }
 
@@ -119,7 +124,7 @@ public class Main {
             int[] uRatingCount = new int[userCount];
             for (int numSeq = 0; numSeq < rateCount; numSeq++) {
                 int u = uIndx[numSeq];
-                avgUser.setValue(u, avgUser.getValue(u) + Auis[numSeq]);
+                avgUser.setValue(u, avgUser.floatValue(u) + Auis[numSeq]);
                 uRatingCount[u]++;
             }
 
@@ -127,7 +132,7 @@ public class Main {
                 if (uRatingCount[u] == 0) {
                     continue;
                 }
-                avgUser.setValue(u, avgUser.getValue(u) / uRatingCount[u]);
+                avgUser.setValue(u, avgUser.floatValue(u) / uRatingCount[u]);
             }
         }
 
@@ -136,7 +141,7 @@ public class Main {
             int[] iRatingCount = new int[itemCount];
             for (int numSeq = 0; numSeq < rateCount; numSeq++) {
                 int i = iIndx[numSeq];
-                avgItem.setValue(i, avgItem.getValue(i) + Auis[numSeq]);
+                avgItem.setValue(i, avgItem.floatValue(i) + Auis[numSeq]);
                 iRatingCount[i]++;
             }
 
@@ -144,7 +149,7 @@ public class Main {
                 if (iRatingCount[i] == 0) {
                     continue;
                 }
-                avgItem.setValue(i, avgItem.getValue(i) / iRatingCount[i]);
+                avgItem.setValue(i, avgItem.floatValue(i) / iRatingCount[i]);
             }
         }
 
@@ -152,7 +157,8 @@ public class Main {
         for (int numSeq = 0; numSeq < rateCount; numSeq++) {
             int u = uIndx[numSeq];
             int i = iIndx[numSeq];
-            Auis[numSeq] = (float) (Auis[numSeq] - (avgUser.getValue(u) + avgItem.getValue(i)) / 2.0);
+            Auis[numSeq] = (float) (Auis[numSeq]
+                                    - (avgUser.floatValue(u) + avgItem.floatValue(i)) / 2.0);
         }
     }
 

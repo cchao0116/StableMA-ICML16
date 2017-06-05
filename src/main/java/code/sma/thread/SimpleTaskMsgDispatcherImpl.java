@@ -77,9 +77,9 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
                 for (int l = 0; l < lastLayerWidth; l++) {
                     RecConfigEnv rce = new RecConfigEnv(conf);
                     for (int c = 0; c < maxLayer - 1; c++) {
-                        rce.put(suffArrKeys.get(c), suffArrVals.get(c).getValue(nodes.get(c)));
+                        rce.put(suffArrKeys.get(c), suffArrVals.get(c).floatValue(nodes.get(c)));
                     }
-                    rce.put(suffArrKeys.get(nextLayer), suffArrVals.get(nextLayer).getValue(l));
+                    rce.put(suffArrKeys.get(nextLayer), suffArrVals.get(nextLayer).floatValue(l));
                     recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
                 }
 
@@ -119,8 +119,7 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
      * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
      */
     @Override
-    public void reduce(Object recmmd, Tuples tnMatrix,
-                       Tuples ttMatrix) {
+    public void reduce(Object recmmd, Tuples tnMatrix, Tuples ttMatrix) {
         LoggerUtil.info(normalLogger, (new StringBuilder(recmmd.toString())).append(": ")
             .append((((Recommender) recmmd).evaluate(ttMatrix)).printOneLine()));
     }

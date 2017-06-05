@@ -1,5 +1,7 @@
 package code.sma.core;
 
+import code.sma.core.impl.CRefVector;
+
 /**
  * data element, the smallest unit of the feature-based data
  * 
@@ -8,31 +10,58 @@ package code.sma.core;
  */
 public class DataElem {
     /** result label, rate or {0,1} for classification*/
-    protected float   label;
+    protected float      label;
     /** number of nonzero global feature*/
-    protected short   num_global;
+    protected short      num_global;
     /** number of nonzero user feature*/
-    protected short   num_ufactor;
+    protected short      num_ufactor;
     /** number of nonzero item feature*/
-    protected short   num_ifacotr;
+    protected short      num_ifacotr;
 
     /** array of global feature index*/
-    protected int[]   index_global;
+    protected CRefVector index_global;
     /** array of user feature index, i.e., uIDs*/
-    protected int[]   index_user;
+    protected CRefVector index_user;
     /** array of item feature index, i.e., iIDs*/
-    protected int[]   index_item;
+    protected CRefVector index_item;
 
     /** array of global feature value */
-    protected float[] value_global;
+    protected CRefVector value_global;
     /** array of global feature value */
-    protected float[] value_ufactor;
+    protected CRefVector value_ufactor;
     /** array of global feature value */
-    protected float[] value_ifactor;
+    protected CRefVector value_ifactor;
+
+    public DataElem() {
+    }
 
     public DataElem(float label) {
         super();
         this.label = label;
+    }
+
+    public int getIndex_global(int i) {
+        return index_global.intValue(i);
+    }
+
+    public int getIndex_user(int i) {
+        return index_user.intValue(i);
+    }
+
+    public int getIndex_item(int i) {
+        return index_item.intValue(i);
+    }
+
+    public float getValue_global(int i) {
+        return value_global.floatValue(i);
+    }
+
+    public float getValue_ufactor(int i) {
+        return value_ufactor.floatValue(i);
+    }
+
+    public float getValue_ifactor(int i) {
+        return value_ifactor.floatValue(i);
     }
 
     /**
@@ -108,65 +137,11 @@ public class DataElem {
     }
 
     /**
-     * Getter method for property <tt>value_global</tt>.
-     * 
-     * @return property value of value_global
-     */
-    public float[] getValue_global() {
-        return value_global;
-    }
-
-    /**
-     * Setter method for property <tt>value_global</tt>.
-     * 
-     * @param value_global value to be assigned to property value_global
-     */
-    public void setValue_global(float[] value_global) {
-        this.value_global = value_global;
-    }
-
-    /**
-     * Getter method for property <tt>value_ufactor</tt>.
-     * 
-     * @return property value of value_ufactor
-     */
-    public float[] getValue_ufactor() {
-        return value_ufactor;
-    }
-
-    /**
-     * Setter method for property <tt>value_ufactor</tt>.
-     * 
-     * @param value_ufactor value to be assigned to property value_ufactor
-     */
-    public void setValue_ufactor(float[] value_ufactor) {
-        this.value_ufactor = value_ufactor;
-    }
-
-    /**
-     * Getter method for property <tt>value_ifactor</tt>.
-     * 
-     * @return property value of value_ifactor
-     */
-    public float[] getValue_ifactor() {
-        return value_ifactor;
-    }
-
-    /**
-     * Setter method for property <tt>value_ifactor</tt>.
-     * 
-     * @param value_ifactor value to be assigned to property value_ifactor
-     */
-    public void setValue_ifactor(float[] value_ifactor) {
-        this.value_ifactor = value_ifactor;
-    }
-
-    /**
      * Getter method for property <tt>index_global</tt>.
      * 
      * @return property value of index_global
      */
-    public int[] getIndex_global() {
+    public CRefVector getIndex_global() {
         return index_global;
     }
 
@@ -175,7 +150,7 @@ public class DataElem {
      * 
      * @param index_global value to be assigned to property index_global
      */
-    public void setIndex_global(int[] index_global) {
+    public void setIndex_global(CRefVector index_global) {
         this.index_global = index_global;
     }
 
@@ -184,7 +159,7 @@ public class DataElem {
      * 
      * @return property value of index_user
      */
-    public int[] getIndex_user() {
+    public CRefVector getIndex_user() {
         return index_user;
     }
 
@@ -193,7 +168,7 @@ public class DataElem {
      * 
      * @param index_user value to be assigned to property index_user
      */
-    public void setIndex_user(int[] index_user) {
+    public void setIndex_user(CRefVector index_user) {
         this.index_user = index_user;
     }
 
@@ -202,7 +177,7 @@ public class DataElem {
      * 
      * @return property value of index_item
      */
-    public int[] getIndex_item() {
+    public CRefVector getIndex_item() {
         return index_item;
     }
 
@@ -211,8 +186,62 @@ public class DataElem {
      * 
      * @param index_item value to be assigned to property index_item
      */
-    public void setIndex_item(int[] index_item) {
+    public void setIndex_item(CRefVector index_item) {
         this.index_item = index_item;
+    }
+
+    /**
+     * Getter method for property <tt>value_global</tt>.
+     * 
+     * @return property value of value_global
+     */
+    public CRefVector getValue_global() {
+        return value_global;
+    }
+
+    /**
+     * Setter method for property <tt>value_global</tt>.
+     * 
+     * @param value_global value to be assigned to property value_global
+     */
+    public void setValue_global(CRefVector value_global) {
+        this.value_global = value_global;
+    }
+
+    /**
+     * Getter method for property <tt>value_ufactor</tt>.
+     * 
+     * @return property value of value_ufactor
+     */
+    public CRefVector getValue_ufactor() {
+        return value_ufactor;
+    }
+
+    /**
+     * Setter method for property <tt>value_ufactor</tt>.
+     * 
+     * @param value_ufactor value to be assigned to property value_ufactor
+     */
+    public void setValue_ufactor(CRefVector value_ufactor) {
+        this.value_ufactor = value_ufactor;
+    }
+
+    /**
+     * Getter method for property <tt>value_ifactor</tt>.
+     * 
+     * @return property value of value_ifactor
+     */
+    public CRefVector getValue_ifactor() {
+        return value_ifactor;
+    }
+
+    /**
+     * Setter method for property <tt>value_ifactor</tt>.
+     * 
+     * @param value_ifactor value to be assigned to property value_ifactor
+     */
+    public void setValue_ifactor(CRefVector value_ifactor) {
+        this.value_ifactor = value_ifactor;
     }
 
 }

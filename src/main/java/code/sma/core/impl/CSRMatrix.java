@@ -1,11 +1,9 @@
 package code.sma.core.impl;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Scanner;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
@@ -20,10 +18,6 @@ import code.sma.util.StringUtil;
  * @version $Id: CSRMatrix.java, v 0.1 2017年6月1日 下午2:48:10 Chao.Chen Exp $
  */
 public class CSRMatrix extends AbstractMatrix {
-    /**  number of rows in the sparse matrix */
-    protected int     num_row;
-    /**  number of nonzero entries in sparse matrix */
-    protected int     num_val;
 
     /** label of each row */
     protected float[] row_label;
@@ -31,17 +25,26 @@ public class CSRMatrix extends AbstractMatrix {
     /** points to the beginning and ends of each row in the data space, size(row_ptr)=3*num_row+1,
       * because we need to points the beginning and ends of global feature, user feature and item feature*/
     protected int[]   row_ptr;
-    /** array of the indices, i.e., uIDs*/
+    /** array of the indices*/
     protected int[]   feat_index;
     /** array of the  features*/
     protected float[] feat_value;
+
+    public CSRMatrix(int num_row, int num_val) {
+        row_label = new float[num_row];
+        row_ptr = new int[3 * num_row + 1];
+
+        feat_index = new int[num_val];
+        feat_value = new float[num_val];
+    }
 
     /** 
      * @see code.sma.core.AbstractMatrix#loadNext(java.lang.String)
      */
     @Override
     public void loadNext(String line) {
-        Assert.assertTrue("Line must not be blank", StringUtil.isNotBlank(line));
+        assert StringUtil.isNotBlank(line) : "Line must not be blank";
+
         Scanner scanner = new Scanner(line);
         scanner.useDelimiter(":+|\\s+");
 
@@ -69,7 +72,6 @@ public class CSRMatrix extends AbstractMatrix {
     }
 
     protected class Iter extends AbstractIterator {
-        protected int cursor = 0;
 
         /** 
          * @see java.util.Iterator#hasNext()
@@ -84,29 +86,44 @@ public class CSRMatrix extends AbstractMatrix {
          */
         @Override
         public DataElem next() {
-            DataElem e = new DataElem(row_label[cursor]);
+            e.setLabel(row_label[cursor]);
 
             short num_global = (short) (row_ptr[3 * cursor + 1] - row_ptr[3 * cursor]);
             short num_ufactor = (short) (row_ptr[3 * cursor + 2] - row_ptr[3 * cursor - 1]);
-            short num_ifacotr = (short) (row_ptr[3 * cursor + 3] - row_ptr[3 * cursor - 2]);
+            short num_ifactor = (short) (row_ptr[3 * cursor + 3] - row_ptr[3 * cursor - 2]);
             e.setNum_global(num_global);
             e.setNum_ufactor(num_ufactor);
-            e.setNum_ifacotr(num_ifacotr);
+            e.setNum_ifacotr(num_ifactor);
 
-            e.setIndex_global(Arrays.copyOfRange(feat_index, row_ptr[3 * cursor + 0],
-                row_ptr[3 * cursor + 0] + num_ifacotr));
-            e.setValue_global(Arrays.copyOfRange(feat_value, row_ptr[3 * cursor + 0],
-                row_ptr[3 * cursor + 0] + num_ifacotr));
+            CRefVector index_global = e.getIndex_global();
+            index_global.setIntPtr(feat_index);
+            index_global.setPtr_offset(row_ptr[3 * cursor + 0]);
+            index_global.setNum_factors(num_global);
 
-            e.setIndex_user(Arrays.copyOfRange(feat_index, row_ptr[3 * cursor + 1],
-                row_ptr[3 * cursor + 1] + num_ifacotr));
-            e.setValue_ufactor(Arrays.copyOfRange(feat_value, row_ptr[3 * cursor + 1],
-                row_ptr[3 * cursor + 1] + num_ifacotr));
+            CRefVector value_global = e.getValue_global();
+            value_global.setFloatPtr(feat_value);
+            value_global.setPtr_offset(row_ptr[3 * cursor + 0]);
+            value_global.setNum_factors(num_global);
 
-            e.setIndex_item(Arrays.copyOfRange(feat_index, row_ptr[3 * cursor + 2],
-                row_ptr[3 * cursor + 2] + num_ifacotr));
-            e.setValue_ifactor(Arrays.copyOfRange(feat_value, row_ptr[3 * cursor + 2],
-                row_ptr[3 * cursor + 2] + num_ifacotr));
+            CRefVector index_user = e.getIndex_user();
+            index_user.setIntPtr(feat_index);
+            index_user.setPtr_offset(row_ptr[3 * cursor + 1]);
+            index_user.setNum_factors(num_ufactor);
+
+            CRefVector value_ufactor = e.getValue_ufactor();
+            value_ufactor.setFloatPtr(feat_value);
+            value_ufactor.setPtr_offset(row_ptr[3 * cursor + 1]);
+            value_ufactor.setNum_factors(num_ufactor);
+
+            CRefVector index_item = e.getIndex_item();
+            index_item.setIntPtr(feat_index);
+            index_item.setPtr_offset(row_ptr[3 * cursor + 2]);
+            index_item.setNum_factors(num_ifactor);
+
+            CRefVector value_ifactor = e.getValue_ifactor();
+            value_ifactor.setFloatPtr(feat_value);
+            value_ifactor.setPtr_offset(row_ptr[3 * cursor + 2]);
+            value_ifactor.setNum_factors(num_ifactor);
 
             cursor++;
             return null;

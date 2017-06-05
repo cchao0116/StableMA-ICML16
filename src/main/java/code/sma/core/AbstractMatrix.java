@@ -6,6 +6,10 @@ package code.sma.core;
  * @version $Id: AbstractMatrix.java, v 0.1 2017年6月1日 上午10:59:13 Chao.Chen Exp $
  */
 public abstract class AbstractMatrix implements Iterable<DataElem> {
+    /**  number of rows in the sparse matrix */
+    protected int num_row;
+    /**  number of nonzero entries in sparse matrix */
+    protected int num_val;
 
     /**
      * Retrieve a stored value from the given index.

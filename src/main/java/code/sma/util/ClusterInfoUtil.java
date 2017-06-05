@@ -1,5 +1,12 @@
 package code.sma.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+
+import com.google.common.io.Files;
+
 import code.sma.clustering.Cluster;
 import code.sma.core.DynIntArr;
 import code.sma.core.impl.Tuples;
@@ -28,8 +35,7 @@ public final class ClusterInfoUtil {
      * @param specClusterIndx   the target cluster index
      * @return                  the involved indices
      */
-    public static int[] readInvolvedIndices(Tuples mfMatrix, boolean[] raf,
-                                            boolean[] caf) {
+    public static int[] readInvolvedIndices(Tuples mfMatrix, boolean[] raf, boolean[] caf) {
         int[] involvedIndices = new int[0];
         {
             int nnz = mfMatrix.getNnz();
@@ -60,8 +66,7 @@ public final class ClusterInfoUtil {
      * @param specClusterIndx   the target cluster index
      * @return                  the involved indices
      */
-    public static int[] readInvolvedIndicesExpanded(Tuples mfMatrix,
-                                                    boolean[] raf, boolean[] caf) {
+    public static int[] readInvolvedIndicesExpanded(Tuples mfMatrix, boolean[] raf, boolean[] caf) {
         int[] involvedIndices = new int[0];
         {
             int nnz = mfMatrix.getNnz();
@@ -92,8 +97,8 @@ public final class ClusterInfoUtil {
      * @param clusteringSize    clustering size
      * @return                  the involved indices
      */
-    public static int[][] readInvolvedIndices(Tuples mfMatrix, int[] raf,
-                                              int[] caf, int[] clusteringSize) {
+    public static int[][] readInvolvedIndices(Tuples mfMatrix, int[] raf, int[] caf,
+                                              int[] clusteringSize) {
         int clusterNum = clusteringSize[0] * clusteringSize[1];
         int[][] involvedIndices = new int[clusterNum][0];
 
@@ -130,19 +135,23 @@ public final class ClusterInfoUtil {
      * @param caf           column assignment function. [itemId] : [item clustering id]
      * @param clusterDir    root directory of clustering configuration files  
      * @return
+     * @throws IOException 
      */
-    public static int[] readClusteringAssigmntFunction(int[] raf, int[] caf, String clusterDir) {
+    public static int[] readClusteringAssigmntFunction(int[] raf, int[] caf,
+                                                       String clusterDir) throws IOException {
         // reading clustering size
         int[] clusteringSize = new int[2];
         {
-            String[] settngContent = FileUtil.readLines(clusterDir + "SETTING");
-            clusteringSize[0] = settngContent[0].split("\\,").length;
-            clusteringSize[1] = settngContent[1].split("\\,").length;
+            List<String> settngContent = Files.readLines(new File(clusterDir + "SETTING"),
+                Charset.defaultCharset());
+            clusteringSize[0] = settngContent.get(0).split("\\,").length;
+            clusteringSize[1] = settngContent.get(0).split("\\,").length;
         }
 
         // reading row assignment functions
         {
-            String[] rowAssgnContent = FileUtil.readLines(clusterDir + "RM");
+            List<String> rowAssgnContent = Files.readLines(new File(clusterDir + "RM"),
+                Charset.defaultCharset());
             for (String line : rowAssgnContent) {
                 String[] elemnts = line.split("\\,");
                 raf[Integer.valueOf(elemnts[0].trim())] = Integer.valueOf(elemnts[1].trim());
@@ -151,7 +160,8 @@ public final class ClusterInfoUtil {
 
         // reading column assignment functions
         {
-            String[] colAssgnContent = FileUtil.readLines(clusterDir + "CM");
+            List<String> colAssgnContent = Files.readLines(new File(clusterDir + "CM"),
+                Charset.defaultCharset());
             for (String line : colAssgnContent) {
                 String[] elemnts = line.split("\\,");
                 caf[Integer.valueOf(elemnts[0].trim())] = Integer.valueOf(elemnts[1].trim());
@@ -167,8 +177,10 @@ public final class ClusterInfoUtil {
      * 
      * @param clustering    clustering structure
      * @param clusterDir    the file destination
+     * @throws IOException 
      */
-    public static void saveClustering(Cluster[][] clustering, String clusterDir) {
+    public static void saveClustering(Cluster[][] clustering,
+                                      String clusterDir) throws IOException {
         // writing clustering size
         {
             StringBuilder settngContt = new StringBuilder();
@@ -181,7 +193,8 @@ public final class ClusterInfoUtil {
                 settngContt.append(colCluster.size() + ",");
             }
             settngContt.deleteCharAt(settngContt.length() - 1);
-            FileUtil.writeAsAppendWithDirCheck(clusterDir + "SETTING", settngContt.toString());
+
+            Files.write(settngContt, new File(clusterDir + "SETTING"), Charset.defaultCharset());
         }
 
         // writing row assignment functions
@@ -194,7 +207,7 @@ public final class ClusterInfoUtil {
                 }
 
                 rowClusterId++;
-                FileUtil.writeAsAppend(clusterDir + "RM", rafContt.toString());
+                Files.append(rafContt, new File(clusterDir + "RM"), Charset.defaultCharset());
             }
         }
 
@@ -208,7 +221,7 @@ public final class ClusterInfoUtil {
                 }
 
                 colClusterId++;
-                FileUtil.writeAsAppend(clusterDir + "CM", cafContt.toString());
+                Files.append(cafContt, new File(clusterDir + "CM"), Charset.defaultCharset());
             }
         }
     }

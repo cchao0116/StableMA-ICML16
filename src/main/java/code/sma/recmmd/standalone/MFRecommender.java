@@ -2,6 +2,7 @@ package code.sma.recmmd.standalone;
 
 import org.apache.log4j.Logger;
 
+import code.sma.core.AbstractVector;
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
 import code.sma.core.impl.Tuples;
@@ -187,16 +188,24 @@ public abstract class MFRecommender extends Recommender {
      */
     @Override
     public double predict(int u, int i) {
+        assert (userDenseFeatures != null
+                && itemDenseFeatures != null) : "Feature matrix cannot be null";
+
         // compute the prediction by using inner product 
         if (avgUser != null && avgItem != null) {
-            this.offset = (avgUser.getValue(u) + avgItem.getValue(i)) / 2.0;
+            this.offset = (avgUser.floatValue(u) + avgItem.floatValue(i)) / 2.0;
         }
 
         double prediction = this.offset;
-        if (userDenseFeatures != null && itemDenseFeatures != null) {
-            prediction += userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
+
+        AbstractVector ufactors = userDenseFeatures.getRowRef(u);
+        AbstractVector ifactors = itemDenseFeatures.getRowRef(i);
+        if (ufactors == null || ifactors == null) {
+            prediction += (maxValue + minValue) / 2;
+            LoggerUtil.warn(runningLogger,
+                String.format("null latent factors for (%d,%d)-entry", u, i));
         } else {
-            throw new RuntimeException("features were not initialized.");
+            prediction += ufactors.innerProduct(ifactors);
         }
 
         // normalize the prediction

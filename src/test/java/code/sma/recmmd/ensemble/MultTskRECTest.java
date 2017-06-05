@@ -1,5 +1,7 @@
 package code.sma.recmmd.ensemble;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
@@ -13,7 +15,7 @@ import code.sma.recmmd.Recommender;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
-import code.sma.util.MatrixFileUtil;
+import code.sma.util.MatrixIOUtil;
 import code.sma.util.StringUtil;
 import junit.framework.TestCase;
 
@@ -34,7 +36,7 @@ public class MultTskRECTest extends TestCase {
     }
 
     @Test
-    public void testAlg() {
+    public void testAlg() throws IOException {
         Configures conf = ConfigureUtil.read("src/main/resources/samples/MTREC.properties");
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
@@ -44,9 +46,9 @@ public class MultTskRECTest extends TestCase {
             String trainFile = rootDir + "trainingset";
             String testFile = rootDir + "testingset";
 
-            String aRcmmdFile = rootDir+conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
+            String aRcmmdFile = rootDir + conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
             conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", aRcmmdFile);
-            
+
             String algName = conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
 
@@ -54,8 +56,8 @@ public class MultTskRECTest extends TestCase {
                 AbstractDpncyChecker checker = new ModelDpncyChecker();
                 checker.handler(conf);
 
-                Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
-                Tuples ttMatrix = MatrixFileUtil.reads(testFile);
+                Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
+                Tuples ttMatrix = MatrixIOUtil.reads(testFile);
                 RecConfigEnv rce = new RecConfigEnv(conf);
                 Recommender rcmmd = RecommenderFactory.instance(algName, rce);
                 rcmmd.buildModel(tnMatrix, ttMatrix);

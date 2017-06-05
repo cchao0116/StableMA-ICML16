@@ -1,5 +1,6 @@
 package code.sma.recmmd.standalone;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +17,7 @@ import code.sma.util.ConfigureUtil;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
-import code.sma.util.MatrixFileUtil;
+import code.sma.util.MatrixIOUtil;
 
 /**
  * 
@@ -28,7 +29,7 @@ public class RegSVDTest {
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     @Test
-    public void testAlg() {
+    public void testAlg() throws IOException {
         Configures conf = ConfigureUtil.read("src/main/resources/samples/RSVD.properties");
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
@@ -44,8 +45,8 @@ public class RegSVDTest {
             TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
             int threadNum = ((Float) conf.get("THREAD_NUMBER_VALUE")).intValue();
 
-            Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
-            Tuples tttMatrix = MatrixFileUtil.reads(testFile);
+            Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
+            Tuples tttMatrix = MatrixIOUtil.reads(testFile);
 
             try {
                 ExecutorService exec = Executors.newCachedThreadPool();

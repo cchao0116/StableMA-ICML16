@@ -43,7 +43,7 @@ public class DenseMatrix implements Serializable {
      */
     public double getValue(int i, int j) {
         if (vals[i] != null) {
-            return vals[i].getValue(j);
+            return vals[i].floatValue(j);
         } else {
             return 0.0d;
         }
@@ -98,7 +98,6 @@ public class DenseMatrix implements Serializable {
     public double innerProduct(int u, int i, DenseMatrix tDenseMatrix, boolean needRanInit) {
         if (needRanInit & vals[u] == null) {
             this.setRowRef(u, new DenseVector(N, true));
-
         }
         if (needRanInit & tDenseMatrix.getRowRef(i) == null) {
             tDenseMatrix.setRowRef(i, new DenseVector(N, true));

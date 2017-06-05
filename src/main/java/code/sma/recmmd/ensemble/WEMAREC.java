@@ -1,5 +1,6 @@
 package code.sma.recmmd.ensemble;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -98,30 +99,37 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     @Override
     public Recommender map() {
         synchronized (MAP_MUTEX) {
+
             if (!recmmdsBuffer.isEmpty()) {
                 return recmmdsBuffer.poll();
             } else if (clusterDirList.isEmpty()) {
                 return null;
             } else {
                 String clusterDir = clusterDirList.poll();
-                int[] raf = new int[userCount];
-                int[] caf = new int[itemCount];
-                int[] clusteringSize = ClusterInfoUtil.readClusteringAssigmntFunction(raf, caf,
-                    clusterDir);
-                int[][] tnInvlvedIndcs = ClusterInfoUtil.readInvolvedIndices(tnMatrix, raf, caf,
-                    clusteringSize);
-                int[][] ttInvlvedIndcs = ClusterInfoUtil.readInvolvedIndices(ttMatrix, raf, caf,
-                    clusteringSize);
+                try {
+                    int[] raf = new int[userCount];
+                    int[] caf = new int[itemCount];
+                    int[] clusteringSize = ClusterInfoUtil.readClusteringAssigmntFunction(raf, caf,
+                        clusterDir);
+                    int[][] tnInvlvedIndcs = ClusterInfoUtil.readInvolvedIndices(tnMatrix, raf, caf,
+                        clusteringSize);
+                    int[][] ttInvlvedIndcs = ClusterInfoUtil.readInvolvedIndices(ttMatrix, raf, caf,
+                        clusteringSize);
 
-                int clusterNum = clusteringSize[0] * clusteringSize[1];
-                for (int c = 0; c < clusterNum; c++) {
-                    Recommender wsvd = new WeigtedSVD(rce, tnInvlvedIndcs[c], ttInvlvedIndcs[c],
-                        beta0, dctzr);
-                    wsvd.threadId = tskId++;
-                    recmmdsBuffer.add(wsvd);
+                    int clusterNum = clusteringSize[0] * clusteringSize[1];
+                    for (int c = 0; c < clusterNum; c++) {
+                        Recommender wsvd = new WeigtedSVD(rce, tnInvlvedIndcs[c], ttInvlvedIndcs[c],
+                            beta0, dctzr);
+                        wsvd.threadId = tskId++;
+                        recmmdsBuffer.add(wsvd);
+                    }
+                    return recmmdsBuffer.poll();
+                } catch (IOException e) {
+                    ExceptionUtil.caught(e, "DIR: " + clusterDir);
+                    return null;
                 }
-                return recmmdsBuffer.poll();
             }
+
         }
     }
 

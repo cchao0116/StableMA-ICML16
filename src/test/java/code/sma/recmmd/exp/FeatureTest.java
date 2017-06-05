@@ -1,5 +1,8 @@
 package code.sma.recmmd.exp;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -8,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
+
+import com.google.common.io.Files;
 
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
@@ -20,10 +25,9 @@ import code.sma.recmmd.standalone.GLOMA;
 import code.sma.recmmd.standalone.RegSVD;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.ExceptionUtil;
-import code.sma.util.FileUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
-import code.sma.util.MatrixFileUtil;
+import code.sma.util.MatrixIOUtil;
 import code.sma.util.PythonExecUtil;
 import code.sma.util.SerializeUtil;
 import code.sma.util.StringUtil;
@@ -42,30 +46,33 @@ public class FeatureTest {
 
     @Test
     public void testAlg() {
+        try {
+            Configures conf = ConfigureUtil.read("src/main/resources/samples/MTREC.properties");
+            String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
-        Configures conf = ConfigureUtil.read("src/main/resources/samples/MTREC.properties");
-        String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
+            for (String rootDir : rootDirs) {
+                LoggerUtil.info(logger, "1. loading " + rootDir);
+                conf.setProperty("ROOT_DIR", rootDir);
+                String testFile = rootDir + "testingset";
 
-        for (String rootDir : rootDirs) {
-            LoggerUtil.info(logger, "1. loading " + rootDir);
-            conf.setProperty("ROOT_DIR", rootDir);
-            String testFile = rootDir + "testingset";
+                String algName = conf.getProperty("ALG_NAME");
+                LoggerUtil.info(logger, "2. running " + algName);
 
-            String algName = conf.getProperty("ALG_NAME");
-            LoggerUtil.info(logger, "2. running " + algName);
+                if (StringUtil.equalsIgnoreCase(algName, "MTREC")) {
+                    AbstractDpncyChecker checker = new ModelDpncyChecker();
+                    checker.handler(conf);
 
-            if (StringUtil.equalsIgnoreCase(algName, "MTREC")) {
-                AbstractDpncyChecker checker = new ModelDpncyChecker();
-                checker.handler(conf);
+                    Tuples ttMatrix = MatrixIOUtil.reads(testFile);
+                    RecConfigEnv rce = new RecConfigEnv(conf);
+                    RegSVD rcmmd = extctGlbl(rce);
+                    SerializeUtil.writeObject(rcmmd, String.format(NEW_EMBD_W_PATTERN, ITER_SEQ));
+                    LoggerUtil.info(logger, String.format("%s\n%s", rcmmd.toString(),
+                        rcmmd.evaluate(ttMatrix).printOneLine()));
 
-                Tuples ttMatrix = MatrixFileUtil.reads(testFile);
-                RecConfigEnv rce = new RecConfigEnv(conf);
-                RegSVD rcmmd = extctGlbl(rce);
-                SerializeUtil.writeObject(rcmmd, String.format(NEW_EMBD_W_PATTERN, ITER_SEQ));
-                LoggerUtil.info(logger, String.format("%s\n%s", rcmmd.toString(),
-                    rcmmd.evaluate(ttMatrix).printOneLine()));
-
+                }
             }
+        } catch (IOException e) {
+            ExceptionUtil.caught(e, "FILE: src/main/resources/samples/MTREC.properties");
         }
 
     }
@@ -123,19 +130,19 @@ public class FeatureTest {
     }
 
     public static class MultThread extends Thread {
-        public static List<GLOMA>    modls;
-        public static RegSVD auxRec;
-        public static int            maxID;
-        public static boolean        isU;
-        private static final Object  MUTEX = new Object();
+        public static List<GLOMA>   modls;
+        public static RegSVD        auxRec;
+        public static int           maxID;
+        public static boolean       isU;
+        private static final Object MUTEX = new Object();
 
-        private DenseMatrix          feats;
-        private String               lTEMP;
-        private static int           step;
+        private DenseMatrix         feats;
+        private File                lTEMP;
+        private static int          step;
 
         public MultThread(DenseMatrix feats, String lTEMP) {
             this.feats = feats;
-            this.lTEMP = lTEMP;
+            this.lTEMP = new File(lTEMP);
             step = maxID / 50;
         }
 
@@ -158,35 +165,37 @@ public class FeatureTest {
          */
         @Override
         public void run() {
-            int ID = 0;
-            while ((ID = map()) != -1) {
-                if (isU) {
-                    int u = ID;
-                    String uFeats = getUFeats(modls, auxRec, u);
-                    if (StringUtil.isBlank(uFeats)) {
-                        continue;
+            try {
+                int ID = 0;
+                while ((ID = map()) != -1) {
+                    if (isU) {
+                        int u = ID;
+                        String uFeats = getUFeats(modls, auxRec, u);
+                        if (StringUtil.isBlank(uFeats)) {
+                            continue;
+                        }
+
+                        Files.write(uFeats, lTEMP, Charset.defaultCharset());
+
+                        DenseVector glbFeat = getGlblFeat(lTEMP.getAbsolutePath());
+                        feats.setRowRef(u, glbFeat);
+                    } else {
+                        int i = ID;
+                        String vFeats = getVFeats(modls, auxRec, i);
+                        if (StringUtil.isBlank(vFeats)) {
+                            continue;
+                        }
+
+                        Files.write(vFeats, lTEMP, Charset.defaultCharset());
+
+                        DenseVector glbFeat = getGlblFeat(lTEMP.getAbsolutePath());
+                        feats.setRowRef(i, glbFeat);
                     }
-
-                    FileUtil.write(lTEMP, uFeats);
-
-                    DenseVector glbFeat = getGlblFeat(lTEMP);
-                    feats.setRowRef(u, glbFeat);
-                } else {
-                    int i = ID;
-                    String vFeats = getVFeats(modls, auxRec, i);
-                    if (StringUtil.isBlank(vFeats)) {
-                        continue;
-                    }
-
-                    FileUtil.write(lTEMP, vFeats);
-
-                    DenseVector glbFeat = getGlblFeat(lTEMP);
-                    feats.setRowRef(i, glbFeat);
                 }
-            }
 
-            if (FileUtil.exists(lTEMP)) {
-                FileUtil.delete(lTEMP);
+                java.nio.file.Files.deleteIfExists(lTEMP.toPath());
+            } catch (IOException e) {
+                ExceptionUtil.caught(e, "FILE: " + lTEMP);
             }
         }
 
@@ -199,7 +208,7 @@ public class FeatureTest {
                 if (vec != null) {
                     DenseVector feat = new DenseVector(recmmd.featureCount);
                     for (int k = 0; k < recmmd.featureCount; k++) {
-                        feat.setValue(k, (vec.getValue(k) + avec.getValue(k)) / 2.0);
+                        feat.setValue(k, (vec.floatValue(k) + avec.floatValue(k)) / 2.0);
                     }
 
                     uFeats.append(feat.toString() + '\n');
@@ -217,7 +226,7 @@ public class FeatureTest {
                 if (vec != null) {
                     DenseVector feat = new DenseVector(recmmd.featureCount);
                     for (int k = 0; k < recmmd.featureCount; k++) {
-                        feat.setValue(k, (vec.getValue(k) + avec.getValue(k)) / 2.0);
+                        feat.setValue(k, (vec.floatValue(k) + avec.floatValue(k)) / 2.0);
                     }
 
                     uFeats.append(feat.toString() + '\n');

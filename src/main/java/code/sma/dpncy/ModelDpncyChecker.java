@@ -1,13 +1,15 @@
 package code.sma.dpncy;
 
+import java.io.File;
+import java.nio.file.Files;
+
 import code.sma.core.impl.Tuples;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.MFRecommender;
-import code.sma.util.FileUtil;
 import code.sma.util.LoggerUtil;
-import code.sma.util.MatrixFileUtil;
+import code.sma.util.MatrixIOUtil;
 import code.sma.util.SerializeUtil;
 
 /**
@@ -28,7 +30,8 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", auxRcmmdPath);
 
         MFRecommender auxRec = null;
-        if (FileUtil.exists(auxRcmmdPath)) {
+
+        if (Files.exists((new File(auxRcmmdPath)).toPath())) {
             auxRec = (MFRecommender) SerializeUtil.readObject(auxRcmmdPath);
         }
 
@@ -38,10 +41,9 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
 
             String rootDir = conf.getProperty("ROOT_DIR");
             String trainFile = rootDir + "trainingset";
-            Tuples tnMatrix = MatrixFileUtil.reads(trainFile);
+            Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
 
-            auxRec = (MFRecommender) RecommenderFactory
-                .instance((String) rce.get("ALG_NAME"), rce);
+            auxRec = (MFRecommender) RecommenderFactory.instance((String) rce.get("ALG_NAME"), rce);
             auxRec.buildModel(tnMatrix, null);
             SerializeUtil.writeObject(auxRec, auxRcmmdPath);
         }
@@ -50,7 +52,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         if (normalLogger.isDebugEnabled()) {
             String rootDir = conf.getProperty("ROOT_DIR");
             String testFile = rootDir + "testingset";
-            Tuples ttMatrix = MatrixFileUtil.reads(testFile);
+            Tuples ttMatrix = MatrixIOUtil.reads(testFile);
             LoggerUtil.debug(normalLogger,
                 String.format("ModelDpncyChecker:%s", auxRec.evaluate(ttMatrix).printOneLine()));
         }

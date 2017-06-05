@@ -1,5 +1,6 @@
 package code.sma.recmmd.standalone;
 
+import code.sma.core.AbstractIterator;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.Tuples;
@@ -47,31 +48,36 @@ public class RegSVD extends MFRecommender {
         double currErr = 9999;
 
         boolean isCollaps = false;
+        AbstractIterator iDataElem = (AbstractIterator) train.iterator();
         while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter && !isCollaps) {
             double sum = 0.0;
 
-            for (DataElem e : train) {
-                int u = e.getIndex_global()[0];
-                int i = e.getIndex_global()[1];
+            iDataElem.refresh();
+            while (iDataElem.hasNext()) {
+                DataElem e = iDataElem.next();
+                short num_ifactor = e.getNum_ifacotr();
 
-                //global model
-                double AuiReal = e.getLabel();
-                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-                sum += lossFunction.diff(AuiReal, AuiEst);
+                for (int f = 0; f < num_ifactor; f++) {
+                    int u = e.getIndex_user(f);
+                    int i = e.getIndex_item(f);
 
-                double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
-                for (int s = 0; s < featureCount; s++) {
-                    double Fus = userDenseFeatures.getValue(u, s);
-                    double Gis = itemDenseFeatures.getValue(i, s);
+                    double AuiReal = e.getValue_ifactor(f);
+                    double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
+                    sum += lossFunction.diff(AuiReal, AuiEst);
 
-                    //global model updates
-                    userDenseFeatures.setValue(u, s,
-                        Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus), true);
-                    itemDenseFeatures.setValue(i, s,
-                        Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis), true);
+                    double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
+                    for (int s = 0; s < featureCount; s++) {
+                        double Fus = userDenseFeatures.getValue(u, s);
+                        double Gis = itemDenseFeatures.getValue(i, s);
+
+                        //global model updates
+                        userDenseFeatures.setValue(u, s,
+                            Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus), true);
+                        itemDenseFeatures.setValue(i, s,
+                            Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis), true);
+                    }
                 }
             }
-
             prevErr = currErr;
             currErr = Math.sqrt(sum / rateCount);
 

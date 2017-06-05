@@ -67,10 +67,10 @@ public class SparseVector extends AbstractVector {
     }
 
     /**
-     * @see code.sma.core.AbstractVector#getValue(int)
+     * @see code.sma.core.AbstractVector#floatValue(int)
      */
     @Override
-    public float getValue(int i) {
+    public float floatValue(int i) {
         if (map.containsKey(i))
             return map.get(i);
         else
@@ -96,7 +96,7 @@ public class SparseVector extends AbstractVector {
         SparseVector newVector = new SparseVector(this.N);
 
         for (int i : this.map.keySet()) {
-            newVector.setValue(i, this.getValue(i));
+            newVector.setValue(i, this.floatValue(i));
         }
 
         return newVector;
@@ -135,7 +135,7 @@ public class SparseVector extends AbstractVector {
         double[] result = new double[this.itemCount()];
         int idx = 0;
         for (int i : this.map.keySet()) {
-            result[idx] = this.getValue(i);
+            result[idx] = this.floatValue(i);
             idx++;
         }
 
@@ -219,7 +219,7 @@ public class SparseVector extends AbstractVector {
 
         float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, _alpha + a.getValue(i));
+            c.setValue(i, _alpha + a.floatValue(i));
         }
 
         return c;
@@ -237,7 +237,7 @@ public class SparseVector extends AbstractVector {
 
         float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, a.getValue(i) - _alpha);
+            c.setValue(i, a.floatValue(i) - _alpha);
         }
 
         return c;
@@ -255,7 +255,7 @@ public class SparseVector extends AbstractVector {
 
         float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, _alpha * a.getValue(i));
+            c.setValue(i, _alpha * a.floatValue(i));
         }
 
         return c;
@@ -273,7 +273,7 @@ public class SparseVector extends AbstractVector {
 
         float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, Math.pow(a.getValue(i), _alpha));
+            c.setValue(i, Math.pow(a.floatValue(i), _alpha));
         }
 
         return c;
@@ -291,7 +291,7 @@ public class SparseVector extends AbstractVector {
 
         float _alpha = (float) alpha;
         for (int i : a.map.keySet()) {
-            c.setValue(i, Math.pow(_alpha, a.getValue(i)));
+            c.setValue(i, Math.pow(_alpha, a.floatValue(i)));
         }
 
         return c;
@@ -317,7 +317,7 @@ public class SparseVector extends AbstractVector {
 
         double sum = 0.0;
         for (int i : a.map.keySet()) {
-            sum += a.getValue(i);
+            sum += a.floatValue(i);
         }
 
         return sum;
@@ -333,8 +333,8 @@ public class SparseVector extends AbstractVector {
 
         double curr = Double.MIN_VALUE;
         for (int i : a.map.keySet()) {
-            if (a.getValue(i) > curr) {
-                curr = a.getValue(i);
+            if (a.floatValue(i) > curr) {
+                curr = a.floatValue(i);
             }
         }
 
@@ -351,8 +351,8 @@ public class SparseVector extends AbstractVector {
 
         double curr = Double.MAX_VALUE;
         for (int i : a.map.keySet()) {
-            if (a.getValue(i) < curr) {
-                curr = a.getValue(i);
+            if (a.floatValue(i) < curr) {
+                curr = a.floatValue(i);
             }
         }
 
@@ -369,7 +369,7 @@ public class SparseVector extends AbstractVector {
 
         double sum = 0.0;
         for (int i : a.map.keySet()) {
-            sum += Math.abs(a.getValue(i));
+            sum += Math.abs(a.floatValue(i));
         }
 
         return sum;
@@ -396,7 +396,7 @@ public class SparseVector extends AbstractVector {
         double sum = 0.0;
 
         for (int i : this.map.keySet()) {
-            sum += Math.pow(this.getValue(i) - avg, 2);
+            sum += Math.pow(this.floatValue(i) - avg, 2);
         }
 
         return sum / this.itemCount();
@@ -427,9 +427,9 @@ public class SparseVector extends AbstractVector {
 
         SparseVector c = new SparseVector(N);
         for (int i : a.map.keySet())
-            c.setValue(i, a.getValue(i)); // c = a
+            c.setValue(i, a.floatValue(i)); // c = a
         for (int i : b.map.keySet())
-            c.setValue(i, b.getValue(i) + c.getValue(i)); // c = c + b
+            c.setValue(i, b.floatValue(i) + c.floatValue(i)); // c = c + b
 
         return c;
     }
@@ -447,9 +447,9 @@ public class SparseVector extends AbstractVector {
 
         SparseVector c = new SparseVector(N);
         for (int i : a.map.keySet())
-            c.setValue(i, a.getValue(i)); // c = a
+            c.setValue(i, a.floatValue(i)); // c = a
         for (int i : b.map.keySet())
-            c.setValue(i, c.getValue(i) - b.getValue(i)); // c = c - b
+            c.setValue(i, c.floatValue(i) - b.floatValue(i)); // c = c - b
 
         return c;
     }
@@ -470,12 +470,12 @@ public class SparseVector extends AbstractVector {
         if (a.itemCount() <= b.itemCount()) {
             for (int i : a.map.keySet()) {
                 if (b.map.containsKey(i))
-                    c.setValue(i, a.getValue(i) - b.getValue(i));
+                    c.setValue(i, a.floatValue(i) - b.floatValue(i));
             }
         } else {
             for (int i : b.map.keySet()) {
                 if (a.map.containsKey(i))
-                    c.setValue(i, a.getValue(i) - b.getValue(i));
+                    c.setValue(i, a.floatValue(i) - b.floatValue(i));
             }
         }
 
@@ -499,12 +499,12 @@ public class SparseVector extends AbstractVector {
         if (a.itemCount() <= b.itemCount()) {
             for (int i : a.map.keySet()) {
                 if (b.map.containsKey(i))
-                    sum += a.getValue(i) * b.getValue(i);
+                    sum += a.floatValue(i) * b.floatValue(i);
             }
         } else {
             for (int i : b.map.keySet()) {
                 if (a.map.containsKey(i))
-                    sum += a.getValue(i) * b.getValue(i);
+                    sum += a.floatValue(i) * b.floatValue(i);
             }
         }
 
@@ -522,7 +522,7 @@ public class SparseVector extends AbstractVector {
 
         for (int i = 0; i < this.N; i++) {
             for (int j = 0; j < b.N; j++) {
-                A.setValue(i, j, this.getValue(i) * b.getValue(j));
+                A.setValue(i, j, this.floatValue(i) * b.floatValue(j));
             }
         }
 
@@ -547,7 +547,7 @@ public class SparseVector extends AbstractVector {
             throw new RuntimeException("Vector lengths disagree");
 
         for (int i : indexList)
-            this.setValue(i, this.getValue(i) + b.getValue(i)); // c = c + b
+            this.setValue(i, this.floatValue(i) + b.floatValue(i)); // c = c + b
 
         return this;
     }
@@ -567,7 +567,7 @@ public class SparseVector extends AbstractVector {
             throw new RuntimeException("Vector lengths disagree");
 
         for (int i : indexList)
-            this.setValue(i, this.getValue(i) - b.getValue(i)); // c = c - b
+            this.setValue(i, this.floatValue(i) - b.floatValue(i)); // c = c - b
 
         return this;
     }
@@ -584,7 +584,7 @@ public class SparseVector extends AbstractVector {
 
         if (indexList != null) {
             for (int i : indexList) {
-                sum += this.getValue(i) * b.getValue(i);
+                sum += this.floatValue(i) * b.floatValue(i);
             }
         }
 
@@ -606,7 +606,7 @@ public class SparseVector extends AbstractVector {
 
         for (int i : indexList) {
             for (int j : indexList) {
-                A.setValue(i, j, this.getValue(i) * b.getValue(j));
+                A.setValue(i, j, this.floatValue(i) * b.floatValue(j));
             }
         }
 

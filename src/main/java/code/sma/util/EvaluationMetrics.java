@@ -132,7 +132,7 @@ public class EvaluationMetrics {
                 double lRecl = 0.0d;
                 for (int s = 0; s < N; s++) {
                     int rcmmdtn = topNRcmdn[s];
-                    if (realVs.getValue(rcmmdtn) != 0.0d) {
+                    if (realVs.floatValue(rcmmdtn) != 0.0d) {
                         avgPrecision++;
                         lRecl++;
                         ndcg += 1 / MathUtil.log2(s + 2);

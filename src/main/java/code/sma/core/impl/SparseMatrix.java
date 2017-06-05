@@ -75,7 +75,7 @@ public class SparseMatrix implements Serializable {
      * @return The value stored at the given index.
      */
     public double getValue(int i, int j) {
-        return rows[i].getValue(j);
+        return rows[i].floatValue(j);
     }
 
     /**
@@ -506,7 +506,7 @@ public class SparseMatrix implements Serializable {
             }
 
             for (int j = 0; j < (B.length())[1]; j++) {
-                this.setValue(i, j, tmp.getValue(j));
+                this.setValue(i, j, tmp.floatValue(j));
             }
         }
     }

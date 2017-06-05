@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.Scanner;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
@@ -18,10 +17,9 @@ import code.sma.util.StringUtil;
  * @version $Id: MatlabFasionSparseMatrix.java, v 0.1 2015-5-16 下午2:55:00 Exp $
  */
 public class Tuples extends AbstractMatrix {
-    /**  number of rows in the sparse matrix */
-    protected int     num_row;
-    /**  number of nonzero entries in sparse matrix */
-    protected int     num_val;
+    /** points to the beginning and ends of each row in the data space, size(row_ptr)=num_row+1,
+     * because we need to points the beginning and ends of user feature*/
+    protected int[]   row_ptr;
 
     /** array of user id*/
     protected int[]   rowIndx;
@@ -31,9 +29,10 @@ public class Tuples extends AbstractMatrix {
     protected float[] vals;
 
     public Tuples(int nnz) {
-        this.rowIndx = new int[nnz];
-        this.colIndx = new int[nnz];
-        this.vals = new float[nnz];
+        this.row_ptr = new int[nnz + 1];
+        this.rowIndx = new int[nnz * 200];
+        this.colIndx = new int[nnz * 200];
+        this.vals = new float[nnz * 200];
         this.num_val = 0;
     }
 
@@ -61,7 +60,8 @@ public class Tuples extends AbstractMatrix {
      */
     @Override
     public void loadNext(String line) {
-        Assert.assertTrue("Line must not be blank", StringUtil.isNotBlank(line));
+        assert StringUtil.isNotBlank(line) : "Line must not be blank";
+
         Scanner scanner = new Scanner(line);
         scanner.skip("^(\\d+\\s+){4}");
         scanner.useDelimiter(":+|\\s+");
@@ -75,6 +75,7 @@ public class Tuples extends AbstractMatrix {
             vals[num_val] = scanner.nextFloat();
             num_val++;
         }
+        row_ptr[num_row + 1] = num_val;
 
         num_row++;
         IOUtils.closeQuietly(scanner);
@@ -89,12 +90,17 @@ public class Tuples extends AbstractMatrix {
     }
 
     protected class Iter extends AbstractIterator {
+        Iter() {
+            super();
+        }
 
         /** 
          * @see java.util.Iterator#hasNext()
          */
         @Override
         public boolean hasNext() {
+            assert num_row != 0 : "The data should be loaded by using loadNext()!";
+
             return cursor != num_row;
         }
 
@@ -103,12 +109,23 @@ public class Tuples extends AbstractMatrix {
          */
         @Override
         public DataElem next() {
-            DataElem e = new DataElem(vals[cursor]);
+            assert row_ptr[cursor
+                           + 1] > row_ptr[cursor] : "The number of item features in each row should be more than one";
 
-            int[] index_global = new int[2];
-            index_global[0] = rowIndx[cursor];
-            index_global[1] = colIndx[cursor];
-            e.setIndex_global(index_global);
+            int num_factor = row_ptr[cursor + 1] - row_ptr[cursor];
+
+            e.getIndex_user().setIntPtr(rowIndx);
+            e.getIndex_user().setPtr_offset(row_ptr[cursor]);
+            e.getIndex_user().setNum_factors(num_factor);
+
+            e.getIndex_item().setIntPtr(colIndx);
+            e.getIndex_item().setPtr_offset(row_ptr[cursor]);
+            e.getIndex_item().setNum_factors(num_factor);
+
+            e.getValue_ifactor().setFloatPtr(vals);
+            e.getValue_ifactor().setPtr_offset(row_ptr[cursor]);
+            e.getValue_ifactor().setNum_factors(num_factor);
+            e.setNum_ifacotr((short) num_factor);
 
             cursor++;
             return e;
