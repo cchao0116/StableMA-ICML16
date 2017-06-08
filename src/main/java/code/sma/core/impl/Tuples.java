@@ -30,9 +30,9 @@ public class Tuples extends AbstractMatrix {
 
     public Tuples(int nnz) {
         this.row_ptr = new int[nnz + 1];
-        this.rowIndx = new int[nnz * 200];
-        this.colIndx = new int[nnz * 200];
-        this.vals = new float[nnz * 200];
+        this.rowIndx = new int[nnz];
+        this.colIndx = new int[nnz];
+        this.vals = new float[nnz];
         this.num_val = 0;
     }
 
@@ -87,6 +87,14 @@ public class Tuples extends AbstractMatrix {
     @Override
     public Iterator<DataElem> iterator() {
         return new Iter();
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#iterator(boolean[], boolean[])
+     */
+    @Override
+    public Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature) {
+        return null;
     }
 
     protected class Iter extends AbstractIterator {
@@ -186,6 +194,14 @@ public class Tuples extends AbstractMatrix {
             sm.setValue(u, i, AuiReal);
         }
         return sm;
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#getnnz()
+     */
+    @Override
+    public int getnnz() {
+        return num_val;
     }
 
 }

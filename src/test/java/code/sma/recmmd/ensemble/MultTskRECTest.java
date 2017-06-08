@@ -10,7 +10,6 @@ import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
-import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
 import code.sma.util.ConfigureUtil;
 import code.sma.util.LoggerDefineConstant;
@@ -46,23 +45,29 @@ public class MultTskRECTest extends TestCase {
             String trainFile = rootDir + "trainingset";
             String testFile = rootDir + "testingset";
 
-            String aRcmmdFile = rootDir + conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
-            conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", aRcmmdFile);
+            Configures new_conf = new Configures(conf);
+            String dconfFile = rootDir + "dConfig.properties";
+            ConfigureUtil.addConfig(new_conf, dconfFile);
 
-            String algName = conf.getProperty("ALG_NAME");
+            String aRcmmdFile = rootDir + new_conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
+            new_conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", aRcmmdFile);
+
+            String algName = new_conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
 
             if (StringUtil.equalsIgnoreCase(algName, "MTREC")) {
                 AbstractDpncyChecker checker = new ModelDpncyChecker();
-                checker.handler(conf);
+                checker.handler(new_conf);
 
-                Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
-                Tuples ttMatrix = MatrixIOUtil.reads(testFile);
-                RecConfigEnv rce = new RecConfigEnv(conf);
-                Recommender rcmmd = RecommenderFactory.instance(algName, rce);
-                rcmmd.buildModel(tnMatrix, ttMatrix);
-                LoggerUtil.info(logger, String.format("%s\n%s", rcmmd.toString(),
-                    rcmmd.evaluate(ttMatrix).printOneLine()));
+                Tuples train = MatrixIOUtil.loadTuples(trainFile,
+                    ((Float) new_conf.get("TRAIN_VAL_NUM_VALUE")).intValue());
+                Tuples test = MatrixIOUtil.loadTuples(testFile,
+                    ((Float) new_conf.get("TEST_VAL_NUM_VALUE")).intValue());
+
+                Recommender rcmmd = RecommenderFactory.instance(algName, new_conf);
+                rcmmd.buildModel(train, test);
+                LoggerUtil.info(logger,
+                    String.format("%s\n%s", rcmmd.toString(), rcmmd.evaluate(test).printOneLine()));
             }
         }
     }

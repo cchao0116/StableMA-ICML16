@@ -1,6 +1,6 @@
 package code.sma.thread;
 
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractMatrix;
 import code.sma.recmmd.Recommender;
 
 /**
@@ -11,23 +11,22 @@ import code.sma.recmmd.Recommender;
  */
 public class WeakLearner extends Thread {
     /** learning task dispatcher*/
-    private TaskMsgDispatcher        dispatcher;
+    private TaskMsgDispatcher dispatcher;
     /** training data*/
-    private Tuples trainMatrix;
+    private AbstractMatrix    train;
     /** testing data*/
-    private Tuples testMatrix;
+    private AbstractMatrix    test;
 
     /**
      * @param recmmnd       cf learner
-     * @param trainMatrix   training data
-     * @param testMatrix    testing data
+     * @param train   training data
+     * @param test    testing data
      */
-    public WeakLearner(TaskMsgDispatcher dispatcher, Tuples trainMatrix,
-                       Tuples testMatrix) {
+    public WeakLearner(TaskMsgDispatcher dispatcher, AbstractMatrix train, AbstractMatrix test) {
         super();
         this.dispatcher = dispatcher;
-        this.trainMatrix = trainMatrix;
-        this.testMatrix = testMatrix;
+        this.train = train;
+        this.test = test;
     }
 
     /** 
@@ -37,8 +36,8 @@ public class WeakLearner extends Thread {
     public void run() {
         Recommender recmmnd = null;
         while ((recmmnd = (Recommender) dispatcher.map()) != null) {
-            recmmnd.buildloclModel(trainMatrix, testMatrix);
-            dispatcher.reduce(recmmnd, trainMatrix, testMatrix);
+            recmmnd.buildloclModel(train, test);
+            dispatcher.reduce(recmmnd, train, test);
         }
     }
 

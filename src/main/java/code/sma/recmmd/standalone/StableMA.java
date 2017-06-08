@@ -1,12 +1,18 @@
 package code.sma.recmmd.standalone;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Map;
 
-import org.apache.commons.math3.stat.StatUtils;
-
-import code.sma.core.impl.Tuples;
-import code.sma.recmmd.RecConfigEnv;
-import code.sma.util.LoggerUtil;
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
+import code.sma.core.Accumulator;
+import code.sma.core.DataElem;
+import code.sma.core.impl.DenseVector;
+import code.sma.main.Configures;
+import code.sma.plugin.Plugin;
+import code.sma.recmmd.Loss;
+import code.sma.recmmd.Regularizer;
+import code.sma.recmmd.stats.StatsOperator;
 
 /**
  * This is a class implementing SMA (Stable Matrix Approximation).
@@ -20,219 +26,150 @@ import code.sma.util.LoggerUtil;
 public class StableMA extends MFRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
-    /** Number of hard-predictable subsets */
-    protected int             numOfHPSet;
+    /** the indicator of hard-predictive set, where true means in the set*/
+    private boolean[][]       hps_indicator;
 
     /*========================================
      * Constructors
      *========================================*/
-    public StableMA(RecConfigEnv rce) {
-        super(rce);
-        numOfHPSet = ((Double) rce.get("NUMBER_HARD_PREDICTION_SET_VALUE")).intValue();
+
+    public StableMA(Configures conf, Map<String, Plugin> plugins) {
+        super(conf, plugins);
+
+        runtimes.ints.add(conf.getInteger("NUMBER_HARD_PREDICTION_SET_VALUE"));
     }
 
     /** 
-     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
+     * @see code.sma.recmmd.standalone.MFRecommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
-        super.buildModel(rateMatrix, tMatrix);
+    protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
+        super.prepare_runtimes(train, test);
 
-        // Gradient Descent:
-        int round = 0;
-        int rateCount = rateMatrix.getNnz();
-        double prevErr = 99999;
-        double currErr = 9999;
+        int num_hps = runtimes.ints.getInt(0); // number of hard-predictive subsets
+        int nnz = runtimes.nnz;
+        hps_indicator = new boolean[num_hps][nnz];
 
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
+        int[] num_en = new int[num_hps]; // number of chosen entries in each  hard-predictive subsets
+        {
+            MFRecommender auxRec = (MFRecommender) runtimes.plugins.get("AUXILIARY_RCMMD_MODEL");
+            double bestRMSE = auxRec.runtimes.bestTrainErr();
 
-        // rating assignment
-        // pre-compute the rmse
-        boolean[][] rAssigmnt = new boolean[numOfHPSet][rateCount];
-        double[] errors = new double[rateCount];
-        double[] seInSubset = new double[numOfHPSet];
-        int[] numInSubset = new int[numOfHPSet];
-        double se = assignStable(rateMatrix, rAssigmnt, errors, seInSubset, numInSubset);
-        LoggerUtil.info(runningLogger, "Param: FC: " + featureCount + "\tLR: " + learningRate
-                                       + "\tR: " + regularizer + "\tT: " + rateCount);
+            int id_en = 0;
 
-        // update model
-        boolean isCollaps = false;
-        while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter && !isCollaps) {
+            AbstractIterator iDataElem = runtimes.itrain.refresh();
+            while (iDataElem.hasNext()) {
+                DataElem e = iDataElem.next();
+                short num_ifactor = e.getNum_ifacotr();
 
-            // compute essential errors
-            for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-                int u = uIndx[numSeq];
-                int i = iIndx[numSeq];
+                int u = e.getIndex_user(0);
+                for (int f = 0; f < num_ifactor; f++) {
+                    int i = e.getIndex_item(f);
 
-                double AuiReal = Auis[numSeq];
-                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-                double diff = lossFunction.diff(AuiReal, AuiEst);
+                    double AuiReal = e.getValue_ifactor(f);
+                    double AuiEstm = auxRec.predict(u, i);
 
-                // compute all rmse-s
-                double rmse = Math.sqrt((se - errors[numSeq] + diff) / rateCount);
-                double[] subRMSES = new double[numOfHPSet];
-                for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
-                    if (rAssigmnt[kIndx][numSeq] == false) {
-                        continue;
+                    // choose hard-predictive subsets at random
+                    double chosen_prob = Math.abs(AuiReal - AuiEstm) > bestRMSE ? 0.55 : 0.75;
+                    for (int h = 0; h < num_hps; h++) {
+                        if (Math.random() > chosen_prob) {
+                            continue;
+                        }
+
+                        hps_indicator[h][id_en] = true;
+                        num_en[h]++;
                     }
 
-                    subRMSES[kIndx] = Math
-                        .sqrt((seInSubset[kIndx] - errors[numSeq] + diff) / numInSubset[kIndx]);
-                    seInSubset[kIndx] = seInSubset[kIndx] - errors[numSeq] + diff;
+                    id_en++;
                 }
-                se = se - errors[numSeq] + diff;
-                errors[numSeq] = diff;
+            }
+        }
+
+        runtimes.acumltors = new ArrayList<Accumulator>();
+        runtimes.acumltors.add(new Accumulator(1, nnz));
+        for (int h = 0; h < num_hps; h++) {
+            runtimes.acumltors.add(new Accumulator(1, num_en[h]));
+        }
+    }
+
+    /** 
+     * @see code.sma.recmmd.standalone.MFRecommender#update_inner(code.sma.core.AbstractIterator)
+     */
+    @Override
+    protected void update_inner(AbstractIterator iDataElem) {
+        int featureCount = runtimes.featureCount;
+        double learningRate = runtimes.learningRate;
+        double regularizer = runtimes.regularizer;
+
+        Regularizer regType = runtimes.regType;
+        Loss lossFunction = runtimes.lossFunction;
+
+        int num_hps = runtimes.ints.getInt(0);
+        Accumulator[] acumltor = new Accumulator[num_hps + 1];
+        acumltor[0] = runtimes.acumltors.get(0);
+
+        int rid = 0;
+
+        iDataElem.refresh();
+        while (iDataElem.hasNext()) {
+            DataElem e = iDataElem.next();
+            short num_ifactor = e.getNum_ifacotr();
+
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+
+                int i = e.getIndex_item(f);
+
+                DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
+                DenseVector ref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i);
+
+                for (int h = 1; h <= num_hps; h++) {
+                    acumltor[h] = hps_indicator[h - 1][rid] ? runtimes.acumltors.get(h) : null;
+                }
+
+                double AuiReal = e.getValue_ifactor(f);
+                double AuiEst = StatsOperator.innerProduct(ref_ufactor, ref_ifactor, lossFunction,
+                    AuiReal, acumltor);
+                runtimes.sumErr += lossFunction.diff(AuiReal, AuiEst);
+
+                // compute RMSEs
+                double tnW = 1 / acumltor[0].rm();
+                for (int h = 0; h <= num_hps; h++) {
+                    if (acumltor[h] != null) {
+                        tnW += 1 / (2 * num_hps * acumltor[h].rm());
+                    }
+                }
 
                 // stochastic gradient descend
                 double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
                 for (int s = 0; s < featureCount; s++) {
-                    double Fus = userDenseFeatures.getValue(u, s);
-                    double Gis = itemDenseFeatures.getValue(i, s);
+                    double Fus = ref_ufactor.floatValue(s);
+                    double Gis = ref_ifactor.floatValue(s);
 
-                    double uGrad = -deriWRTp * Gis / rmse - regularizer * regType.reg(null, 0, Fus);
-                    double iGrad = -deriWRTp * Fus / rmse - regularizer * regType.reg(null, 0, Gis);
-
-                    for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
-                        if (rAssigmnt[kIndx][numSeq] == false) {
-                            continue;
-                        }
-
-                        uGrad += -deriWRTp * Gis / (2 * numOfHPSet * subRMSES[kIndx]);
-                        iGrad += -deriWRTp * Fus / (2 * numOfHPSet * subRMSES[kIndx]);
-                    }
-
-                    userDenseFeatures.setValue(u, s, Fus + learningRate * uGrad, true);
-                    itemDenseFeatures.setValue(i, s, Gis + learningRate * iGrad, true);
+                    //global model updates
+                    ref_ufactor.setValue(s,
+                        Fus + learningRate
+                              * (-deriWRTp * Gis * tnW - regularizer * regType.reg(null, u, Fus)));
+                    ref_ifactor.setValue(s,
+                        Gis + learningRate
+                              * (-deriWRTp * Fus * tnW - regularizer * regType.reg(null, i, Gis)));
                 }
-            }
 
-            // Show progress:
-            prevErr = currErr;
-            currErr = Math.sqrt(se / rateCount);
-            round++;
-
-            isCollaps = recordLoggerAndDynamicStop(round, tMatrix, currErr);
-        }
-    }
-
-    /**
-     * Assign ratings to different groups <br/>
-     * 
-     * @param rateMatrix        the matrix containing training data
-     * @param rAssigmnt         rating assignment table
-     * @param errors            the error for every ratings
-     * @param seInSubset        the square sum of errors in different partitions
-     * @param numInSubset       the number of ratings in different partitions
-     * @return
-     */
-    protected double assignStable(Tuples rateMatrix, boolean[][] rAssigmnt, double[] errors,
-                                  double[] seInSubset, int[] numInSubset) {
-        int rateCount = rateMatrix.getNnz();
-
-        // build RSVD model
-        RecConfigEnv rce = new RecConfigEnv();
-        rce.put("USER_COUNT_VALUE", userCount * 1.0);
-        rce.put("ITEM_COUNT_VALUE", itemCount * 1.0);
-        rce.put("MAX_RATING_VALUE", maxValue * 1.0);
-        rce.put("MIN_RATING_VALUE", minValue * 1.0);
-
-        rce.put("FEATURE_COUNT_VALUE", 30 * 1.0);
-        rce.put("LEARNING_RATE_VALUE", 0.01);
-        rce.put("REGULAIZED_VALUE", 0.001);
-        rce.put("MAX_ITERATION_VALUE", 30 * 1.0);
-        rce.put("VERBOSE_BOOLEAN", false);
-
-        RegSVD recmmd = new RegSVD(rce);
-        recmmd.buildModel(rateMatrix, null);
-        double recRMSE = recmmd.evaluate(rateMatrix).getRMSE();
-
-        // compute a probability for every rating
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
-
-        double[] diffArr = new double[rateCount];
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double AuiReal = Auis[numSeq];
-            double AuiEst = recmmd.predict(u, i);
-
-            diffArr[numSeq] = Math.abs(AuiReal - AuiEst) - recRMSE;
-        }
-        double sampleMean = StatUtils.mean(diffArr);
-
-        // make a partition
-        for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
-            Arrays.fill(rAssigmnt[kIndx], true);
-        }
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            double rand = Math.random();
-            boolean isHardPredictableItem = diffArr[numSeq] > sampleMean;
-
-            if ((isHardPredictableItem & (rand < 0.45)) | (!isHardPredictableItem & rand < 0.60)) {
-                rAssigmnt[(int) (numOfHPSet * Math.random())][numSeq] = false;
+                rid++;
             }
         }
 
-        return initialStatParam(rateMatrix, rAssigmnt, errors, seInSubset, numInSubset);
-    }
-
-    /**
-     * initial the statistical parameters
-     * 
-     * @param rateMatrix        the matrix containing training data
-     * @param rAssigmnt         rating assignment table
-     * @param errors            the error for every ratings
-     * @param seInSubset        the square sum of errors in different partitions
-     * @param numInSubset       the number of ratings in different partitions
-     * @return
-     */
-    protected double initialStatParam(Tuples rateMatrix, boolean[][] rAssigmnt, double[] errors,
-                                      double[] seInSubset, int[] numInSubset) {
-        // refresh statistical parameters
-        Arrays.fill(errors, 0.0d);
-        Arrays.fill(seInSubset, 0.0d);
-        Arrays.fill(numInSubset, 0);
-
-        int rateCount = rateMatrix.getNnz();
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
-
-        double se = 0.0d;
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-
-            double AuiReal = Auis[numSeq];
-            double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-            double error = AuiReal - AuiEst;
-
-            errors[numSeq] = Math.pow(error, 2.0d);
-            se += errors[numSeq];
-
-            for (int kIndx = 0; kIndx < numOfHPSet; kIndx++) {
-                if (rAssigmnt[kIndx][numSeq] == false) {
-                    continue;
-                }
-                seInSubset[kIndx] += errors[numSeq];
-                numInSubset[kIndx]++;
-            }
-        }
-        return se;
+        // update runtime environment
+        update_runtimes();
     }
 
     /** 
      * @see java.lang.Object#toString()
      */
-    @Override
-    public String toString() {
-        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
-               + " ALG[SMA][" + numOfHPSet + "]";
-    }
+    //    @Override
+    //    public String toString() {
+    //        return "Param: FC: " + runtimes.featureCount + " LR: " + runtimes.learningRate + " R: "
+    //               + runtimes.regularizer + " ALG[SMA][" + numOfHPSet + "]";
+    //    }
 
 }

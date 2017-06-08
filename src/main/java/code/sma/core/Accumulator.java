@@ -1,5 +1,7 @@
 package code.sma.core;
 
+import java.util.Arrays;
+
 /**
  * 
  * @author Chao.Chen
@@ -7,33 +9,46 @@ package code.sma.core;
  */
 public class Accumulator {
     double[][] indvdlVal;
-    double[]   accVal;
-    int[]      accNum;
+    double[]   accVal;      // accumulated value
+    int[]      accNum;      // number of values in each calculator
 
-    public Accumulator(int num) {
-        accVal = new double[num];
-        accNum = new int[num];
-    }
+    int        cursor_vId;
+    int        cursor_accId;
 
     public Accumulator(int num, int dimnsn) {
-        indvdlVal = new double[num][dimnsn];
         accVal = new double[num];
         accNum = new int[num];
+
+        indvdlVal = new double[num][dimnsn];
+        for (double[] iv : indvdlVal) {
+            Arrays.fill(iv, Double.NaN);
+        }
+
+        cursor_vId = 0;
+        cursor_accId = 0;
     }
 
     /**
-     * insert a new value to the accumulator
+     * WARN: Please carefully use this method, 
+     * which recurrently update the values one-by-one 
+     * from 0-th value of different calculator to the last one.
      * 
-     * @param accId the accumulator's ID
-     * @param vId   the index of the new value
-     * @param value the value to insert
+     * @param value the value to update
      */
-    public void insert(int accId, int vId, double value) {
-        if (indvdlVal != null) {
-            indvdlVal[accId][vId] = value;
+    public void traverse(double value) {
+        update(cursor_accId, cursor_vId, value);
+
+        // update cursor
+        int num_cal = indvdlVal.length;
+        int num_val = indvdlVal[0].length;
+
+        cursor_accId++;
+        if (cursor_accId == num_cal) {
+            cursor_vId++;
         }
-        accVal[accId] += value;
-        accNum[accId]++;
+
+        cursor_accId %= num_cal;
+        cursor_vId %= num_val;
     }
 
     /**
@@ -44,7 +59,13 @@ public class Accumulator {
      * @param value the value to update
      */
     public void update(int accId, int vId, double value) {
-        accVal[accId] += value - indvdlVal[accId][vId];
+        if (Double.isNaN(indvdlVal[accId][vId])) {
+            accVal[accId] += value;
+            accNum[accId]++;
+        } else {
+            accVal[accId] += value - indvdlVal[accId][vId];
+        }
+
         indvdlVal[accId][vId] = value;
     }
 

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Scanner;
+
+import org.apache.commons.io.IOUtils;
 
 import com.google.common.io.Files;
 
@@ -129,6 +132,50 @@ public final class ClusterInfoUtil {
     }
 
     /**
+     * read <b>a</b>ccessible <b>f</b>eature <b>i</b>ndicator <b>(AFI)</b> based on clustering
+     * 
+     * @param num_rows          number of rows
+     * @param num_cols          number of columns
+     * @param clusterDir        file path of clustering 
+     * @return                  [0] user feature accessible indicator, [1] item feature accessible indicator
+     * @throws IOException
+     */
+    public static boolean[][][] readAFI(int num_rows, int num_cols,
+                                        String clusterDir) throws IOException {
+        boolean[][][] acc_features = new boolean[2][0][0];
+
+        acc_features[0] = readAFIInner(new File(clusterDir + "RM"), num_rows);
+        acc_features[1] = readAFIInner(new File(clusterDir + "CM"), num_cols);
+        return acc_features;
+    }
+
+    protected static boolean[][] readAFIInner(File f, int num) throws IOException {
+        List<String> lines = Files.readLines(f, Charset.defaultCharset());
+
+        int num_lines = lines.size();
+        boolean[][] acc_feature = new boolean[num_lines][num];
+        for (int n = 0; n < num_lines; n++) {
+            String line = lines.get(n);
+            if (StringUtil.isBlank(line)) {
+                continue;
+            }
+
+            Scanner scanner = new Scanner(line);
+            scanner.useDelimiter(":+|[|]|,");
+
+            int c = scanner.nextInt();
+
+            while (scanner.hasNextInt()) {
+                int rowId = scanner.nextInt();
+                acc_feature[c][rowId] = true;
+            }
+            IOUtils.closeQuietly(scanner);
+        }
+
+        return acc_feature;
+    }
+
+    /**
      * read the mapping between the uId (iId) and uClustering(iClustering)Id 
      * 
      * @param raf           row assignment function. [userId] : [user clustering id]
@@ -181,48 +228,27 @@ public final class ClusterInfoUtil {
      */
     public static void saveClustering(Cluster[][] clustering,
                                       String clusterDir) throws IOException {
-        // writing clustering size
-        {
-            StringBuilder settngContt = new StringBuilder();
-            for (Cluster rowCluster : clustering[0]) {
-                settngContt.append(rowCluster.size() + ",");
-            }
-            settngContt.replace(settngContt.length() - 1, settngContt.length(), "\n");
-
-            for (Cluster colCluster : clustering[1]) {
-                settngContt.append(colCluster.size() + ",");
-            }
-            settngContt.deleteCharAt(settngContt.length() - 1);
-
-            Files.write(settngContt, new File(clusterDir + "SETTING"), Charset.defaultCharset());
-        }
 
         // writing row assignment functions
         {
-            int rowClusterId = 0;
-            for (Cluster rowCluster : clustering[0]) {
-                StringBuilder rafContt = new StringBuilder();
-                for (Integer rowId : rowCluster) {
-                    rafContt.append(rowId + "," + rowClusterId + '\n');
-                }
-
-                rowClusterId++;
-                Files.append(rafContt, new File(clusterDir + "RM"), Charset.defaultCharset());
+            StringBuilder str = new StringBuilder();
+            int c = 0;
+            for (Cluster cluster : clustering[0]) {
+                str.append(String.format("%d:%s\n", c, cluster.toString()));
+                c++;
             }
+            Files.write(str, new File(clusterDir + "RM"), Charset.defaultCharset());
         }
 
         // writing column assignment functions
         {
-            int colClusterId = 0;
-            for (Cluster colCluster : clustering[1]) {
-                StringBuilder cafContt = new StringBuilder();
-                for (Integer colId : colCluster) {
-                    cafContt.append(colId + "," + colClusterId + '\n');
-                }
-
-                colClusterId++;
-                Files.append(cafContt, new File(clusterDir + "CM"), Charset.defaultCharset());
+            int c = 0;
+            StringBuilder str = new StringBuilder();
+            for (Cluster cluster : clustering[1]) {
+                str.append(String.format("%d:%s\n", c, cluster.toString()));
+                c++;
             }
+            Files.write(str, new File(clusterDir + "CM"), Charset.defaultCharset());
         }
     }
 }

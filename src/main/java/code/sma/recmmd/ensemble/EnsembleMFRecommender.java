@@ -1,16 +1,21 @@
 package code.sma.recmmd.ensemble;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
 import code.sma.core.impl.SparseMatrix;
-import code.sma.core.impl.Tuples;
-import code.sma.recmmd.RecConfigEnv;
+import code.sma.main.Configures;
+import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
+import code.sma.util.EvaluationMetrics;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerUtil;
 
@@ -22,51 +27,36 @@ import code.sma.util.LoggerUtil;
  */
 public abstract class EnsembleMFRecommender extends MFRecommender implements TaskMsgDispatcher {
     /** SerialVersionNum */
-    protected static final long      serialVersionUID = 1L;
+    protected static final long serialVersionUID = 1L;
     /** cumulative prediction */
-    protected SparseMatrix           cumPrediction    = null;
+    protected SparseMatrix      cumPrediction    = null;
     /** cumulative weights */
-    protected SparseMatrix           cumWeight        = null;
-    /** the number of threads in training*/
-    protected int                    threadNum;
-    /** current assigned thread id*/
-    protected int                    tskId            = 0;
-    /** algorithm environment*/
-    protected transient RecConfigEnv rce;
+    protected SparseMatrix      cumWeight        = null;
 
     /** mutex using in map procedure*/
-    protected static Object          MAP_MUTEX        = new Object();
+    protected static Object     MAP_MUTEX        = new Object();
     /** mutex using in reduce procedure*/
-    protected static Object          REDUCE_MUTEX     = new Object();
-    /** training data*/
-    protected transient Tuples       tnMatrix;
-    /** testing data*/
-    protected transient Tuples       ttMatrix;
+    protected static Object     REDUCE_MUTEX     = new Object();
 
     /*========================================
      * Constructors
      *========================================*/
-    public EnsembleMFRecommender(RecConfigEnv rce) {
-        super(rce);
-        this.rce = rce;
-        threadNum = ((Double) rce.get("THREAD_NUMBER_VALUE")).intValue();
-        cumPrediction = new SparseMatrix(userCount, itemCount);
-        cumWeight = new SparseMatrix(userCount, itemCount);
+    public EnsembleMFRecommender(Configures conf, Map<String, Plugin> plugins) {
+        super(conf, plugins);
+        cumPrediction = new SparseMatrix(runtimes.userCount, runtimes.itemCount);
+        cumWeight = new SparseMatrix(runtimes.userCount, runtimes.itemCount);
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
+     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
-        tnMatrix = rateMatrix;
-        ttMatrix = tMatrix;
-
+    public void buildModel(AbstractMatrix train, AbstractMatrix test) {
         // run learning threads
         try {
             ExecutorService exec = Executors.newCachedThreadPool();
-            for (int t = 0; t < threadNum; t++) {
-                exec.execute(new WeakLearner(this, rateMatrix, tMatrix));
+            for (int t = 0; t < runtimes.threadNum; t++) {
+                exec.execute(new WeakLearner(this, train, test));
             }
             exec.shutdown();
             exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
@@ -76,55 +66,49 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void reduce(Object recmmd, Tuples tnMatrix, Tuples ttMatrix) {
-        int[] uIndx = ttMatrix.getRowIndx();
-        int[] iIndx = ttMatrix.getColIndx();
-        float[] vals = ttMatrix.getVals();
-
+    public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
         // update approximated model
         synchronized (REDUCE_MUTEX) {
-            int[] testInvlvIndces = ((MFRecommender) recmmd).testInvlvIndces;
-            for (int numSeq : testInvlvIndces) {
-                int u = uIndx[numSeq];
-                int i = iIndx[numSeq];
 
-                // update global approximation model
-                if (((MFRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
-                    || ((MFRecommender) recmmd).itemDenseFeatures.getRowRef(i) == null) {
-                    continue;
+            AbstractIterator iDataElem = (AbstractIterator) test.iterator();
+            iDataElem.refresh();
+            while (iDataElem.hasNext()) {
+                DataElem e = iDataElem.next();
+                short num_ifactor = e.getNum_ifacotr();
+
+                int u = e.getIndex_user(0);
+                for (int f = 0; f < num_ifactor; f++) {
+                    int i = e.getIndex_item(f);
+
+                    // update global approximation model
+                    if (((MFRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
+                        || ((MFRecommender) recmmd).itemDenseFeatures.getRowRef(i) == null) {
+                        continue;
+                    }
+
+                    double prediction = ((Recommender) recmmd).predict(u, i);
+                    double weight = ensnblWeight(u, i, prediction);
+
+                    double newCumPrediction = prediction * weight + cumPrediction.getValue(u, i);
+                    double newCumWeight = weight + cumWeight.getValue(u, i);
+
+                    cumPrediction.setValue(u, i, newCumPrediction);
+                    cumWeight.setValue(u, i, newCumWeight);
                 }
-
-                double prediction = ((Recommender) recmmd).predict(u, i);
-                double weight = ensnblWeight(u, i, prediction);
-
-                double newCumPrediction = prediction * weight + cumPrediction.getValue(u, i);
-                double newCumWeight = weight + cumWeight.getValue(u, i);
-
-                cumPrediction.setValue(u, i, newCumPrediction);
-                cumWeight.setValue(u, i, newCumWeight);
             }
         }
 
         // evaluate approximated model
         // WARNING: this part is not thread safe in order to quick produce the evaluation
-        int nnz = ttMatrix.getNnz();
-        double rmse = 0.0d;
-        for (int numSeq = 0; numSeq < nnz; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double AuiRel = vals[numSeq];
-            double AuiEst = (cumWeight.getValue(u, i) == 0.0) ? ((maxValue + minValue) / 2)
-                : (cumPrediction.getValue(u, i) / cumWeight.getValue(u, i));
-            rmse += Math.pow(AuiEst - AuiRel, 2.0d);
-        }
-        rmse = Math.sqrt(rmse / nnz);
+        EvaluationMetrics em = new EvaluationMetrics(this);
 
-        LoggerUtil.info(resultLogger, String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f",
-            ((Recommender) recmmd).threadId, rmse, ((MFRecommender) recmmd).trainInvlvIndces.length,
-            ((MFRecommender) recmmd).testInvlvIndces.length, ((MFRecommender) recmmd).bestRMSE));
+        LoggerUtil.info(resultLogger,
+            String.format("ThreadId: %d\tRMSE: %.6f - %.6f",
+                ((MFRecommender) recmmd).runtimes.threadId, em.getRMSE(),
+                ((MFRecommender) recmmd).runtimes.bestTestErr()));
     }
 
     /** 
@@ -132,17 +116,12 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
      */
     @Override
     public double predict(int u, int i) {
+        double maxValue = runtimes.maxValue;
+        double minValue = runtimes.minValue;
+
         double prediction = (cumWeight.getValue(u, i) == 0.0) ? ((maxValue + minValue) / 2)
             : (cumPrediction.getValue(u, i) / cumWeight.getValue(u, i));
-
-        // normalize the prediction
-        if (prediction > maxValue) {
-            return maxValue;
-        } else if (prediction < minValue) {
-            return minValue;
-        } else {
-            return prediction;
-        }
+        return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
     /**

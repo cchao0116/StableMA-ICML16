@@ -7,11 +7,10 @@ import java.util.Queue;
 
 import org.apache.log4j.Logger;
 
+import code.sma.core.AbstractMatrix;
 import code.sma.core.impl.DenseVector;
-import code.sma.core.impl.Tuples;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
-import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.Recommender;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
@@ -75,11 +74,13 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
 
                 // store all possible configures
                 for (int l = 0; l < lastLayerWidth; l++) {
-                    RecConfigEnv rce = new RecConfigEnv(conf);
+                    Configures rce = new Configures(conf);
                     for (int c = 0; c < maxLayer - 1; c++) {
-                        rce.put(suffArrKeys.get(c), suffArrVals.get(c).floatValue(nodes.get(c)));
+                        rce.setDouble(suffArrKeys.get(c),
+                            (double) suffArrVals.get(c).floatValue(nodes.get(c)));
                     }
-                    rce.put(suffArrKeys.get(nextLayer), suffArrVals.get(nextLayer).floatValue(l));
+                    rce.setDouble(suffArrKeys.get(nextLayer),
+                        (double) suffArrVals.get(nextLayer).floatValue(l));
                     recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
                 }
 
@@ -99,8 +100,8 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
                 }
             }
         } else {
-            RecConfigEnv rce = new RecConfigEnv(conf);
-            recmmdsBuffer.add(RecommenderFactory.instance(algName, rce));
+            Configures lconf = new Configures(conf);
+            recmmdsBuffer.add(RecommenderFactory.instance(algName, lconf));
         }
 
     }
@@ -116,12 +117,12 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(code.sma.recmmd.Recommender)
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void reduce(Object recmmd, Tuples tnMatrix, Tuples ttMatrix) {
+    public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
         LoggerUtil.info(normalLogger, (new StringBuilder(recmmd.toString())).append(": ")
-            .append((((Recommender) recmmd).evaluate(ttMatrix)).printOneLine()));
+            .append((((Recommender) recmmd).evaluate(test)).printOneLine()));
     }
 
 }

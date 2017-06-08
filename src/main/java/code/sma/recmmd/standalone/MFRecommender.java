@@ -1,19 +1,21 @@
 package code.sma.recmmd.standalone;
 
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
 import code.sma.core.AbstractVector;
+import code.sma.core.DataElem;
 import code.sma.core.impl.DenseMatrix;
-import code.sma.core.impl.DenseVector;
-import code.sma.core.impl.Tuples;
-import code.sma.recmmd.Loss;
-import code.sma.recmmd.RecConfigEnv;
+import code.sma.main.Configures;
+import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
-import code.sma.recmmd.Regularizer;
+import code.sma.recmmd.RuntimeEnv;
 import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
-import code.sma.util.StringUtil;
 
 /**
  * This is an abstract class implementing four matrix-factorization-based methods
@@ -23,46 +25,14 @@ import code.sma.util.StringUtil;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public abstract class MFRecommender extends Recommender {
+public abstract class MFRecommender extends Recommender implements Plugin {
     /** SerialVersionNum */
     protected static final long             serialVersionUID = 1L;
-
-    /** The number of features. */
-    public int                              featureCount;
-    /** Learning rate parameter. */
-    public double                           learningRate;
-    /** Regularization factor parameter. */
-    public double                           regularizer;
-    /** Momentum parameter. */
-    public double                           momentum;
-    /** Maximum number of iteration. */
-    public int                              maxIter;
-    /** The best RMSE in test*/
-    public double                           bestRMSE         = Double.MAX_VALUE;
-
-    /** Indicator whether to show progress of iteration. */
-    public boolean                          showProgress;
-    /** Offset to rating estimation. Usually this is the average of ratings. */
-    protected double                        offset;
 
     /** User profile in low-rank matrix form. */
     public DenseMatrix                      userDenseFeatures;
     /** Item profile in low-rank matrix form. */
     public DenseMatrix                      itemDenseFeatures;
-
-    /** indices involved in training */
-    public transient int[]                  trainInvlvIndces;
-    /** indices involved in testing */
-    public transient int[]                  testInvlvIndces;
-    /** the loss funciton to measure the distance between real value and approximated value*/
-    protected Loss                          lossFunction;
-    /** regularizer used to control the complexity of the method*/
-    protected Regularizer                   regType;
-
-    /** user average rating*/
-    protected DenseVector                   avgUser;
-    /** item average rating*/
-    protected DenseVector                   avgItem;
 
     /** logger */
     protected final static transient Logger runningLogger    = Logger
@@ -73,114 +43,120 @@ public abstract class MFRecommender extends Recommender {
     /*========================================
      * Constructors
      *========================================*/
-    public MFRecommender(RecConfigEnv rce) {
-        commonParse(rce);
+    public MFRecommender(Configures conf, Map<String, Plugin> plugins) {
+        runtimes = new RuntimeEnv(conf);
+        runtimes.plugins = plugins;
     }
 
-    public MFRecommender(RecConfigEnv rce, DenseMatrix userDenseFeatures,
-                         DenseMatrix itemDenseFeatures) {
-        commonParse(rce);
-        this.userDenseFeatures = userDenseFeatures;
-        this.itemDenseFeatures = itemDenseFeatures;
-    }
+    public MFRecommender(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
+                         Map<String, Plugin> plugins) {
+        runtimes = new RuntimeEnv(conf);
+        runtimes.plugins = plugins;
 
-    public MFRecommender(RecConfigEnv rce, int[] trainInvlvIndces, int[] testInvlvIndces) {
-        commonParse(rce);
-
-        this.trainInvlvIndces = trainInvlvIndces;
-        this.testInvlvIndces = testInvlvIndces;
-    }
-
-    private void commonParse(RecConfigEnv rce) {
-        this.featureCount = ((Float) rce.get("FEATURE_COUNT_VALUE")).intValue();
-        this.learningRate = ((Float) rce.get("LEARNING_RATE_VALUE")).doubleValue();
-        this.regularizer = ((Float) rce.get("REGULAIZED_VALUE")).doubleValue();
-        this.maxIter = ((Float) rce.get("MAX_ITERATION_VALUE")).intValue();
-
-        this.userCount = ((Float) rce.get("USER_COUNT_VALUE")).intValue();
-        this.itemCount = ((Float) rce.get("ITEM_COUNT_VALUE")).intValue();
-        this.maxValue = ((Float) rce.get("MAX_RATING_VALUE")).doubleValue();
-        this.minValue = ((Float) rce.get("MIN_RATING_VALUE")).doubleValue();
-        this.showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
-
-        String lsfnctn = (String) rce.get("LOSS_FUNCTION");
-        if (StringUtil.isNotBlank(lsfnctn)) {
-            this.lossFunction = Loss.valueOf(lsfnctn);
-        } else {
-            this.lossFunction = Loss.LOSS_RMSE;
-        }
-
-        String rtype = (String) rce.get("REG_TYPE");
-        if (StringUtil.isNotBlank(rtype)) {
-            this.regType = Regularizer.valueOf(rtype);
-        } else {
-            this.regType = Regularizer.L2;
-        }
+        runtimes.acc_uf_indicator = acc_ufi;
+        runtimes.acc_if_indicator = acc_ifi;
     }
 
     /*========================================
      * Model Builder
      *========================================*/
     /**
-     * @see edu.tongji.ml.Recommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
+     * @see code.sma.recmmd.Recommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void buildModel(Tuples train, Tuples test) {
-        LoggerUtil.info(runningLogger, String.format("Param: FC:%d\tLR:%.5f\tR:%.5f", featureCount,
-            learningRate, regularizer));
-        userDenseFeatures = new DenseMatrix(userCount, featureCount);
-        itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
+    public void buildModel(AbstractMatrix train, AbstractMatrix test) {
+        LoggerUtil.info(runningLogger, this);
+
+        // prepare runtime environment
+        prepare_runtimes(train, test);
+
+        // update model
+        AbstractIterator iDataElem = runtimes.itrain;
+        while (Math.abs(runtimes.prevErr - runtimes.currErr) > 0.0001
+               && runtimes.round < runtimes.maxIter) {
+            update_inner(iDataElem);
+        }
     }
 
-    /**
-     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
-     */
-    @Override
-    public void buildloclModel(Tuples train, Tuples test) {
-        LoggerUtil.info(runningLogger,
-            String.format("Param: FC:%d,LR:%.7f,R:%.7f", featureCount, learningRate, regularizer));
+    protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
+        assert train != null : "Training data cannot be null.";
+
+        int userCount = runtimes.userCount;
+        int itemCount = runtimes.itemCount;
+        int featureCount = runtimes.featureCount;
+
+        boolean[] acc_ufi = runtimes.acc_uf_indicator;
+        boolean[] acc_ifi = runtimes.acc_if_indicator;
+
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
         itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
+
+        runtimes.nnz = train.getnnz();
+        runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
+            : (AbstractIterator) train.iterator(acc_ufi, acc_ifi);
+        runtimes.itest = (test == null) ? null
+            : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
+                : (AbstractIterator) test.iterator(acc_ufi, acc_ifi));
     }
 
-    /*========================================
-     * Record Logs & Dynamic Stopper
-     *========================================*/
-    /**
-     * Record Logs & Dynamic Stopper
-     * 
-     * @param round         the current round
-     * @param tMatrix       test matrix
-     * @param currErr       the current training error
-     * @return              true to stop, false to continue
-     */
-    protected boolean recordLoggerAndDynamicStop(int round, Tuples tMatrix, double currErr) {
-        if (showProgress && (round % 5 == 0) && tMatrix != null) {
-            EvaluationMetrics metric = evaluate(tMatrix);
-            LoggerUtil.info(runningLogger,
-                String.format("%d\t%.6f [%s]", round, currErr, metric.printOneLine()));
-            if (bestRMSE >= metric.getRMSE()) {
-                bestRMSE = metric.getRMSE();
-            } else {
-                return true;
-            }
-        } else {
-            LoggerUtil.info(runningLogger, String.format("%d\t%.6f", round, currErr));
+    protected void update_inner(AbstractIterator iDataElem) {
+        iDataElem.refresh();
+        while (iDataElem.hasNext()) {
+            DataElem e = iDataElem.next();
+            update_each(e);
         }
 
-        return false;
+        // update runtime environment
+        update_runtimes();
+    }
+
+    /**
+     * update based on one-user's 
+     * 
+     * @param e user-grouped data, i.e., one-user's data
+     */
+    protected void update_each(DataElem e) {
+    }
+
+    protected void update_runtimes() {
+        runtimes.prevErr = runtimes.currErr;
+        runtimes.currErr = Math.sqrt(runtimes.sumErr / runtimes.nnz);
+        runtimes.trainErr.add(runtimes.currErr);
+
+        runtimes.round++;
+        runtimes.sumErr = 0.0;
+
+        if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
+            EvaluationMetrics metric = new EvaluationMetrics(this);
+            LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
+                runtimes.currErr, metric.printOneLine()));
+            runtimes.testErr.add(metric.getRMSE());
+        } else {
+            LoggerUtil.info(runningLogger,
+                String.format("%d\t%.6f", runtimes.round, runtimes.currErr));
+        }
+    }
+
+    /**
+     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     */
+    @Override
+    public void buildloclModel(AbstractMatrix train, AbstractMatrix test) {
+        LoggerUtil.info(runningLogger, String.format("Param: FC:%d,LR:%.7f,R:%.7f",
+            runtimes.featureCount, runtimes.learningRate, runtimes.regularizer));
+        userDenseFeatures = new DenseMatrix(runtimes.userCount, runtimes.featureCount);
+        itemDenseFeatures = new DenseMatrix(runtimes.itemCount, runtimes.featureCount);
     }
 
     /*========================================
      * Prediction
      *========================================*/
-
     /**
      * @see code.sma.recmmd.Recommender#evaluate(code.sma.core.impl.Tuples)
      */
     @Override
-    public EvaluationMetrics evaluate(Tuples testMatrix) {
-        return new EvaluationMetrics(this, testMatrix);
+    public EvaluationMetrics evaluate(AbstractMatrix testMatrix) {
+        return new EvaluationMetrics(this);
     }
 
     /**
@@ -191,12 +167,9 @@ public abstract class MFRecommender extends Recommender {
         assert (userDenseFeatures != null
                 && itemDenseFeatures != null) : "Feature matrix cannot be null";
 
-        // compute the prediction by using inner product 
-        if (avgUser != null && avgItem != null) {
-            this.offset = (avgUser.floatValue(u) + avgItem.floatValue(i)) / 2.0;
-        }
-
-        double prediction = this.offset;
+        double maxValue = runtimes.maxValue;
+        double minValue = runtimes.minValue;
+        double prediction = 0.0;
 
         AbstractVector ufactors = userDenseFeatures.getRowRef(u);
         AbstractVector ifactors = itemDenseFeatures.getRowRef(i);
@@ -208,14 +181,7 @@ public abstract class MFRecommender extends Recommender {
             prediction += ufactors.innerProduct(ifactors);
         }
 
-        // normalize the prediction
-        if (prediction > maxValue) {
-            return maxValue;
-        } else if (prediction < minValue) {
-            return minValue;
-        } else {
-            return prediction;
-        }
+        return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
 }

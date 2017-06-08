@@ -20,7 +20,6 @@ import code.sma.core.impl.Tuples;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.main.Configures;
-import code.sma.recmmd.RecConfigEnv;
 import code.sma.recmmd.standalone.GLOMA;
 import code.sma.recmmd.standalone.RegSVD;
 import code.sma.util.ConfigureUtil;
@@ -53,7 +52,10 @@ public class FeatureTest {
             for (String rootDir : rootDirs) {
                 LoggerUtil.info(logger, "1. loading " + rootDir);
                 conf.setProperty("ROOT_DIR", rootDir);
+
                 String testFile = rootDir + "testingset";
+                String dconfFile = rootDir + "dConfig.properties";
+                ConfigureUtil.addConfig(conf, dconfFile);
 
                 String algName = conf.getProperty("ALG_NAME");
                 LoggerUtil.info(logger, "2. running " + algName);
@@ -62,12 +64,14 @@ public class FeatureTest {
                     AbstractDpncyChecker checker = new ModelDpncyChecker();
                     checker.handler(conf);
 
-                    Tuples ttMatrix = MatrixIOUtil.reads(testFile);
-                    RecConfigEnv rce = new RecConfigEnv(conf);
-                    RegSVD rcmmd = extctGlbl(rce);
+                    Tuples test = MatrixIOUtil.loadTuples(testFile,
+                        ((Float) conf.get("TEST_VAL_NUM_VALUE")).intValue());
+
+                    Configures lconf = new Configures(conf);
+                    RegSVD rcmmd = extctGlbl(lconf);
                     SerializeUtil.writeObject(rcmmd, String.format(NEW_EMBD_W_PATTERN, ITER_SEQ));
                     LoggerUtil.info(logger, String.format("%s\n%s", rcmmd.toString(),
-                        rcmmd.evaluate(ttMatrix).printOneLine()));
+                        rcmmd.evaluate(test).printOneLine()));
 
                 }
             }
@@ -77,7 +81,7 @@ public class FeatureTest {
 
     }
 
-    protected RegSVD extctGlbl(RecConfigEnv rce) {
+    protected RegSVD extctGlbl(Configures conf) {
         RegSVD auxRec = (RegSVD) SerializeUtil
             .readObject(String.format(OLD_EMBD_R_PATTERN, ITER_SEQ - 1));
         List<GLOMA> modls = new ArrayList<GLOMA>();
@@ -88,10 +92,10 @@ public class FeatureTest {
 
         }
 
-        int threadNum = ((Double) rce.get("THREAD_NUMBER_VALUE")).intValue();
-        int userCount = auxRec.userCount;
-        int itemCount = auxRec.itemCount;
-        int featCount = auxRec.featureCount;
+        int threadNum = ((Float) conf.get("THREAD_NUMBER_VALUE")).intValue();
+        int userCount = auxRec.runtimes.userCount;
+        int itemCount = auxRec.runtimes.itemCount;
+        int featCount = auxRec.runtimes.featureCount;
         LoggerUtil.info(logger, "UFeats ");
         DenseMatrix userFeature = new DenseMatrix(userCount, featCount);
         try {
@@ -126,7 +130,10 @@ public class FeatureTest {
             ExceptionUtil.caught(e, "Item Features");
         }
 
-        return new RegSVD(rce, userFeature, itemFeature);
+        RegSVD rcmmd = new RegSVD(conf, null);
+        rcmmd.userDenseFeatures = userFeature;
+        rcmmd.itemDenseFeatures = itemFeature;
+        return rcmmd;
     }
 
     public static class MultThread extends Thread {
@@ -206,8 +213,8 @@ public class FeatureTest {
             for (GLOMA recmmd : modls) {
                 DenseVector vec = recmmd.userDenseFeatures.getRowRef(u);
                 if (vec != null) {
-                    DenseVector feat = new DenseVector(recmmd.featureCount);
-                    for (int k = 0; k < recmmd.featureCount; k++) {
+                    DenseVector feat = new DenseVector(recmmd.runtimes.featureCount);
+                    for (int k = 0; k < recmmd.runtimes.featureCount; k++) {
                         feat.setValue(k, (vec.floatValue(k) + avec.floatValue(k)) / 2.0);
                     }
 
@@ -224,8 +231,8 @@ public class FeatureTest {
             for (GLOMA recmmd : modls) {
                 DenseVector vec = recmmd.itemDenseFeatures.getRowRef(i);
                 if (vec != null) {
-                    DenseVector feat = new DenseVector(recmmd.featureCount);
-                    for (int k = 0; k < recmmd.featureCount; k++) {
+                    DenseVector feat = new DenseVector(recmmd.runtimes.featureCount);
+                    for (int k = 0; k < recmmd.runtimes.featureCount; k++) {
                         feat.setValue(k, (vec.floatValue(k) + avec.floatValue(k)) / 2.0);
                     }
 

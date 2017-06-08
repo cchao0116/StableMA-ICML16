@@ -2,7 +2,7 @@ package code.sma.recmmd;
 
 import java.io.Serializable;
 
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractMatrix;
 import code.sma.util.EvaluationMetrics;
 
 /**
@@ -14,20 +14,8 @@ import code.sma.util.EvaluationMetrics;
 public abstract class Recommender implements Serializable {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
-
-    /*========================================
-     * Common Variables
-     *========================================*/
-    /** thread id in multiple thread version */
-    public int                threadId;
-    /** The number of users. */
-    public int                userCount;
-    /** The number of items. */
-    public int                itemCount;
-    /** Maximum value of rating, existing in the dataset. */
-    public double             maxValue;
-    /** Minimum value of rating, existing in the dataset. */
-    public double             minValue;
+    /** Runtime environment*/
+    public RuntimeEnv         runtimes;
 
     /*========================================
      * Model Builder
@@ -36,18 +24,18 @@ public abstract class Recommender implements Serializable {
     /**
      * Build a model with given training set.
      * 
-     * @param train
-     * @param test
+     * @param train     training data
+     * @param test      test data
      */
-    public abstract void buildModel(Tuples train, Tuples test);
+    public abstract void buildModel(AbstractMatrix train, AbstractMatrix test);
 
     /**
      * Build a model with given training set.
      * 
-     * @param train
-     * @param test
+     * @param train     training data
+     * @param test      test data
      */
-    public abstract void buildloclModel(Tuples train, Tuples test);
+    public abstract void buildloclModel(AbstractMatrix train, AbstractMatrix test);
 
     /*========================================
      * Prediction
@@ -59,7 +47,7 @@ public abstract class Recommender implements Serializable {
      * 
      * @return The result of evaluation, such as MAE, RMSE, and rank-score.
      */
-    public abstract EvaluationMetrics evaluate(Tuples testMatrix);
+    public abstract EvaluationMetrics evaluate(AbstractMatrix testMatrix);
 
     /**
      * return the predicted rating

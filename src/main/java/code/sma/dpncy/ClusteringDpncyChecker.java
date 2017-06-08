@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit;
 import code.sma.clustering.Cluster;
 import code.sma.clustering.CoclusterUtil;
 import code.sma.clustering.Distance;
+import code.sma.core.AbstractMatrix;
 import code.sma.core.impl.SparseMatrix;
-import code.sma.core.impl.Tuples;
 import code.sma.main.Configures;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ClusterInfoUtil;
@@ -55,12 +55,11 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
 
         if (!clusterDirs.isEmpty()) {
             // compute the undone clustering
-            int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
-            int rowCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
-            int colCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
+            int threadNum = ((Float) conf.get("THREAD_NUMBER_VALUE")).intValue();
+            int rowCount = ((Float) conf.get("USER_COUNT_VALUE")).intValue();
+            int colCount = ((Float) conf.get("ITEM_COUNT_VALUE")).intValue();
             String trainFile = rootDir + "trainingset";
-            SparseMatrix rateMatrix = MatrixIOUtil.read(trainFile, rowCount, colCount);
-            //        SparseMatrix rateMatrix = null;
+            SparseMatrix rateMatrix = MatrixIOUtil.loadSparseMatrix(trainFile, rowCount, colCount);
 
             try {
                 ExecutorService exec = Executors.newCachedThreadPool();
@@ -92,10 +91,11 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
+     * 
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void reduce(Object recmmd, Tuples tnMatrix, Tuples ttMatrix) {
+    public void reduce(Object recmmd, AbstractMatrix tnMatrix, AbstractMatrix ttMatrix) {
     }
 
     protected class ClusteringLearner extends Thread {

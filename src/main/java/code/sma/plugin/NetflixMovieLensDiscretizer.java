@@ -1,9 +1,10 @@
-package code.sma.dpncy;
+package code.sma.plugin;
 
 import org.apache.commons.math3.stat.StatUtils;
 
-import code.sma.core.impl.Tuples;
-import code.sma.recmmd.RecConfigEnv;
+import code.sma.core.AbstractIterator;
+import code.sma.core.DataElem;
+import code.sma.main.Configures;
 
 /**
  * Convert the rating data in Netflix and Movielens into continuous discrete
@@ -23,16 +24,16 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     /** maximum value */
     private double maxValue;
 
-    public NetflixMovieLensDiscretizer(RecConfigEnv rce) {
+    public NetflixMovieLensDiscretizer(Configures conf) {
         super();
-        this.userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
-        this.itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
-        this.maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
-        this.minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
+        this.userCount = ((Float) conf.get("USER_COUNT_VALUE")).intValue();
+        this.itemCount = ((Float) conf.get("ITEM_COUNT_VALUE")).intValue();
+        this.maxValue = ((Float) conf.get("MAX_RATING_VALUE")).doubleValue();
+        this.minValue = ((Float) conf.get("MIN_RATING_VALUE")).doubleValue();
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#convert(double)
+     * @see code.sma.plugin.Discretizer#convert(double)
      */
     @Override
     public int convert(double val) {
@@ -40,56 +41,61 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#cmpTrainWs(code.sma.core.impl.Tuples,
+     * @see code.sma.plugin.Discretizer#cmpTrainWs(code.sma.core.impl.Tuples,
      *      int[])
      */
     @Override
-    public double[] cmpTrainWs(Tuples tnMatrix, int[] invlvIndces) {
+    public double[] cmpTrainWs(AbstractIterator iter) {
+        iter.refresh();
+
         int tnS = (int) (maxValue / minValue);
         double[] tnWs = new double[tnS];
-        float[] Auis = tnMatrix.getVals();
 
-        if (invlvIndces == null) {
-            int count = tnMatrix.getNnz();
-            for (int numSeq = 0; numSeq < count; numSeq++) {
-                tnWs[convert(Auis[numSeq])]++;
-            }
-        } else {
-            for (int numSeq : invlvIndces) {
-                tnWs[convert(Auis[numSeq])]++;
+        int nnz = 0;
+        while (iter.hasNext()) {
+            DataElem e = iter.next();
+            short num_ifactor = e.getNum_ifacotr();
+
+            for (int f = 0; f < num_ifactor; f++) {
+                double AuiReal = e.getValue_ifactor(f);
+                tnWs[convert(AuiReal)]++;
+                nnz++;
             }
         }
 
         // every entry plus 1 to avoid zero condition
-        int ttlN = invlvIndces == null ? tnMatrix.getNnz() : invlvIndces.length;
         for (int t = 0; t < tnS; t++) {
-            tnWs[t] = (tnWs[t] + 1) / (ttlN + tnS);
+            tnWs[t] = (tnWs[t] + 1) / (nnz + tnS);
         }
         return tnWs;
     }
 
     /**
-     * @see code.sma.dpncy.Discretizer#cmpEnsmblWs(code.sma.core.impl.Tuples,
+     * @see code.sma.plugin.Discretizer#cmpEnsmblWs(code.sma.core.impl.Tuples,
      *      int[])
      */
     @Override
-    public double[][][] cmpEnsmblWs(Tuples tnMatrix, int[] invlvIndces) {
+    public double[][][] cmpEnsmblWs(AbstractIterator iter) {
+        iter.refresh();
+
         int tnS = (int) (maxValue / minValue);
         double[][][] emWs = new double[2][0][0];
         emWs[0] = new double[userCount][tnS]; // user-related weights
         emWs[1] = new double[itemCount][tnS]; // item-related weights
 
-        int nnz = tnMatrix.getNnz();
-        int[] uIndx = tnMatrix.getRowIndx();
-        int[] iIndx = tnMatrix.getColIndx();
-        float[] Auis = tnMatrix.getVals();
-        for (int numSeq = 0; numSeq < nnz; numSeq++) {
-            int uId = uIndx[numSeq];
-            int iId = iIndx[numSeq];
+        while (iter.hasNext()) {
+            DataElem e = iter.next();
+            short num_ifactor = e.getNum_ifacotr();
 
-            int label = convert(Auis[numSeq]);
-            emWs[0][uId][label]++;
-            emWs[1][iId][label]++;
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+                int i = e.getIndex_item(f);
+                double AuiReal = e.getValue_ifactor(f);
+
+                int label = convert(AuiReal);
+                emWs[0][u][label]++;
+                emWs[1][i][label]++;
+            }
         }
 
         // user side

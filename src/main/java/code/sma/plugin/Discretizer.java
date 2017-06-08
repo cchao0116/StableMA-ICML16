@@ -1,6 +1,6 @@
-package code.sma.dpncy;
+package code.sma.plugin;
 
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractIterator;
 
 /**
  * convert continuous values into discrete values   
@@ -8,7 +8,7 @@ import code.sma.core.impl.Tuples;
  * @author Chao.Chen
  * @version $Id: Discretizer.java, v 0.1 2016年9月26日 下午3:33:09 Chao.Chen Exp $
  */
-public abstract class Discretizer {
+public abstract class Discretizer implements Plugin {
 
     /**
      * convert continuous values into discrete values
@@ -21,18 +21,16 @@ public abstract class Discretizer {
     /**
      * compute the training weights using in WEMAREC
      * 
-     * @param tnMatrix            the training data
-     * @param invlvIndces         involved data indices
+     * @param iter            the iterator of data
      * @return
      */
-    public abstract double[] cmpTrainWs(Tuples tnMatrix, int[] invlvIndces);
+    public abstract double[] cmpTrainWs(AbstractIterator iter);
 
     /**
      * compute the ensemble weights using in WEMAREC
      * 
-     * @param tnMatrix           the training data   
-     * @param invlvIndces        involved data indices
+     * @param iter           the iterator of data  
      * @return
      */
-    public abstract double[][][] cmpEnsmblWs(Tuples tnMatrix, int[] invlvIndces);
+    public abstract double[][][] cmpEnsmblWs(AbstractIterator iter);
 }

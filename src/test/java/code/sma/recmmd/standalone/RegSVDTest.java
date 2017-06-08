@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractMatrix;
 import code.sma.main.Configures;
 import code.sma.thread.SimpleLearner;
 import code.sma.thread.SimpleTaskMsgDispatcherImpl;
@@ -39,19 +39,27 @@ public class RegSVDTest {
             String trainFile = rootDir + "trainingset";
             String testFile = rootDir + "testingset";
 
-            String algName = conf.getProperty("ALG_NAME");
+            Configures new_conf = new Configures(conf);
+            String dconfFile = rootDir + "dConfig.properties";
+            ConfigureUtil.addConfig(new_conf, dconfFile);
+
+            String algName = new_conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
 
-            TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(conf);
-            int threadNum = ((Float) conf.get("THREAD_NUMBER_VALUE")).intValue();
+            TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(new_conf);
+            int threadNum = new_conf.getInteger("THREAD_NUMBER_VALUE");
 
-            Tuples tnMatrix = MatrixIOUtil.reads(trainFile);
-            Tuples tttMatrix = MatrixIOUtil.reads(testFile);
+            AbstractMatrix train = MatrixIOUtil.loadCSRMatrix(trainFile,
+                new_conf.getInteger("TRAIN_ROW_NUM_VALUE"),
+                new_conf.getInteger("TRAIN_VAL_NUM_VALUE"));
+            AbstractMatrix test = MatrixIOUtil.loadCSRMatrix(testFile,
+                new_conf.getInteger("TEST_ROW_NUM_VALUE"),
+                new_conf.getInteger("TEST_VAL_NUM_VALUE"));
 
             try {
                 ExecutorService exec = Executors.newCachedThreadPool();
                 for (int t = 0; t < threadNum; t++) {
-                    exec.execute(new SimpleLearner(stkmImpl, tnMatrix, tttMatrix));
+                    exec.execute(new SimpleLearner(stkmImpl, train, test));
                 }
                 exec.shutdown();
                 exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);

@@ -72,8 +72,8 @@ public final class CoclusterUtil {
                                                             final int constraint,
                                                             final Distance dtncConst) {
         //check primary parameter
-        int rowCount = points.length()[0];
-        int colCount = points.length()[1];
+        int rowCount = points.shape()[0];
+        int colCount = points.shape()[1];
         if (rowCount < K || colCount < L) {
             throw new RuntimeException("Number of samples is less than the number of classes.");
         }
@@ -228,7 +228,7 @@ public final class CoclusterUtil {
                                                            double[] E_Uc, double[] E_V,
                                                            double[] E_Vc, double[][] E_U_Vc,
                                                            double[][] E_Uc_V, double E) {
-        int rowCount = points.length()[0];
+        int rowCount = points.shape()[0];
 
         //clear current clusters
         for (Cluster local : rowCluster) {
@@ -324,7 +324,7 @@ public final class CoclusterUtil {
                                                          double[] E_Uc, double[] E_V, double[] E_Vc,
                                                          double[][] E_U_Vc, double[][] E_Uc_V,
                                                          double E) {
-        int rowCount = points.length()[0];
+        int rowCount = points.shape()[0];
 
         //clear current clusters
         for (Cluster local : rowCluster) {
@@ -442,7 +442,7 @@ public final class CoclusterUtil {
                                                            double[] E_Uc, double[] E_V,
                                                            double[] E_Vc, double[][] E_U_Vc,
                                                            double[][] E_Uc_V, double E) {
-        int colCount = points.length()[1];
+        int colCount = points.shape()[1];
         //clear current clusters
         boolean[] emptyIndicator = new boolean[L];
         for (int i = 0; i < L; i++) {
@@ -549,7 +549,7 @@ public final class CoclusterUtil {
                                                          double[] E_Uc, double[] E_V, double[] E_Vc,
                                                          double[][] E_U_Vc, double[][] E_Uc_V,
                                                          double E) {
-        int colCount = points.length()[1];
+        int colCount = points.shape()[1];
         //clear current clusters
         for (Cluster local : colCluster) {
             local.clear();
@@ -640,8 +640,8 @@ public final class CoclusterUtil {
                                             final Cluster[] rowCluster, final Cluster[] colCluster,
                                             double[][] E_Uc_Vc, double[] E_U, double[] E_Uc,
                                             double[] E_V, double[] E_Vc) {
-        int rowCount = points.length()[0];
-        int colCount = points.length()[1];
+        int rowCount = points.shape()[0];
+        int colCount = points.shape()[1];
 
         //1. cmp E_Uc_Vc
         for (int k = 0; k < K; k++) {
@@ -712,8 +712,8 @@ public final class CoclusterUtil {
                                                            double[] E_Uc, double[] E_V,
                                                            double[] E_Vc, double[][] E_U_Vc,
                                                            double[][] E_Uc_V) {
-        int rowCount = points.length()[0];
-        int colCount = points.length()[1];
+        int rowCount = points.shape()[0];
+        int colCount = points.shape()[1];
 
         //1. cmp E_Uc_Vc
         for (int k = 0; k < K; k++) {

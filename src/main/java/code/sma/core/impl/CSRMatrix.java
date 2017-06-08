@@ -71,7 +71,18 @@ public class CSRMatrix extends AbstractMatrix {
         return new Iter();
     }
 
+    /** 
+     * @see code.sma.core.AbstractMatrix#iterator(boolean[], boolean)
+     */
+    @Override
+    public Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature) {
+        return null;
+    }
+
     protected class Iter extends AbstractIterator {
+        Iter() {
+            super();
+        }
 
         /** 
          * @see java.util.Iterator#hasNext()
@@ -89,8 +100,8 @@ public class CSRMatrix extends AbstractMatrix {
             e.setLabel(row_label[cursor]);
 
             short num_global = (short) (row_ptr[3 * cursor + 1] - row_ptr[3 * cursor]);
-            short num_ufactor = (short) (row_ptr[3 * cursor + 2] - row_ptr[3 * cursor - 1]);
-            short num_ifactor = (short) (row_ptr[3 * cursor + 3] - row_ptr[3 * cursor - 2]);
+            short num_ufactor = (short) (row_ptr[3 * cursor + 2] - row_ptr[3 * cursor + 1]);
+            short num_ifactor = (short) (row_ptr[3 * cursor + 3] - row_ptr[3 * cursor + 2]);
             e.setNum_global(num_global);
             e.setNum_ufactor(num_ufactor);
             e.setNum_ifacotr(num_ifactor);
@@ -126,7 +137,7 @@ public class CSRMatrix extends AbstractMatrix {
             value_ifactor.setNum_factors(num_ifactor);
 
             cursor++;
-            return null;
+            return e;
         }
 
     }
@@ -145,6 +156,14 @@ public class CSRMatrix extends AbstractMatrix {
     @Override
     public void setValue(int i, int j, double value) {
         throw new RuntimeException("This method has not been implemented in CSRMatrix!");
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#getnnz()
+     */
+    @Override
+    public int getnnz() {
+        return num_val - num_row;
     }
 
 }

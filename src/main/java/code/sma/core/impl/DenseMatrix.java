@@ -106,4 +106,10 @@ public class DenseMatrix implements Serializable {
         return vals[u].innerProduct(tDenseMatrix.getRowRef(i));
     }
 
+    public int[] shape() {
+        int[] shape = new int[2];
+        shape[0] = M;
+        shape[1] = N;
+        return shape;
+    }
 }

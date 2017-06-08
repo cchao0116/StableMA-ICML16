@@ -1,5 +1,7 @@
 package code.sma.core;
 
+import java.util.Iterator;
+
 /**
  * 
  * @author Chao.Chen
@@ -35,5 +37,21 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
      * @param line One line containing one-row data
      */
     public abstract void loadNext(String line);
+
+    /**
+     * get the number of non-zero entries
+     * 
+     * @return  the number of non-zero entries
+     */
+    public abstract int getnnz();
+
+    /**
+     * Returns an iterator over a set of elements with a subset of user/item features
+     * 
+     * @param acc_ufeature  indicator whether user feature is accessible
+     * @param acc_ifeature  indicator whether item feature is accessible
+     * @return  an Iterator.
+     */
+    public abstract Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature);
 
 }

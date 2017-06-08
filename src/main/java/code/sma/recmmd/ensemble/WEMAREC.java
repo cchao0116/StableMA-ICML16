@@ -2,18 +2,18 @@ package code.sma.recmmd.ensemble;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-import code.sma.core.impl.Tuples;
-import code.sma.dpncy.Discretizer;
-import code.sma.recmmd.RecConfigEnv;
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
+import code.sma.main.Configures;
+import code.sma.plugin.Discretizer;
+import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
+import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.recmmd.standalone.WeigtedSVD;
 import code.sma.thread.TaskMsgDispatcher;
-import code.sma.thread.WeakLearner;
 import code.sma.util.ClusterInfoUtil;
 import code.sma.util.ExceptionUtil;
 
@@ -30,67 +30,36 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     /** SerialVersionNum */
     protected static final long            serialVersionUID = 1L;
 
-    /** dicretizer */
-    protected Discretizer                  dctzr;
-
     /** the arrays containing various clusterings*/
     protected transient Queue<String>      clusterDirList;
     /** the learning task buffer*/
     protected transient Queue<Recommender> recmmdsBuffer;
 
     /*========================================
-     * Model specific parameters
-     *========================================*/
-    /** parameter used in training*/
-    protected double                       beta0            = 0.4f;
-    /** parameter used in ensemble (user-related) */
-    public double                          beta1            = 0.7f;
-    /** parameter used in ensemble (item-related) */
-    public double                          beta2            = 0.8f;
-
-    /** the rating distribution w.r.t each user*/
-    protected double[][]                   ensmblWeightInU;
-    /** the rating distribution w.r.t each item*/
-    protected double[][]                   ensmblWeightInI;
-
-    /*========================================
      * Constructors
      *========================================*/
-    public WEMAREC(RecConfigEnv rce, Discretizer dr, Queue<String> clusterDirs) {
-        super(rce);
-        beta0 = (Double) rce.get("BETA0_VALUE");
-        beta1 = (Double) rce.get("BETA1_VALUE");
-        beta2 = (Double) rce.get("BETA2_VALUE");
+    public WEMAREC(Configures conf, Map<String, Plugin> plugins, Queue<String> clusterDirs) {
+        super(conf, plugins);
+        runtimes.doubles.add((float) conf.get("BETA0_VALUE"));
+        runtimes.doubles.add((float) conf.get("BETA1_VALUE"));
+        runtimes.doubles.add((float) conf.get("BETA2_VALUE"));
 
-        dctzr = dr;
         clusterDirList = clusterDirs;
         recmmdsBuffer = new LinkedList<Recommender>();
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildGloblModel(code.sma.core.impl.Tuples, code.sma.core.impl.Tuples)
+     * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
-        tnMatrix = rateMatrix;
-        ttMatrix = tMatrix;
-
+    public void buildModel(AbstractMatrix train, AbstractMatrix test) {
         // compute ensemble weights
-        double[][][] ensmbleWs = dctzr.cmpEnsmblWs(tnMatrix, null);
-        ensmblWeightInU = ensmbleWs[0];
-        ensmblWeightInI = ensmbleWs[1];
+        Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
+        double[][][] ensmbleWs = dctzr.cmpEnsmblWs((AbstractIterator) train.iterator());
+        runtimes.ensmblUWs = ensmbleWs[0];
+        runtimes.ensmblIWs = ensmbleWs[1];
 
-        // run learning threads
-        try {
-            ExecutorService exec = Executors.newCachedThreadPool();
-            for (int t = 0; t < threadNum; t++) {
-                exec.execute(new WeakLearner(this, rateMatrix, tMatrix));
-            }
-            exec.shutdown();
-            exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-        } catch (InterruptedException e) {
-            ExceptionUtil.caught(e, "WEMAREC Thread!");
-        }
+        super.buildModel(train, test);
     }
 
     /** 
@@ -107,22 +76,22 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
             } else {
                 String clusterDir = clusterDirList.poll();
                 try {
-                    int[] raf = new int[userCount];
-                    int[] caf = new int[itemCount];
-                    int[] clusteringSize = ClusterInfoUtil.readClusteringAssigmntFunction(raf, caf,
-                        clusterDir);
-                    int[][] tnInvlvedIndcs = ClusterInfoUtil.readInvolvedIndices(tnMatrix, raf, caf,
-                        clusteringSize);
-                    int[][] ttInvlvedIndcs = ClusterInfoUtil.readInvolvedIndices(ttMatrix, raf, caf,
-                        clusteringSize);
+                    boolean[][][] acc_features = ClusterInfoUtil.readAFI(runtimes.userCount,
+                        runtimes.itemCount, clusterDir);
 
-                    int clusterNum = clusteringSize[0] * clusteringSize[1];
-                    for (int c = 0; c < clusterNum; c++) {
-                        Recommender wsvd = new WeigtedSVD(rce, tnInvlvedIndcs[c], ttInvlvedIndcs[c],
-                            beta0, dctzr);
-                        wsvd.threadId = tskId++;
-                        recmmdsBuffer.add(wsvd);
+                    boolean[][] uf_indicator = acc_features[0];
+                    boolean[][] if_indicator = acc_features[1];
+
+                    for (int ufi = 0; ufi < uf_indicator.length; ufi++) {
+                        for (int ifi = 0; ifi < if_indicator.length; ifi++) {
+                            MFRecommender wsvd = new WeigtedSVD(runtimes.conf, runtimes.plugins);
+                            wsvd.runtimes.acc_uf_indicator = uf_indicator[ufi];
+                            wsvd.runtimes.acc_if_indicator = if_indicator[ifi];
+                            wsvd.runtimes.threadId = runtimes.threadId++;
+                            recmmdsBuffer.add(wsvd);
+                        }
                     }
+
                     return recmmdsBuffer.poll();
                 } catch (IOException e) {
                     ExceptionUtil.caught(e, "DIR: " + clusterDir);
@@ -138,8 +107,9 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
      */
     @Override
     public double ensnblWeight(int u, int i, double prediction) {
-        int indx = dctzr.convert(prediction);
-        return 1.0 + beta1 * ensmblWeightInU[u][indx] + beta2 * ensmblWeightInI[i][indx];
+        int indx = ((Discretizer) runtimes.plugins.get("DISCRETIZER")).convert(prediction);
+        return 1.0 + runtimes.doubles.getDouble(1) * runtimes.ensmblUWs[u][indx]
+               + runtimes.doubles.getDouble(2) * runtimes.ensmblIWs[i][indx];
     }
 
 }

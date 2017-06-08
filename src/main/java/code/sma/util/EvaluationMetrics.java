@@ -1,17 +1,8 @@
 package code.sma.util;
 
-import java.util.Comparator;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.ujmp.core.util.MathUtil;
-
-import com.google.common.collect.MinMaxPriorityQueue;
-
-import code.sma.core.DynIntArr;
-import code.sma.core.impl.SparseMatrix;
-import code.sma.core.impl.SparseVector;
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
 import code.sma.recmmd.Recommender;
 
 /**
@@ -23,30 +14,26 @@ import code.sma.recmmd.Recommender;
  */
 public class EvaluationMetrics {
     /** Top-N recommendations*/
-    private int         N = -1;
+    private int    N = -1;
     /** Mean Absoulte Error (MAE) */
-    private double      mae;
+    private double mae;
     /** Mean Squared Error (MSE) */
-    private double      mse;
+    private double mse;
     /** Rank-based Normalized Discounted Cumulative Gain (NDCG) */
-    private double      ndcg;
-    private double      recall;
+    private double ndcg;
+    private double recall;
     /** Average Precision */
-    private double      avgPrecision;
-    /** Recommender to produce prediction*/
-    private Recommender recmmd;
+    private double avgPrecision;
 
-    public EvaluationMetrics(Recommender recmmd, Tuples ttMatrix) {
+    public EvaluationMetrics(Recommender recmmd) {
         super();
-        this.recmmd = recmmd;
-        build(ttMatrix, null);
+        build(recmmd);
     }
 
-    public EvaluationMetrics(Recommender recmmd, Tuples ttMatrix, Tuples trMatrix, int N) {
+    public EvaluationMetrics(Recommender recmmd, AbstractMatrix train, AbstractMatrix test, int N) {
         super();
-        this.recmmd = recmmd;
         this.N = N;
-        build(ttMatrix, trMatrix);
+        //        build(train, test);
     }
 
     /**
@@ -54,101 +41,109 @@ public class EvaluationMetrics {
      * 
      * @param ttMatrix  test data
      */
-    protected void build(Tuples ttMatrix, Tuples trMatrix) {
+    protected void build(Recommender recmmd) {
         // Rating Prediction evaluation
-        int totlCount = ttMatrix.getNnz();
-        int[] uIndx = ttMatrix.getRowIndx();
-        int[] iIndx = ttMatrix.getColIndx();
-        float[] Auis = ttMatrix.getVals();
-        for (int numSeq = 0; numSeq < totlCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double realVal = Auis[numSeq];
-            double predVal = recmmd.predict(u, i);
-            mae += Math.abs(realVal - predVal);
-            mse += Math.pow(realVal - predVal, 2.0d);
+
+        int nnz = 0;
+        AbstractIterator iDataElem = recmmd.runtimes.itest.refresh();
+        while (iDataElem.hasNext()) {
+
+            DataElem e = iDataElem.next();
+            short num_ifactor = e.getNum_ifacotr();
+
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+                int i = e.getIndex_item(f);
+
+                double realVal = e.getValue_ifactor(f);
+                double predVal = recmmd.predict(u, i);
+
+                mae += Math.abs(realVal - predVal);
+                mse += Math.pow(realVal - predVal, 2.0d);
+                nnz++;
+            }
 
         }
-        mae /= totlCount;
-        mse /= totlCount;
+        mae /= nnz;
+        mse /= nnz;
 
         // Top-N evaluation
-        if (N > 0) {
-            int userCount = recmmd.userCount;
-            int itemCount = recmmd.itemCount;
-            DynIntArr[] dArr = new DynIntArr[userCount];
-            for (int numSeq = 0; numSeq < totlCount; numSeq++) {
-                if (dArr[uIndx[numSeq]] == null) {
-                    dArr[uIndx[numSeq]] = new DynIntArr(N);
-                }
-                dArr[uIndx[numSeq]].addValue(numSeq);
-            }
-
-            SparseMatrix trainMatrix = trMatrix.toSparseMatrix(userCount, itemCount);
-
-            int avgPEffectiveUserCount = 0;
-            for (int u = 0; u < userCount; u++) {
-                if (dArr[u] == null || dArr[u].size() < N) {
-                    continue;
-                }
-                avgPEffectiveUserCount++;
-
-                // get Top-N recommendations
-                int[] topNRcmdn = new int[N];
-                {
-                    MinMaxPriorityQueue<Pair<Integer, Double>> fpQue = MinMaxPriorityQueue
-                        .orderedBy(new Comparator<Pair<Integer, Double>>() {
-                            @Override
-                            public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
-                                return (int) Math.signum(o2.getValue() - o1.getValue());
-                            }
-
-                        }).maximumSize(N).create();
-
-                    // filtering training data
-                    for (int i = 0; i < itemCount; i++) {
-                        if (trainMatrix.getValue(u, i) != 0.0d) {
-                            continue;
-                        }
-
-                        Pair<Integer, Double> uidVSratg = new ImmutablePair<Integer, Double>(i,
-                            recmmd.predict(u, i));
-                        fpQue.add(uidVSratg);
-                    }
-
-                    for (int s = 0; s < N; s++) {
-                        topNRcmdn[s] = fpQue.poll().getKey();
-                    }
-                }
-
-                // get user real ratings
-
-                SparseVector realVs = new SparseVector(itemCount);
-                for (int n : dArr[u].getArr()) {
-                    realVs.setValue(iIndx[n], Auis[n]);
-
-                }
-
-                double lRecl = 0.0d;
-                for (int s = 0; s < N; s++) {
-                    int rcmmdtn = topNRcmdn[s];
-                    if (realVs.floatValue(rcmmdtn) != 0.0d) {
-                        avgPrecision++;
-                        lRecl++;
-                        ndcg += 1 / MathUtil.log2(s + 2);
-                    }
-                }
-                recall += lRecl / realVs.length();
-            }
-
-            double iNDCG = 0.0d;
-            for (int s = 0; s < N; s++) {
-                iNDCG += 1 / MathUtil.log2(s + 2);
-            }
-            recall /= avgPEffectiveUserCount;
-            ndcg /= iNDCG * avgPEffectiveUserCount;
-            avgPrecision /= N * avgPEffectiveUserCount;
-        }
+        //        if (N > 0) {
+        //            int userCount = recmmd.userCount;
+        //            int itemCount = recmmd.itemCount;
+        //            DynIntArr[] dArr = new DynIntArr[userCount];
+        //            for (int numSeq = 0; numSeq < totlCount; numSeq++) {
+        //                if (dArr[uIndx[numSeq]] == null) {
+        //                    dArr[uIndx[numSeq]] = new DynIntArr(N);
+        //                }
+        //                dArr[uIndx[numSeq]].addValue(numSeq);
+        //            }
+        //
+        //            SparseMatrix trainMatrix = trMatrix.toSparseMatrix(userCount, itemCount);
+        //
+        //            int avgPEffectiveUserCount = 0;
+        //            for (int u = 0; u < userCount; u++) {
+        //                if (dArr[u] == null || dArr[u].size() < N) {
+        //                    continue;
+        //                }
+        //                avgPEffectiveUserCount++;
+        //
+        //                // get Top-N recommendations
+        //                int[] topNRcmdn = new int[N];
+        //                {
+        //                    MinMaxPriorityQueue<Pair<Integer, Double>> fpQue = MinMaxPriorityQueue
+        //                        .orderedBy(new Comparator<Pair<Integer, Double>>() {
+        //                            @Override
+        //                            public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
+        //                                return (int) Math.signum(o2.getValue() - o1.getValue());
+        //                            }
+        //
+        //                        }).maximumSize(N).create();
+        //
+        //                    // filtering training data
+        //                    for (int i = 0; i < itemCount; i++) {
+        //                        if (trainMatrix.getValue(u, i) != 0.0d) {
+        //                            continue;
+        //                        }
+        //
+        //                        Pair<Integer, Double> uidVSratg = new ImmutablePair<Integer, Double>(i,
+        //                            recmmd.predict(u, i));
+        //                        fpQue.add(uidVSratg);
+        //                    }
+        //
+        //                    for (int s = 0; s < N; s++) {
+        //                        topNRcmdn[s] = fpQue.poll().getKey();
+        //                    }
+        //                }
+        //
+        //                // get user real ratings
+        //
+        //                SparseVector realVs = new SparseVector(itemCount);
+        //                for (int n : dArr[u].getArr()) {
+        //                    realVs.setValue(iIndx[n], Auis[n]);
+        //
+        //                }
+        //
+        //                double lRecl = 0.0d;
+        //                for (int s = 0; s < N; s++) {
+        //                    int rcmmdtn = topNRcmdn[s];
+        //                    if (realVs.floatValue(rcmmdtn) != 0.0d) {
+        //                        avgPrecision++;
+        //                        lRecl++;
+        //                        ndcg += 1 / MathUtil.log2(s + 2);
+        //                    }
+        //                }
+        //                recall += lRecl / realVs.length();
+        //            }
+        //
+        //            double iNDCG = 0.0d;
+        //            for (int s = 0; s < N; s++) {
+        //                iNDCG += 1 / MathUtil.log2(s + 2);
+        //            }
+        //            recall /= avgPEffectiveUserCount;
+        //            ndcg /= iNDCG * avgPEffectiveUserCount;
+        //            avgPrecision /= N * avgPEffectiveUserCount;
+        //        }
     }
 
     public double getRecall() {

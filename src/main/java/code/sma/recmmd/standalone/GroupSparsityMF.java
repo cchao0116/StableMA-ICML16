@@ -1,12 +1,18 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.core.DynIntArr;
-import code.sma.core.impl.SparseMatrix;
-import code.sma.core.impl.Tuples;
+import java.util.Map;
+
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
 import code.sma.core.impl.UJMPDenseMatrix;
 import code.sma.core.impl.UJMPDenseVector;
-import code.sma.recmmd.RecConfigEnv;
+import code.sma.main.Configures;
+import code.sma.plugin.Plugin;
+import code.sma.recmmd.Loss;
+import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * This is a class implementing GroupSparse Matrix Factorization (GSMF)
@@ -19,139 +25,139 @@ import code.sma.util.LoggerUtil;
  */
 public class GroupSparsityMF extends MFRecommender {
     /**  SerialVersionNum */
-    private static final long serialVersionUID = 1L;
+    private static final long        serialVersionUID = 1L;
 
     /** Number of item clusters*/
-    private int               L;
+    private int                      L;
     /** User profile in low-rank matrix form. */
-    private UJMPDenseMatrix   userUJMPFeatures;
+    private UJMPDenseMatrix          userUJMPFeatures;
     /** Item profile in low-rank matrix form. */
-    private UJMPDenseMatrix   itemUJMPFeatures;
+    private UJMPDenseMatrix          itemUJMPFeatures;
     /** The Indicator matrix indexed by user id*/
-    private DynIntArr[]       IijIndxU;
+    private transient IntArrayList[] IijIndxU;
     /** The Indicator matrix indexed by item id*/
-    private DynIntArr[]       IijIndxI;
-
-    /** Controlling factor for loss function */
-    double                    alpha            = 1;
-    /** Controlling factor for the degree of group-sparsity regularization. */
-    double                    beta             = 70;
-    /** Controlling factor for the degree of regularization. */
-    double                    lambda           = 0.05;
+    private transient IntArrayList[] IijIndxI;
 
     /*========================================
      * Constructors
      *========================================*/
-    public GroupSparsityMF(RecConfigEnv rce) {
-        super(rce);
-        alpha = (double) rce.get("ALPA_VALUE");
-        beta = (double) rce.get("BETA_VALUE");
-        lambda = (double) rce.get("LAMBDA_VALUE");
-        this.L = ((Double) rce.get("ITEM_CLUSTER_NUM_VALUE")).intValue();
+    public GroupSparsityMF(Configures conf, Map<String, Plugin> plugins) {
+        super(conf, plugins);
+        this.L = ((Float) conf.get("ITEM_CLUSTER_NUM_VALUE")).intValue();
+
+        runtimes.doubles.add((float) conf.get("ALPA_VALUE"));
+        runtimes.doubles.add((float) conf.get("BETA_VALUE"));
+        runtimes.doubles.add((float) conf.get("LAMBDA_VALUE"));
+
+        runtimes.ia_func = new short[runtimes.itemCount];
+
+    }
+
+    /**
+     * @see code.sma.recmmd.standalone.MFRecommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     */
+    @Override
+    protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
+        runtimes.nnz = train.getnnz();
+        runtimes.itrain = (AbstractIterator) train.iterator();
+        runtimes.itest = test == null ? null : (AbstractIterator) test.iterator();
+
+        int userCount = runtimes.userCount;
+        int itemCount = runtimes.itemCount;
+        int featureCount = runtimes.featureCount;
+
+        {
+            //user features
+            userUJMPFeatures = new UJMPDenseMatrix(userCount, featureCount);
+            for (int u = 0; u < userCount; u++) {
+                for (int f = 0; f < featureCount; f++) {
+                    double rdm = Math.random() / featureCount;
+                    userUJMPFeatures.setValue(u, f, rdm);
+                }
+            }
+
+            //item features
+            itemUJMPFeatures = new UJMPDenseMatrix(featureCount, itemCount);
+            for (int i = 0; i < itemCount; i++) {
+                for (int f = 0; f < featureCount; f++) {
+                    double rdm = Math.random() / featureCount;
+                    itemUJMPFeatures.setValue(f, i, rdm);
+                }
+            }
+        }
+
+        // dividing rating matrix into $L$ pieces
+        IijIndxU = new IntArrayList[userCount];
+        IijIndxI = new IntArrayList[itemCount];
+        for (int u = 0; u < userCount; u++) {
+            IijIndxU[u] = new IntArrayList();
+        }
+
+        for (int i = 0; i < itemCount; i++) {
+            IijIndxI[i] = new IntArrayList();
+            runtimes.ia_func[i] = (short) (Math.random() * L);
+        }
+
+        AbstractIterator iDataElem = runtimes.itrain;
+        iDataElem.refresh();
+        while (iDataElem.hasNext()) {
+            DataElem e = iDataElem.next();
+
+            short num_ifactor = e.getNum_ifacotr();
+
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+                int i = e.getIndex_item(f);
+
+                IijIndxU[u].add(i);
+                IijIndxI[i].add(u);
+            }
+
+        }
     }
 
     /** 
-     * @see MFRecommender.tongji.ml.matrix.MatrixFactorizationRecommender#buildModel(Tuples.tongji.data.MatlabFasionSparseMatrix, Tuples.tongji.data.MatlabFasionSparseMatrix)
+     * @see code.sma.recmmd.standalone.MFRecommender#update_inner(code.sma.core.AbstractIterator)
      */
     @Override
-    public void buildModel(Tuples rateMatrix, Tuples tMatrix) {
-        //1. initialize features
-        initFeatures();
+    protected void update_inner(AbstractIterator iDataElem) {
+        // a) update U features
+        updateU(iDataElem);
 
-        //2. 
-        int[] itemAssigm = new int[itemCount];
-        initParam(itemAssigm, rateMatrix);
+        // b) update V features
+        updateI(iDataElem);
 
-        //3. updating model
-        int round = 0;
-        int rateCount = rateMatrix.getNnz();
-        if (rateCount >= 20 * 1000 * 1000) {
-            System.gc();
-        }
-
-        double prevErr = 99999;
-        double currErr = 9999;
-        boolean isCollaps = false;
-        while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter && !isCollaps) {
-
-            // a) update U features
-            updateU(rateMatrix);
-
-            // b) update V features
-            updateI(rateMatrix, itemAssigm);
-
-            // c) training error
-            prevErr = currErr;
-            currErr = trainError(rateMatrix);
-            round++;
-            isCollaps = recordLoggerAndDynamicStop(round, tMatrix, currErr);
-        }
-
+        // c) training error
+        update_runtimes();
     }
 
-    protected void initFeatures() {
-        LoggerUtil.info(runningLogger, "Param: FC: " + featureCount + "\talpha: " + alpha
-                                       + "\tbeta: " + beta + "\tlambda: " + lambda);
-        //user features
-        userUJMPFeatures = new UJMPDenseMatrix(userCount, featureCount);
-        for (int u = 0; u < userCount; u++) {
-            for (int f = 0; f < featureCount; f++) {
-                double rdm = Math.random() / featureCount;
-                userUJMPFeatures.setValue(u, f, rdm);
-            }
-        }
+    protected void updateU(AbstractIterator iDataElem) {
+        int userCount = runtimes.userCount;
+        int featureCount = runtimes.featureCount;
 
-        //item features
-        itemUJMPFeatures = new UJMPDenseMatrix(featureCount, itemCount);
-        for (int i = 0; i < itemCount; i++) {
-            for (int f = 0; f < featureCount; f++) {
-                double rdm = Math.random() / featureCount;
-                itemUJMPFeatures.setValue(f, i, rdm);
-            }
-        }
-    }
-
-    protected void initParam(int[] itemAssigm, Tuples rateMatrix) {
-        // dividing rating matrix into l pieces
-        for (int i = 0; i < itemCount; i++) {
-            itemAssigm[i] = (int) (Math.random() * L);
-        }
-
-        // initial I matrix
-        if (IijIndxU != null && IijIndxI != null) {
-            return;
-        }
-
-        IijIndxU = new DynIntArr[userCount];
-        IijIndxI = new DynIntArr[itemCount];
-        SparseMatrix sm = rateMatrix.toSparseMatrix(userCount, itemCount);
-        for (int uIndx = 0; uIndx < userCount; uIndx++) {
-            IijIndxU[uIndx] = new DynIntArr(sm.getRowRef(uIndx).indexList());
-        }
-
-        for (int iIndx = 0; iIndx < itemCount; iIndx++) {
-            IijIndxI[iIndx] = new DynIntArr(sm.getColRef(iIndx).indexList());
-        }
-    }
-
-    protected void updateU(Tuples rateMatrix) {
-        int rateCount = rateMatrix.getNnz();
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
+        double alpha = runtimes.doubles.getDouble(0);
+        double lambda = runtimes.doubles.getDouble(0);
 
         // the right vector term for every user
         UJMPDenseMatrix rightSideMtx = new UJMPDenseMatrix(userCount, featureCount);
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double Rui = Auis[numSeq];
-            rightSideMtx.plusInRow(u, itemUJMPFeatures.getCol(i).scale(alpha * Rui));
+        iDataElem.refresh();
+        while (iDataElem.hasNext()) {
+            DataElem e = iDataElem.next();
+            short num_ifactor = e.getNum_ifacotr();
+
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+                int i = e.getIndex_item(f);
+
+                double Rui = e.getValue_ifactor(f);
+                rightSideMtx.plusInRow(u, itemUJMPFeatures.getCol(i).scale(alpha * Rui));
+            }
         }
+
         for (int i = 0; i < userCount; i++) {
             // left matrix term, which will be inversed
             UJMPDenseMatrix leftSideMtx = UJMPDenseMatrix.makeIdentity(featureCount).scale(lambda);
-            for (int ratedItemIndx : IijIndxU[i].getArr()) {
+            for (int ratedItemIndx : IijIndxU[i]) {
                 UJMPDenseVector Vj = itemUJMPFeatures.getCol(ratedItemIndx);
                 leftSideMtx = leftSideMtx.plus(Vj.outerProduct(Vj).scale(alpha));
             }
@@ -164,19 +170,30 @@ public class GroupSparsityMF extends MFRecommender {
         }
     }
 
-    protected void updateI(Tuples rateMatrix, int[] itemAssigm) {
-        int rateCount = rateMatrix.getNnz();
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
+    protected void updateI(AbstractIterator iDataElem) {
+        int itemCount = runtimes.itemCount;
+        int featureCount = runtimes.featureCount;
+
+        double alpha = runtimes.doubles.getDouble(0);
+        double beta = runtimes.doubles.getDouble(1);
+        double lambda = runtimes.doubles.getDouble(0);
+
+        short[] ia_func = runtimes.ia_func;
 
         // the right vector term for every item
         UJMPDenseMatrix rightSideMtx = new UJMPDenseMatrix(itemCount, featureCount);
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double Rui = Auis[numSeq];
-            rightSideMtx.plusInRow(i, userUJMPFeatures.getRow(u).scale(Rui));
+        iDataElem.refresh();
+        while (iDataElem.hasNext()) {
+            DataElem e = iDataElem.next();
+            short num_ifactor = e.getNum_ifacotr();
+
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+                int i = e.getIndex_item(f);
+
+                double Rui = e.getValue_ifactor(f);
+                rightSideMtx.plusInRow(i, userUJMPFeatures.getRow(u).scale(Rui));
+            }
         }
 
         // compute D^b
@@ -187,7 +204,7 @@ public class GroupSparsityMF extends MFRecommender {
         for (int t = 0; t < featureCount; t++) {
             double[] Dtt = new double[L];
             for (int j = 0; j < itemCount; j++) {
-                Dtt[itemAssigm[j]] += Math.pow(itemUJMPFeatures.getValue(t, j), 2.0d);
+                Dtt[ia_func[j]] += Math.pow(itemUJMPFeatures.getValue(t, j), 2.0d);
             }
 
             for (int l = 0; l < L; l++) {
@@ -199,9 +216,9 @@ public class GroupSparsityMF extends MFRecommender {
         for (int j = 0; j < itemCount; j++) {
             // left matrix term, which will be inversed
             UJMPDenseMatrix leftSideMtx = UJMPDenseMatrix.makeIdentity(featureCount)
-                .scale(lambda / alpha).plus(Ds[itemAssigm[j]]);
+                .scale(lambda / alpha).plus(Ds[ia_func[j]]);
 
-            for (int usrRatedIndx : IijIndxI[j].getArr()) {
+            for (int usrRatedIndx : IijIndxI[j]) {
                 UJMPDenseVector Vj = userUJMPFeatures.getRow(usrRatedIndx);
                 leftSideMtx = leftSideMtx.plus(Vj.outerProduct(Vj));
             }
@@ -214,21 +231,41 @@ public class GroupSparsityMF extends MFRecommender {
         }
     }
 
-    protected double trainError(Tuples rateMatrix) {
-        double sum = 0.0d;
+    /** 
+     * @see code.sma.recmmd.standalone.MFRecommender#update_runtimes()
+     */
+    @Override
+    protected void update_runtimes() {
+        Loss lossfunc = runtimes.lossFunction;
 
-        int rateCount = rateMatrix.getNnz();
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
-        for (int numSeq = 0; numSeq < rateCount; numSeq++) {
-            int u = uIndx[numSeq];
-            int i = iIndx[numSeq];
-            double Rui = Auis[numSeq];
-            double RuiEstm = userUJMPFeatures.getRow(u).innerProduct(itemUJMPFeatures.getCol(i));
-            sum += Math.pow(Rui - RuiEstm, 2.0);
+        AbstractIterator iDataElem = runtimes.itrain;
+        iDataElem.refresh();
+        while (iDataElem.hasNext()) {
+            DataElem e = iDataElem.next();
+            short num_ifactor = e.getNum_ifacotr();
+
+            int u = e.getIndex_user(0);
+            for (int f = 0; f < num_ifactor; f++) {
+                int i = e.getIndex_item(f);
+
+                double Rui = e.getValue_ifactor(f);
+                runtimes.sumErr += lossfunc.diff(Rui, predict(u, i));
+            }
         }
-        return Math.sqrt(sum / rateCount);
+
+        runtimes.prevErr = runtimes.currErr;
+        runtimes.currErr = Math.sqrt(runtimes.sumErr / runtimes.nnz);
+        runtimes.round++;
+
+        if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
+            EvaluationMetrics metric = new EvaluationMetrics(this);
+            LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
+                runtimes.currErr, metric.printOneLine()));
+            runtimes.testErr.add(metric.getRMSE());
+        } else {
+            LoggerUtil.info(runningLogger,
+                String.format("%d\t%.6f", runtimes.round, runtimes.currErr));
+        }
     }
 
     /** 
@@ -236,16 +273,11 @@ public class GroupSparsityMF extends MFRecommender {
      */
     @Override
     public double predict(int u, int i) {
-        double prediction = this.offset
-                            + userUJMPFeatures.getRow(u).innerProduct(itemUJMPFeatures.getCol(i));
+        double maxValue = runtimes.maxValue;
+        double minValue = runtimes.minValue;
 
-        if (prediction > maxValue) {
-            return maxValue;
-        } else if (prediction < minValue) {
-            return minValue;
-        } else {
-            return prediction;
-        }
+        double prediction = userUJMPFeatures.getRow(u).innerProduct(itemUJMPFeatures.getCol(i));
+        return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
     /** 
@@ -253,6 +285,9 @@ public class GroupSparsityMF extends MFRecommender {
      */
     @Override
     public String toString() {
+        int featureCount = runtimes.featureCount;
+        double learningRate = runtimes.learningRate;
+        double regularizer = runtimes.regularizer;
         return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
                + " ALG[GSMF]";
     }

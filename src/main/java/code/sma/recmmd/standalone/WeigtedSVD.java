@@ -1,9 +1,14 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.core.impl.Tuples;
-import code.sma.dpncy.Discretizer;
-import code.sma.recmmd.RecConfigEnv;
-import code.sma.util.LoggerUtil;
+import java.util.Map;
+
+import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
+import code.sma.core.impl.DenseVector;
+import code.sma.main.Configures;
+import code.sma.plugin.Discretizer;
+import code.sma.plugin.Plugin;
+import code.sma.recmmd.stats.StatsOperator;
 
 /**
  * This is a class implementing WSVD (Weighted Matrix Approximation).
@@ -17,91 +22,64 @@ import code.sma.util.LoggerUtil;
 public class WeigtedSVD extends MFRecommender {
     /** SerialVersionNum */
     private static final long serialVersionUID = 1L;
-    /** parameter used in training*/
-    protected double          beta0            = 0.4f;
-    /** dicretizer */
-    protected Discretizer     dctzr            = null;
 
     /*========================================
      * Constructors
      *========================================*/
-    public WeigtedSVD(RecConfigEnv rce, int[] trainInvlvIndces, int[] testInvlvIndces, double b0,
-                      Discretizer dctzr) {
-        super(rce, trainInvlvIndces, testInvlvIndces);
-        this.beta0 = b0;
-        this.dctzr = dctzr;
+    public WeigtedSVD(Configures conf, Map<String, Plugin> plugins) {
+        super(conf, plugins);
+
+        runtimes.doubles.add(conf.getDouble("BETA0_VALUE"));
     }
 
     /*========================================
      * Model Builder
      *========================================*/
-    /**
-     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
+    /** 
+     * @see code.sma.recmmd.standalone.MFRecommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void buildloclModel(Tuples rateMatrix, Tuples tMatrix) {
-        super.buildloclModel(rateMatrix, null);
+    protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
+        super.prepare_runtimes(train, test);
 
-        // Compute dependencies
-        double[] tnWs = dctzr.cmpTrainWs(rateMatrix, trainInvlvIndces);
+        Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
+        runtimes.tnWs = dctzr.cmpTrainWs(runtimes.itrain);
+    }
 
-        // Gradient Descent:
-        int round = 0;
-        int rateCount = rateMatrix.getNnz();
-        double prevErr = 99999;
-        double currErr = 9999;
+    /** 
+     * @see code.sma.recmmd.standalone.MFRecommender#update_each(code.sma.core.DataElem)
+     */
+    @Override
+    protected void update_each(DataElem e) {
+        double learningRate = runtimes.learningRate;
+        double regularizer = runtimes.regularizer;
+        short num_ifactor = e.getNum_ifacotr();
 
-        int[] uIndx = rateMatrix.getRowIndx();
-        int[] iIndx = rateMatrix.getColIndx();
-        float[] Auis = rateMatrix.getVals();
-        while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter) {
-            double sum = 0.0;
+        Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
+        double beta0 = runtimes.doubles.getDouble(0);
 
-            for (int numSeq : trainInvlvIndces) {
-                int u = uIndx[numSeq];
-                int i = iIndx[numSeq];
-                double AuiReal = Auis[numSeq];
-                double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-                sum += lossFunction.diff(AuiReal, AuiEst);
+        int u = e.getIndex_user(0);
+        for (int f = 0; f < num_ifactor; f++) {
+            int i = e.getIndex_item(f);
 
-                double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
-                for (int s = 0; s < featureCount; s++) {
-                    double Fus = userDenseFeatures.getValue(u, s);
-                    double Gis = itemDenseFeatures.getValue(i, s);
-                    double wts = 1 + beta0 * tnWs[dctzr.convert(AuiReal)];
+            DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
+            DenseVector ref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i);
 
-                    userDenseFeatures.setValue(u, s,
-                        Fus + learningRate * (-deriWRTp * Gis * wts - regularizer * Fus), true);
-                    itemDenseFeatures.setValue(i, s,
-                        Gis + learningRate * (-deriWRTp * Fus * wts - regularizer * Gis), true);
-                }
-            }
+            double AuiReal = e.getValue_ifactor(f);
+            double AuiEst = ref_ufactor.innerProduct(ref_ifactor);
+            runtimes.sumErr += runtimes.lossFunction.diff(AuiReal, AuiEst);
 
-            prevErr = currErr;
-            currErr = Math.sqrt(sum / rateCount);
-            round++;
+            double deriWRTp = runtimes.lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
+            double tnW = 1 + beta0 * runtimes.tnWs[dctzr.convert(AuiReal)];
+            for (int s = 0; s < runtimes.featureCount; s++) {
+                double Fus = ref_ufactor.floatValue(s);
+                double Gis = ref_ifactor.floatValue(s);
 
-            // Show progress:
-            if (runningLogger.isDebugEnabled() && round % 5 == 0) {
-                double RMSE = 0.0d;
-                for (int numSeq : testInvlvIndces) {
-                    int u = tMatrix.getRowIndx()[numSeq];
-                    int i = tMatrix.getColIndx()[numSeq];
-                    double AuiReal = tMatrix.getVals()[numSeq];
-
-                    if (userDenseFeatures.getRowRef(u) == null
-                        || itemDenseFeatures.getRowRef(i) == null) {
-                        continue;
-                    }
-                    double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
-                    RMSE += Math.pow(AuiReal - AuiEst, 2.0);
-                }
-
-                bestRMSE = Math.sqrt(RMSE / testInvlvIndces.length);
-                LoggerUtil.info(runningLogger,
-                    String.format("%d\t%.6f,[%.6f]", round, currErr, bestRMSE));
-            } else if (showProgress) {
-                LoggerUtil.info(runningLogger, String.format("%d\t%.6f", round, currErr));
+                //global model updates
+                ref_ufactor.setValue(s,
+                    Fus + learningRate * (-deriWRTp * Gis * tnW - regularizer * Fus));
+                ref_ifactor.setValue(s,
+                    Gis + learningRate * (-deriWRTp * Fus * tnW - regularizer * Gis));
             }
         }
     }
@@ -111,8 +89,9 @@ public class WeigtedSVD extends MFRecommender {
      */
     @Override
     public String toString() {
-        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
-               + " ALG[WSVD][" + String.format("%.0f", beta0 * 100) + "%]";
+        return "Param: FC: " + runtimes.featureCount + " LR: " + runtimes.learningRate + " R: "
+               + runtimes.regularizer + " ALG[WSVD]["
+               + String.format("%.0f", runtimes.doubles.getDouble(0) * 100) + "%]";
     }
 
 }

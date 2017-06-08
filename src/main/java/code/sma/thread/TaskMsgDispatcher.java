@@ -1,6 +1,6 @@
 package code.sma.thread;
 
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractMatrix;
 
 /**
  * The learning task dispatcher
@@ -24,7 +24,6 @@ public interface TaskMsgDispatcher {
      * @param tnMatrix  the training data
      * @param ttMatrix  the testing data
      */
-    public void reduce(Object recmmd, Tuples tnMatrix,
-                       Tuples ttMatrix);
+    public void reduce(Object recmmd, AbstractMatrix tnMatrix, AbstractMatrix ttMatrix);
 
 }

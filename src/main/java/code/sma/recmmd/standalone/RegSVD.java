@@ -1,10 +1,12 @@
 package code.sma.recmmd.standalone;
 
-import code.sma.core.AbstractIterator;
+import java.util.Map;
+
 import code.sma.core.DataElem;
-import code.sma.core.impl.DenseMatrix;
-import code.sma.core.impl.Tuples;
-import code.sma.recmmd.RecConfigEnv;
+import code.sma.core.impl.DenseVector;
+import code.sma.main.Configures;
+import code.sma.plugin.Plugin;
+import code.sma.recmmd.stats.StatsOperator;
 
 /**
  * This is a class implementing Regularized SVD (Singular Value Decomposition).
@@ -23,68 +25,47 @@ public class RegSVD extends MFRecommender {
     /*========================================
      * Constructors
      *========================================*/
-    public RegSVD(RecConfigEnv rce) {
-        super(rce);
+    public RegSVD(Configures conf, Map<String, Plugin> plugins) {
+        super(conf, plugins);
     }
 
-    public RegSVD(RecConfigEnv rce, DenseMatrix userDenseFeatures, DenseMatrix itemDenseFeatures) {
-        super(rce, userDenseFeatures, itemDenseFeatures);
+    public RegSVD(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
+                  Map<String, Plugin> plugins) {
+        super(conf, acc_ufi, acc_ifi, plugins);
     }
 
     /*========================================
      * Model Builder
      *========================================*/
-    /**
-     * @see edu.tongji.ml.matrix.MFRecommender#buildModel(edu.tongji.data.Tuples, edu.tongji.data.Tuples)
+    /** 
+     * @see code.sma.recmmd.standalone.MFRecommender#update_each(code.sma.core.DataElem)
      */
     @Override
-    public void buildModel(Tuples train, Tuples test) {
-        super.buildModel(train, test);
+    protected void update_each(DataElem e) {
+        double learningRate = runtimes.learningRate;
+        double regularizer = runtimes.regularizer;
+        short num_ifactor = e.getNum_ifacotr();
 
-        // Gradient Descent:
-        int round = 0;
-        int rateCount = train.getNnz();
-        double prevErr = 99999;
-        double currErr = 9999;
+        int u = e.getIndex_user(0);
+        for (int f = 0; f < num_ifactor; f++) {
+            int i = e.getIndex_item(f);
 
-        boolean isCollaps = false;
-        AbstractIterator iDataElem = (AbstractIterator) train.iterator();
-        while (Math.abs(prevErr - currErr) > 0.0001 && round < maxIter && !isCollaps) {
-            double sum = 0.0;
+            DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
+            DenseVector ref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i);
 
-            iDataElem.refresh();
-            while (iDataElem.hasNext()) {
-                DataElem e = iDataElem.next();
-                short num_ifactor = e.getNum_ifacotr();
+            double AuiReal = e.getValue_ifactor(f);
+            double AuiEst = ref_ufactor.innerProduct(ref_ifactor);
+            runtimes.sumErr += runtimes.lossFunction.diff(AuiReal, AuiEst);
 
-                for (int f = 0; f < num_ifactor; f++) {
-                    int u = e.getIndex_user(f);
-                    int i = e.getIndex_item(f);
+            double deriWRTp = runtimes.lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
+            for (int s = 0; s < runtimes.featureCount; s++) {
+                double Fus = ref_ufactor.floatValue(s);
+                double Gis = ref_ifactor.floatValue(s);
 
-                    double AuiReal = e.getValue_ifactor(f);
-                    double AuiEst = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, true);
-                    sum += lossFunction.diff(AuiReal, AuiEst);
-
-                    double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
-                    for (int s = 0; s < featureCount; s++) {
-                        double Fus = userDenseFeatures.getValue(u, s);
-                        double Gis = itemDenseFeatures.getValue(i, s);
-
-                        //global model updates
-                        userDenseFeatures.setValue(u, s,
-                            Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus), true);
-                        itemDenseFeatures.setValue(i, s,
-                            Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis), true);
-                    }
-                }
+                //global model updates
+                ref_ufactor.setValue(s, Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus));
+                ref_ifactor.setValue(s, Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis));
             }
-            prevErr = currErr;
-            currErr = Math.sqrt(sum / rateCount);
-
-            round++;
-
-            // Show progress:
-            isCollaps = recordLoggerAndDynamicStop(round, test, currErr);
         }
     }
 
@@ -93,8 +74,8 @@ public class RegSVD extends MFRecommender {
      */
     @Override
     public String toString() {
-        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
-               + " ALG[RegSVD]";
+        return "Param: FC: " + runtimes.featureCount + " LR: " + runtimes.learningRate + " R: "
+               + runtimes.regularizer + " ALG[RegSVD]";
     }
 
 }

@@ -1,6 +1,10 @@
 package code.sma.core.impl;
 
 import java.io.Serializable;
+import java.util.Iterator;
+
+import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
 
 /**
  * This class implements sparse matrix, containing empty values for most space.
@@ -9,7 +13,7 @@ import java.io.Serializable;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public class SparseMatrix implements Serializable {
+public class SparseMatrix extends AbstractMatrix implements Serializable {
     /** SerialVersionNum */
     private static final long serialVersionUID = 8003;
 
@@ -62,6 +66,48 @@ public class SparseMatrix implements Serializable {
         for (int j = 0; j < N; j++) {
             cols[j] = sm.getCol(j);
         }
+    }
+
+    /** 
+     * @see java.lang.Iterable#iterator()
+     */
+    @Override
+    public Iterator<DataElem> iterator() {
+        return null;
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#loadNext(java.lang.String)
+     */
+    @Override
+    public void loadNext(String line) {
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#iterator(boolean[], boolean[])
+     */
+    @Override
+    public Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature) {
+        return null;
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#getnnz()
+     */
+    @Override
+    public int getnnz() {
+        int sum = 0;
+
+        if (M > N) {
+            for (int i = 0; i < M; i++) {
+                sum += rows[i].itemCount();
+            }
+        } else {
+            for (int j = 0; j < N; j++) {
+                sum += cols[j].itemCount();
+            }
+        }
+        return sum;
     }
 
     /*========================================
@@ -152,34 +198,13 @@ public class SparseMatrix implements Serializable {
      * @return An array containing the length of this matrix.
      * Index 0 contains row count, while index 1 column count.
      */
-    public int[] length() {
+    public int[] shape() {
         int[] lengthArray = new int[2];
 
         lengthArray[0] = this.M;
         lengthArray[1] = this.N;
 
         return lengthArray;
-    }
-
-    /**
-     * Actual number of items in the matrix.
-     * 
-     * @return The number of items in the matrix.
-     */
-    public int itemCount() {
-        int sum = 0;
-
-        if (M > N) {
-            for (int i = 0; i < M; i++) {
-                sum += rows[i].itemCount();
-            }
-        } else {
-            for (int j = 0; j < N; j++) {
-                sum += cols[j].itemCount();
-            }
-        }
-
-        return sum;
     }
 
     /**
@@ -275,7 +300,7 @@ public class SparseMatrix implements Serializable {
      * @return The average value.
      */
     public double average() {
-        return this.sum() / this.itemCount();
+        return this.sum() / this.getnnz();
     }
 
     /**
@@ -296,7 +321,7 @@ public class SparseMatrix implements Serializable {
             }
         }
 
-        return sum / this.itemCount();
+        return sum / this.getnnz();
     }
 
     /**
@@ -462,13 +487,13 @@ public class SparseMatrix implements Serializable {
      */
     public SparseMatrix times(SparseMatrix B) {
         // original implementation
-        if (N != (B.length())[0])
+        if (N != (B.shape())[0])
             throw new RuntimeException("Dimensions disagree");
 
         SparseMatrix A = this;
-        SparseMatrix C = new SparseMatrix(M, (B.length())[1]);
+        SparseMatrix C = new SparseMatrix(M, (B.shape())[1]);
         for (int i = 0; i < M; i++) {
-            for (int j = 0; j < (B.length())[1]; j++) {
+            for (int j = 0; j < (B.shape())[1]; j++) {
                 SparseVector x = A.getRowRef(i);
                 SparseVector y = B.getColRef(j);
 
@@ -490,12 +515,12 @@ public class SparseMatrix implements Serializable {
      */
     public void selfTimes(SparseMatrix B) {
         // original implementation
-        if (N != (B.length())[0])
+        if (N != (B.shape())[0])
             throw new RuntimeException("Dimensions disagree");
 
         for (int i = 0; i < M; i++) {
             SparseVector tmp = new SparseVector(N);
-            for (int j = 0; j < (B.length())[1]; j++) {
+            for (int j = 0; j < (B.shape())[1]; j++) {
                 SparseVector x = this.getRowRef(i);
                 SparseVector y = B.getColRef(j);
 
@@ -505,7 +530,7 @@ public class SparseMatrix implements Serializable {
                     tmp.setValue(j, 0.0);
             }
 
-            for (int j = 0; j < (B.length())[1]; j++) {
+            for (int j = 0; j < (B.shape())[1]; j++) {
                 this.setValue(i, j, tmp.floatValue(j));
             }
         }
@@ -783,19 +808,6 @@ public class SparseMatrix implements Serializable {
         }
 
         return b;
-    }
-
-    /**
-     * remove all elements
-     */
-    public void clear() {
-        for (SparseVector row : rows) {
-            row.clear();
-        }
-
-        for (SparseVector col : cols) {
-            col.clear();
-        }
     }
 
     /**

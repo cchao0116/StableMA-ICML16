@@ -1,6 +1,6 @@
 package code.sma.thread;
 
-import code.sma.core.impl.Tuples;
+import code.sma.core.AbstractMatrix;
 import code.sma.recmmd.Recommender;
 
 /**
@@ -11,19 +11,19 @@ import code.sma.recmmd.Recommender;
  */
 public class SimpleLearner extends Thread {
     /** learning task dispatcher*/
-    private TaskMsgDispatcher        dispatcher;
+    private TaskMsgDispatcher dispatcher;
     /** training data*/
-    private Tuples trainMatrix;
+    private AbstractMatrix    trainMatrix;
     /** testing data*/
-    private Tuples testMatrix;
+    private AbstractMatrix    testMatrix;
 
     /**
      * @param recmmnd       cf learner
      * @param trainMatrix   training data
      * @param testMatrix    testing data
      */
-    public SimpleLearner(TaskMsgDispatcher dispatcher, Tuples trainMatrix,
-                         Tuples testMatrix) {
+    public SimpleLearner(TaskMsgDispatcher dispatcher, AbstractMatrix trainMatrix,
+                         AbstractMatrix testMatrix) {
         super();
         this.dispatcher = dispatcher;
         this.trainMatrix = trainMatrix;

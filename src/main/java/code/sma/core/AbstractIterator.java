@@ -32,8 +32,9 @@ public abstract class AbstractIterator implements Iterator<DataElem> {
     /**
      * refresh the iterator for re-use
      */
-    public void refresh() {
+    public AbstractIterator refresh() {
         cursor = 0;
+        return this;
     }
 
     /** 
@@ -43,4 +44,5 @@ public abstract class AbstractIterator implements Iterator<DataElem> {
     public void remove() {
         throw new RuntimeException("This method has not been implemented in AbstractIterator!");
     }
+
 }
