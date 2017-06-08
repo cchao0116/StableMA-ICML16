@@ -1,6 +1,6 @@
 package code.sma.recmmd;
 
-import code.sma.core.Accumulator;
+import code.sma.recmmd.stats.Accumulator;
 
 /**
  * regularizer

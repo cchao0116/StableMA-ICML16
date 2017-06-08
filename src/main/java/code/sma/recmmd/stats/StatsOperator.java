@@ -1,7 +1,6 @@
 package code.sma.recmmd.stats;
 
 import code.sma.core.AbstractVector;
-import code.sma.core.Accumulator;
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
 import code.sma.recmmd.Loss;

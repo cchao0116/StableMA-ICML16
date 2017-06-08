@@ -5,13 +5,13 @@ import java.util.Map;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
-import code.sma.core.Accumulator;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.Regularizer;
+import code.sma.recmmd.stats.Accumulator;
 import code.sma.recmmd.stats.StatsOperator;
 
 /**
@@ -52,7 +52,7 @@ public class StableMA extends MFRecommender {
 
         int[] num_en = new int[num_hps]; // number of chosen entries in each  hard-predictive subsets
         {
-            MFRecommender auxRec = (MFRecommender) runtimes.plugins.get("AUXILIARY_RCMMD_MODEL");
+            MFRecommender auxRec = (MFRecommender) runtimes.plugins.remove("AUXILIARY_RCMMD_MODEL");
             double bestRMSE = auxRec.runtimes.bestTrainErr();
 
             int id_en = 0;

@@ -7,9 +7,9 @@ import java.util.Map;
 import com.google.common.primitives.Doubles;
 
 import code.sma.core.AbstractIterator;
-import code.sma.core.Accumulator;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
+import code.sma.recmmd.stats.Accumulator;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 

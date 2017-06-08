@@ -1,4 +1,4 @@
-package code.sma.core;
+package code.sma.recmmd.stats;
 
 import java.util.Arrays;
 
@@ -8,20 +8,20 @@ import java.util.Arrays;
  * @version $Id: Accumulator.java, v 0.1 2017年3月1日 下午1:55:02 Chao.Chen Exp $
  */
 public class Accumulator {
-    double[][] indvdlVal;
-    double[]   accVal;      // accumulated value
-    int[]      accNum;      // number of values in each calculator
+    float[][] indvdlVal;
+    float[]   accVal;      // accumulated value
+    int[]     accNum;      // number of values in each calculator
 
-    int        cursor_vId;
-    int        cursor_accId;
+    int       cursor_vId;
+    int       cursor_accId;
 
     public Accumulator(int num, int dimnsn) {
-        accVal = new double[num];
+        accVal = new float[num];
         accNum = new int[num];
 
-        indvdlVal = new double[num][dimnsn];
-        for (double[] iv : indvdlVal) {
-            Arrays.fill(iv, Double.NaN);
+        indvdlVal = new float[num][dimnsn];
+        for (float[] iv : indvdlVal) {
+            Arrays.fill(iv, Float.NaN);
         }
 
         cursor_vId = 0;
@@ -59,14 +59,14 @@ public class Accumulator {
      * @param value the value to update
      */
     public void update(int accId, int vId, double value) {
-        if (Double.isNaN(indvdlVal[accId][vId])) {
+        if (Float.isNaN(indvdlVal[accId][vId])) {
             accVal[accId] += value;
             accNum[accId]++;
         } else {
             accVal[accId] += value - indvdlVal[accId][vId];
         }
 
-        indvdlVal[accId][vId] = value;
+        indvdlVal[accId][vId] = (float) value;
     }
 
     /** 

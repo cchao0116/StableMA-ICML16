@@ -43,6 +43,9 @@ public class SMATest {
             String dconfFile = rootDir + "dConfig.properties";
             ConfigureUtil.addConfig(new_conf, dconfFile);
 
+            String aRcmmdFile = rootDir + new_conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH");
+            new_conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", aRcmmdFile);
+
             String algName = new_conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
 
