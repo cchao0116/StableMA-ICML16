@@ -1,6 +1,5 @@
 package code.sma.core.impl;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -63,7 +62,11 @@ public class Tuples extends AbstractMatrix {
         assert StringUtil.isNotBlank(line) : "Line must not be blank";
 
         Scanner scanner = new Scanner(line);
-        scanner.skip("^(\\d+\\s+){4}");
+        scanner.skip("^(\\d+\\s+){1}");
+        this.num_global += scanner.nextInt();
+        this.num_ufactor += scanner.nextInt();
+        this.num_ifactor += scanner.nextInt();
+
         scanner.useDelimiter(":+|\\s+");
 
         int uId = scanner.nextInt();
@@ -87,14 +90,6 @@ public class Tuples extends AbstractMatrix {
     @Override
     public Iterator<DataElem> iterator() {
         return new Iter();
-    }
-
-    /** 
-     * @see code.sma.core.AbstractMatrix#iterator(boolean[], boolean[])
-     */
-    @Override
-    public Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature) {
-        return null;
     }
 
     protected class Iter extends AbstractIterator {
@@ -139,14 +134,30 @@ public class Tuples extends AbstractMatrix {
             return e;
         }
 
-    }
-
-    public void reduceMem() {
-        if (num_val < rowIndx.length) {
-            rowIndx = Arrays.copyOf(rowIndx, num_val);
-            colIndx = Arrays.copyOf(colIndx, num_val);
-            vals = Arrays.copyOf(vals, num_val);
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_global()
+         */
+        @Override
+        public int get_num_global() {
+            return 0;
         }
+
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_ufactor()
+         */
+        @Override
+        public int get_num_ufactor() {
+            return num_ufactor;
+        }
+
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_ifactor()
+         */
+        @Override
+        public int get_num_ifactor() {
+            return num_ifactor;
+        }
+
     }
 
     /**
@@ -182,25 +193,6 @@ public class Tuples extends AbstractMatrix {
      * @return property value of nnz
      */
     public int getNnz() {
-        return num_val;
-    }
-
-    public SparseMatrix toSparseMatrix(int m, int n) {
-        SparseMatrix sm = new SparseMatrix(m, n);
-        for (int indx = 0; indx < num_val; indx++) {
-            int u = rowIndx[indx];
-            int i = colIndx[indx];
-            float AuiReal = vals[indx];
-            sm.setValue(u, i, AuiReal);
-        }
-        return sm;
-    }
-
-    /** 
-     * @see code.sma.core.AbstractMatrix#getnnz()
-     */
-    @Override
-    public int getnnz() {
         return num_val;
     }
 

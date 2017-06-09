@@ -52,6 +52,10 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
      */
     @Override
     public void buildModel(AbstractMatrix train, AbstractMatrix test) {
+        runtimes.nnz = train.num_ifactor;
+        runtimes.itrain = (AbstractIterator) train.iterator();
+        runtimes.itest = (AbstractIterator) test.iterator();
+
         // run learning threads
         try {
             ExecutorService exec = Executors.newCachedThreadPool();

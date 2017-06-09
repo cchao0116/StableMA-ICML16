@@ -26,10 +26,10 @@ public class NetflixMovieLensDiscretizer extends Discretizer {
 
     public NetflixMovieLensDiscretizer(Configures conf) {
         super();
-        this.userCount = ((Float) conf.get("USER_COUNT_VALUE")).intValue();
-        this.itemCount = ((Float) conf.get("ITEM_COUNT_VALUE")).intValue();
-        this.maxValue = ((Float) conf.get("MAX_RATING_VALUE")).doubleValue();
-        this.minValue = ((Float) conf.get("MIN_RATING_VALUE")).doubleValue();
+        this.userCount = conf.getInteger("USER_COUNT_VALUE");
+        this.itemCount = conf.getInteger("ITEM_COUNT_VALUE");
+        this.maxValue = conf.getDouble("MAX_RATING_VALUE");
+        this.minValue = conf.getInteger("MIN_RATING_VALUE");
     }
 
     /**

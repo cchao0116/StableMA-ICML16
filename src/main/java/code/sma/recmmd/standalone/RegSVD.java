@@ -42,8 +42,8 @@ public class RegSVD extends MFRecommender {
      */
     @Override
     protected void update_each(DataElem e) {
-        double learningRate = runtimes.learningRate;
-        double regularizer = runtimes.regularizer;
+        double lr = runtimes.learningRate;
+        double reg = runtimes.regularizer;
         short num_ifactor = e.getNum_ifacotr();
 
         int u = e.getIndex_user(0);
@@ -63,8 +63,10 @@ public class RegSVD extends MFRecommender {
                 double Gis = ref_ifactor.floatValue(s);
 
                 //global model updates
-                ref_ufactor.setValue(s, Fus + learningRate * (-deriWRTp * Gis - regularizer * Fus));
-                ref_ifactor.setValue(s, Gis + learningRate * (-deriWRTp * Fus - regularizer * Gis));
+                ref_ufactor.setValue(s,
+                    Fus + lr * (-deriWRTp * Gis - reg * runtimes.regType.reg(null, u, Fus)));
+                ref_ifactor.setValue(s,
+                    Gis + lr * (-deriWRTp * Fus - reg * runtimes.regType.reg(null, i, Gis)));
             }
         }
     }

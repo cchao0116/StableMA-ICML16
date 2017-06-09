@@ -2,9 +2,13 @@ package code.sma.core.impl;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Scanner;
+
+import org.apache.commons.io.IOUtils;
 
 import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
+import code.sma.util.StringUtil;
 
 /**
  * This class implements sparse matrix, containing empty values for most space.
@@ -81,33 +85,25 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
      */
     @Override
     public void loadNext(String line) {
-    }
+        assert StringUtil.isNotBlank(line) : "Line must not be blank";
 
-    /** 
-     * @see code.sma.core.AbstractMatrix#iterator(boolean[], boolean[])
-     */
-    @Override
-    public Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature) {
-        return null;
-    }
+        Scanner scanner = new Scanner(line);
+        scanner.skip("^(\\d+\\s+){1}");
+        this.num_global += scanner.nextInt();
+        this.num_ufactor += scanner.nextInt();
+        this.num_ifactor += scanner.nextInt();
 
-    /** 
-     * @see code.sma.core.AbstractMatrix#getnnz()
-     */
-    @Override
-    public int getnnz() {
-        int sum = 0;
+        scanner.useDelimiter(":+|\\s+");
 
-        if (M > N) {
-            for (int i = 0; i < M; i++) {
-                sum += rows[i].itemCount();
-            }
-        } else {
-            for (int j = 0; j < N; j++) {
-                sum += cols[j].itemCount();
-            }
+        int uId = scanner.nextInt();
+        scanner.nextFloat();
+
+        while (scanner.hasNextInt()) {
+            setValue(uId, scanner.nextInt(), scanner.nextFloat());
+            num_val++;
         }
-        return sum;
+        num_row++;
+        IOUtils.closeQuietly(scanner);
     }
 
     /*========================================
@@ -300,7 +296,7 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
      * @return The average value.
      */
     public double average() {
-        return this.sum() / this.getnnz();
+        return this.sum() / num_ifactor;
     }
 
     /**
@@ -321,7 +317,7 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
             }
         }
 
-        return sum / this.getnnz();
+        return sum / num_ifactor;
     }
 
     /**

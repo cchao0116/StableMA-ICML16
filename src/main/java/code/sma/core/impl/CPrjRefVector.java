@@ -10,9 +10,17 @@ public class CPrjRefVector extends CRefVector {
     /** projection mappings*/
     protected short[]         prj_mpg;
 
+    public CPrjRefVector(float[] data, int ptr_offset, int num_factors) {
+        super(data, ptr_offset, num_factors);
+    }
+
     public CPrjRefVector(float[] data, int ptr_offset, int num_factors, short[] prj_mpg) {
         super(data, ptr_offset, num_factors);
         this.prj_mpg = prj_mpg;
+    }
+
+    public CPrjRefVector(int[] data, int ptr_offset, int num_factors) {
+        super(data, ptr_offset, num_factors);
     }
 
     public CPrjRefVector(int[] data, int ptr_offset, int num_factors, short[] prj_mpg) {
@@ -26,7 +34,8 @@ public class CPrjRefVector extends CRefVector {
     @Override
     public float floatValue(int i) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-
+        if(prj_mpg == null) return super.floatValue(i);
+        
         switch (refType) {
             case Ints:
                 return intPtr[prj_mpg[i]];
@@ -43,7 +52,8 @@ public class CPrjRefVector extends CRefVector {
     @Override
     public int intValue(int i) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-
+        if(prj_mpg == null) return super.intValue(i);
+        
         switch (refType) {
             case Ints:
                 return intPtr[prj_mpg[i]];

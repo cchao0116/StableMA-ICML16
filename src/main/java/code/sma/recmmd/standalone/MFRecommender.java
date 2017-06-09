@@ -72,8 +72,7 @@ public abstract class MFRecommender extends Recommender implements Plugin {
 
         // update model
         AbstractIterator iDataElem = runtimes.itrain;
-        while (Math.abs(runtimes.prevErr - runtimes.currErr) > 0.0001
-               && runtimes.round < runtimes.maxIter) {
+        while (runtimes.prevErr - runtimes.currErr > 0.0001 && runtimes.round < runtimes.maxIter) {
             update_inner(iDataElem);
         }
     }
@@ -91,12 +90,12 @@ public abstract class MFRecommender extends Recommender implements Plugin {
         userDenseFeatures = new DenseMatrix(userCount, featureCount);
         itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
 
-        runtimes.nnz = train.getnnz();
         runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
             : (AbstractIterator) train.iterator(acc_ufi, acc_ifi);
         runtimes.itest = (test == null) ? null
             : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
                 : (AbstractIterator) test.iterator(acc_ufi, acc_ifi));
+        runtimes.nnz = runtimes.itrain.get_num_ifactor();
     }
 
     protected void update_inner(AbstractIterator iDataElem) {
@@ -137,17 +136,6 @@ public abstract class MFRecommender extends Recommender implements Plugin {
         }
     }
 
-    /**
-     * @see code.sma.recmmd.Recommender#buildloclModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
-     */
-    @Override
-    public void buildloclModel(AbstractMatrix train, AbstractMatrix test) {
-        LoggerUtil.info(runningLogger, String.format("Param: FC:%d,LR:%.7f,R:%.7f",
-            runtimes.featureCount, runtimes.learningRate, runtimes.regularizer));
-        userDenseFeatures = new DenseMatrix(runtimes.userCount, runtimes.featureCount);
-        itemDenseFeatures = new DenseMatrix(runtimes.itemCount, runtimes.featureCount);
-    }
-
     /*========================================
      * Prediction
      *========================================*/
@@ -175,7 +163,7 @@ public abstract class MFRecommender extends Recommender implements Plugin {
         AbstractVector ifactors = itemDenseFeatures.getRowRef(i);
         if (ufactors == null || ifactors == null) {
             prediction += (maxValue + minValue) / 2;
-            LoggerUtil.warn(runningLogger,
+            LoggerUtil.debug(runningLogger,
                 String.format("null latent factors for (%d,%d)-entry", u, i));
         } else {
             prediction += ufactors.innerProduct(ifactors);

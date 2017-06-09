@@ -43,11 +43,11 @@ public class GroupSparsityMF extends MFRecommender {
      *========================================*/
     public GroupSparsityMF(Configures conf, Map<String, Plugin> plugins) {
         super(conf, plugins);
-        this.L = ((Float) conf.get("ITEM_CLUSTER_NUM_VALUE")).intValue();
+        this.L = conf.getInteger("ITEM_CLUSTER_NUM_VALUE");
 
-        runtimes.doubles.add((float) conf.get("ALPA_VALUE"));
-        runtimes.doubles.add((float) conf.get("BETA_VALUE"));
-        runtimes.doubles.add((float) conf.get("LAMBDA_VALUE"));
+        runtimes.doubles.add(conf.getDouble("ALPA_VALUE"));
+        runtimes.doubles.add(conf.getDouble("BETA_VALUE"));
+        runtimes.doubles.add(conf.getDouble("LAMBDA_VALUE"));
 
         runtimes.ia_func = new short[runtimes.itemCount];
 
@@ -58,9 +58,9 @@ public class GroupSparsityMF extends MFRecommender {
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
-        runtimes.nnz = train.getnnz();
         runtimes.itrain = (AbstractIterator) train.iterator();
         runtimes.itest = test == null ? null : (AbstractIterator) test.iterator();
+        runtimes.nnz = runtimes.itrain.get_num_ifactor();
 
         int userCount = runtimes.userCount;
         int itemCount = runtimes.itemCount;
@@ -98,11 +98,9 @@ public class GroupSparsityMF extends MFRecommender {
             runtimes.ia_func[i] = (short) (Math.random() * L);
         }
 
-        AbstractIterator iDataElem = runtimes.itrain;
-        iDataElem.refresh();
+        AbstractIterator iDataElem = runtimes.itrain.refresh();
         while (iDataElem.hasNext()) {
             DataElem e = iDataElem.next();
-
             short num_ifactor = e.getNum_ifacotr();
 
             int u = e.getIndex_user(0);
@@ -136,7 +134,7 @@ public class GroupSparsityMF extends MFRecommender {
         int featureCount = runtimes.featureCount;
 
         double alpha = runtimes.doubles.getDouble(0);
-        double lambda = runtimes.doubles.getDouble(0);
+        double lambda = runtimes.doubles.getDouble(2);
 
         // the right vector term for every user
         UJMPDenseMatrix rightSideMtx = new UJMPDenseMatrix(userCount, featureCount);
@@ -176,7 +174,7 @@ public class GroupSparsityMF extends MFRecommender {
 
         double alpha = runtimes.doubles.getDouble(0);
         double beta = runtimes.doubles.getDouble(1);
-        double lambda = runtimes.doubles.getDouble(0);
+        double lambda = runtimes.doubles.getDouble(2);
 
         short[] ia_func = runtimes.ia_func;
 

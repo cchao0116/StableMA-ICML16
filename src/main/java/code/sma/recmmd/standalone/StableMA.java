@@ -9,8 +9,6 @@ import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.Loss;
-import code.sma.recmmd.Regularizer;
 import code.sma.recmmd.stats.Accumulator;
 import code.sma.recmmd.stats.StatsOperator;
 
@@ -97,12 +95,8 @@ public class StableMA extends MFRecommender {
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {
-        int featureCount = runtimes.featureCount;
-        double learningRate = runtimes.learningRate;
-        double regularizer = runtimes.regularizer;
-
-        Regularizer regType = runtimes.regType;
-        Loss lossFunction = runtimes.lossFunction;
+        double lr = runtimes.learningRate;
+        double reg = runtimes.regularizer;
 
         int num_hps = runtimes.ints.getInt(0);
         Accumulator[] acumltor = new Accumulator[num_hps + 1];
@@ -117,7 +111,6 @@ public class StableMA extends MFRecommender {
 
             int u = e.getIndex_user(0);
             for (int f = 0; f < num_ifactor; f++) {
-
                 int i = e.getIndex_item(f);
 
                 DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
@@ -128,9 +121,9 @@ public class StableMA extends MFRecommender {
                 }
 
                 double AuiReal = e.getValue_ifactor(f);
-                double AuiEst = StatsOperator.innerProduct(ref_ufactor, ref_ifactor, lossFunction,
-                    AuiReal, acumltor);
-                runtimes.sumErr += lossFunction.diff(AuiReal, AuiEst);
+                double AuiEst = StatsOperator.innerProduct(ref_ufactor, ref_ifactor,
+                    runtimes.lossFunction, AuiReal, acumltor);
+                runtimes.sumErr += runtimes.lossFunction.diff(AuiReal, AuiEst);
 
                 // compute RMSEs
                 double tnW = 1 / acumltor[0].rm();
@@ -141,18 +134,18 @@ public class StableMA extends MFRecommender {
                 }
 
                 // stochastic gradient descend
-                double deriWRTp = lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
-                for (int s = 0; s < featureCount; s++) {
+                double deriWRTp = runtimes.lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
+                for (int s = 0; s < runtimes.featureCount; s++) {
                     double Fus = ref_ufactor.floatValue(s);
                     double Gis = ref_ifactor.floatValue(s);
 
                     //global model updates
                     ref_ufactor.setValue(s,
-                        Fus + learningRate
-                              * (-deriWRTp * Gis * tnW - regularizer * regType.reg(null, u, Fus)));
+                        Fus + lr
+                              * (-deriWRTp * Gis * tnW - reg * runtimes.regType.reg(null, u, Fus)));
                     ref_ifactor.setValue(s,
-                        Gis + learningRate
-                              * (-deriWRTp * Fus * tnW - regularizer * regType.reg(null, i, Gis)));
+                        Gis + lr
+                              * (-deriWRTp * Fus * tnW - reg * runtimes.regType.reg(null, i, Gis)));
                 }
 
                 rid++;
@@ -162,14 +155,5 @@ public class StableMA extends MFRecommender {
         // update runtime environment
         update_runtimes();
     }
-
-    /** 
-     * @see java.lang.Object#toString()
-     */
-    //    @Override
-    //    public String toString() {
-    //        return "Param: FC: " + runtimes.featureCount + " LR: " + runtimes.learningRate + " R: "
-    //               + runtimes.regularizer + " ALG[SMA][" + numOfHPSet + "]";
-    //    }
 
 }

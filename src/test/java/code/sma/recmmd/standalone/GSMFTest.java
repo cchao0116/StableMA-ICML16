@@ -24,13 +24,13 @@ import code.sma.util.MatrixIOUtil;
  * @author Chao.Chen
  * @version $Id: SMATest.java, v 0.1 2017年3月28日 下午1:14:34 Chao.Chen Exp $
  */
-public class SMATest {
+public class GSMFTest {
     /** the logger instance*/
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     @Test
     public void testAlg() throws IOException {
-        Configures conf = ConfigureUtil.read("src/main/resources/samples/SMA.properties");
+        Configures conf = ConfigureUtil.read("src/main/resources/samples/GSMF.properties");
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
         for (String rootDir : rootDirs) {

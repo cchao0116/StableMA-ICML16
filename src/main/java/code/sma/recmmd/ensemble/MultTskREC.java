@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.main.Configures;
@@ -14,7 +12,7 @@ import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.standalone.GLOMA;
 import code.sma.recmmd.standalone.MFRecommender;
-import code.sma.util.SerializeUtil;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 /**
  * 
@@ -36,8 +34,6 @@ public class MultTskREC extends EnsembleMFRecommender {
     private double                  samplingRate;
     /** the instance of the auxiliary model */
     private transient MFRecommender auxRec;
-    /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]                lambda           = { 1.0d, 0.5d, 0.5d };
 
     /*
      * ======================================== Constructors
@@ -45,19 +41,10 @@ public class MultTskREC extends EnsembleMFRecommender {
      */
     public MultTskREC(Configures conf, Map<String, Plugin> plugins) {
         super(conf, plugins);
-        runtimes.doubles.add((float) conf.get("SAMPLE_RATE_VALUE"));
+        runtimes.doubles = new DoubleArrayList(conf.getDoubleArr("BETA"));
 
-        String auxRcmmdPath = (String) conf.get("AUXILIARY_RCMMD_MODEL_PATH");
-        this.auxRec = (MFRecommender) SerializeUtil.readObject(auxRcmmdPath);
-        {
-            String lam = (String) conf.get("LAMBDA");
-            if (lam != null) {
-                String[] lamStr = lam.split(",");
-                for (int l = 0; l < 3; l++) {
-                    lambda[l] = Double.valueOf(lamStr[l]).doubleValue();
-                }
-            }
-        }
+        samplingRate = conf.getDouble("SAMPLE_RATE_VALUE");
+        this.auxRec = (MFRecommender) plugins.get("AUXILIARY_RCMMD_MODEL");
 
         this.randSeeds = new LinkedList<Long>();
         {
@@ -132,8 +119,8 @@ public class MultTskREC extends EnsembleMFRecommender {
     @Override
     public double ensnblWeight(int u, int i, double prediction) {
         int indx = ((Discretizer) runtimes.plugins.get("DISCRETIZER")).convert(prediction);
-        return 1.0 + runtimes.doubles.getDouble(1) * runtimes.ensmblUWs[u][indx]
-               + runtimes.doubles.getDouble(2) * runtimes.ensmblIWs[i][indx];
+        return 1.0 + runtimes.doubles.getDouble(0) * runtimes.ensmblUWs[u][indx]
+               + runtimes.doubles.getDouble(1) * runtimes.ensmblIWs[i][indx];
     }
 
     /**
@@ -147,7 +134,8 @@ public class MultTskREC extends EnsembleMFRecommender {
         double regularizer = runtimes.regularizer;
 
         return String.format("Param[%d]: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", maxIter,
-            featureCount, learningRate, regularizer, samplingRate, ArrayUtils.toString(lambda));
+            featureCount, learningRate, regularizer, samplingRate,
+            runtimes.conf.getProperty("LAMBDA"));
     }
 
 }

@@ -29,13 +29,13 @@ public final class RuntimeEnv implements Serializable {
     // BASICS
     public int                           userCount;
     public int                           itemCount;
-    public float                         maxValue;
-    public float                         minValue;
+    public double                        maxValue;
+    public double                        minValue;
 
     public int                           featureCount;
-    public float                         learningRate;
-    public float                         regularizer;
-    public float                         momentum;
+    public double                        learningRate;
+    public double                        regularizer;
+    public double                        momentum;
     public int                           maxIter;
     public boolean                       showProgress;
     public Loss                          lossFunction;
@@ -92,16 +92,16 @@ public final class RuntimeEnv implements Serializable {
         this.ints = new IntArrayList();
 
         // load configures
-        this.featureCount = conf.getInteger("FEATURE_COUNT_VALUE");
-        this.learningRate = conf.getFloat("LEARNING_RATE_VALUE");
-        this.regularizer = conf.getFloat("REGULAIZED_VALUE");
-        this.maxIter = conf.getInteger("MAX_ITERATION_VALUE");
+        if(conf.containsKey("FEATURE_COUNT_VALUE" )) this.featureCount = conf.getInteger("FEATURE_COUNT_VALUE");
+        if(conf.containsKey("LEARNING_RATE_VALUE" )) this.learningRate = conf.getFloat("LEARNING_RATE_VALUE");
+        if(conf.containsKey("REGULAIZED_VALUE" )) this.regularizer = conf.getFloat("REGULAIZED_VALUE");
+        if(conf.containsKey("MAX_ITERATION_VALUE" )) this.maxIter = conf.getInteger("MAX_ITERATION_VALUE");
 
         this.userCount = conf.getInteger("USER_COUNT_VALUE");
         this.itemCount = conf.getInteger("ITEM_COUNT_VALUE");
         this.maxValue = conf.getFloat("MAX_RATING_VALUE");
         this.minValue = conf.getFloat("MIN_RATING_VALUE");
-        this.showProgress = (Boolean) conf.get("VERBOSE_BOOLEAN");
+        this.showProgress = conf.getBoolean("VERBOSE_BOOLEAN");
 
         this.threadNum = conf.getInteger("THREAD_NUMBER_VALUE");
 

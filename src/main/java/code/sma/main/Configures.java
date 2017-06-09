@@ -51,6 +51,10 @@ public final class Configures extends Properties {
         return ((Double) get(key.trim())).shortValue();
     }
 
+    public boolean getBoolean(String key) {
+        return (boolean) get(key.trim());
+    }
+
     public double[] getDoubleArr(String key) {
         String[] elems = getProperty(key).split(",+");
         int length = elems.length;

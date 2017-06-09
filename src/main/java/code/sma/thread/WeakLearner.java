@@ -36,7 +36,7 @@ public class WeakLearner extends Thread {
     public void run() {
         Recommender recmmnd = null;
         while ((recmmnd = (Recommender) dispatcher.map()) != null) {
-            recmmnd.buildloclModel(train, test);
+            recmmnd.buildModel(train, test);
             dispatcher.reduce(recmmnd, train, test);
         }
     }

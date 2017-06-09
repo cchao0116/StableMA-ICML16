@@ -36,6 +36,8 @@ public final class RecommenderFactory {
             return new RegSVD(conf, null);
         } else if (StringUtil.equalsIgnoreCase(algName, "SMA")) {
             AbstractDpncyChecker checker = new ModelDpncyChecker();
+            conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH",
+                conf.getProperty("ROOT_DIR") + conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH"));
             checker.handler(conf);
 
             // Stable Matrix Approximation
@@ -63,6 +65,8 @@ public final class RecommenderFactory {
             return new WEMAREC(conf, plugins, clusterDirs);
         } else if (StringUtil.equalsIgnoreCase(algName, "MTREC")) {
             AbstractDpncyChecker checker = new ModelDpncyChecker();
+            conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH",
+                conf.getProperty("ROOT_DIR") + conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH"));
             checker.handler(conf);
 
             Map<String, Plugin> plugins = new HashMap<String, Plugin>();

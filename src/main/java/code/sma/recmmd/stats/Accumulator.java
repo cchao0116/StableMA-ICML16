@@ -9,14 +9,14 @@ import java.util.Arrays;
  */
 public class Accumulator {
     float[][] indvdlVal;
-    float[]   accVal;      // accumulated value
+    double[]  accVal;      // accumulated value
     int[]     accNum;      // number of values in each calculator
 
     int       cursor_vId;
     int       cursor_accId;
 
     public Accumulator(int num, int dimnsn) {
-        accVal = new float[num];
+        accVal = new double[num];
         accNum = new int[num];
 
         indvdlVal = new float[num][dimnsn];
@@ -40,15 +40,16 @@ public class Accumulator {
 
         // update cursor
         int num_cal = indvdlVal.length;
-        int num_val = indvdlVal[0].length;
+        int dimnsn = indvdlVal[0].length;
 
         cursor_accId++;
         if (cursor_accId == num_cal) {
             cursor_vId++;
         }
-
         cursor_accId %= num_cal;
-        cursor_vId %= num_val;
+
+        int num_val = accNum[cursor_accId];
+        cursor_vId = cursor_vId < dimnsn ? (cursor_vId % (num_val + 1)) : 0;
     }
 
     /**
@@ -59,7 +60,7 @@ public class Accumulator {
      * @param value the value to update
      */
     public void update(int accId, int vId, double value) {
-        if (Float.isNaN(indvdlVal[accId][vId])) {
+        if (Double.isNaN(indvdlVal[accId][vId])) {
             accVal[accId] += value;
             accNum[accId]++;
         } else {

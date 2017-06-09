@@ -49,9 +49,18 @@ public class CSRMatrix extends AbstractMatrix {
         scanner.useDelimiter(":+|\\s+");
 
         row_label[num_row] = scanner.nextFloat();
-        row_ptr[3 * num_row + 1] = row_ptr[3 * num_row] + scanner.nextInt();
-        row_ptr[3 * num_row + 2] = row_ptr[3 * num_row + 1] + scanner.nextInt();
-        row_ptr[3 * num_row + 3] = row_ptr[3 * num_row + 2] + scanner.nextInt();
+
+        int num = scanner.nextInt();
+        this.num_global += num;
+        row_ptr[3 * num_row + 1] = row_ptr[3 * num_row] + num;
+
+        num = scanner.nextInt();
+        this.num_ufactor += num;
+        row_ptr[3 * num_row + 2] = row_ptr[3 * num_row + 1] + num;
+
+        num = scanner.nextInt();
+        this.num_ifactor += num;
+        row_ptr[3 * num_row + 3] = row_ptr[3 * num_row + 2] + num;
 
         while (scanner.hasNextInt()) {
             feat_index[num_val] = scanner.nextInt();
@@ -64,19 +73,27 @@ public class CSRMatrix extends AbstractMatrix {
     }
 
     /** 
+     * @see code.sma.core.AbstractMatrix#getValue(int, int)
+     */
+    @Override
+    public double getValue(int i, int j) {
+        throw new RuntimeException("This method has not been implemented in CSRMatrix!");
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#setValue(int, int, double)
+     */
+    @Override
+    public void setValue(int i, int j, double value) {
+        throw new RuntimeException("This method has not been implemented in CSRMatrix!");
+    }
+
+    /** 
      * @see java.lang.Iterable#iterator()
      */
     @Override
     public Iterator<DataElem> iterator() {
         return new Iter();
-    }
-
-    /** 
-     * @see code.sma.core.AbstractMatrix#iterator(boolean[], boolean)
-     */
-    @Override
-    public Iterator<DataElem> iterator(boolean[] acc_ufeature, boolean[] acc_ifeature) {
-        return null;
     }
 
     protected class Iter extends AbstractIterator {
@@ -140,30 +157,29 @@ public class CSRMatrix extends AbstractMatrix {
             return e;
         }
 
-    }
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_global()
+         */
+        @Override
+        public int get_num_global() {
+            return num_global;
+        }
 
-    /** 
-     * @see code.sma.core.AbstractMatrix#getValue(int, int)
-     */
-    @Override
-    public double getValue(int i, int j) {
-        throw new RuntimeException("This method has not been implemented in CSRMatrix!");
-    }
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_ufactor()
+         */
+        @Override
+        public int get_num_ufactor() {
+            return num_ufactor;
+        }
 
-    /** 
-     * @see code.sma.core.AbstractMatrix#setValue(int, int, double)
-     */
-    @Override
-    public void setValue(int i, int j, double value) {
-        throw new RuntimeException("This method has not been implemented in CSRMatrix!");
-    }
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_ifactor()
+         */
+        @Override
+        public int get_num_ifactor() {
+            return num_ifactor;
+        }
 
-    /** 
-     * @see code.sma.core.AbstractMatrix#getnnz()
-     */
-    @Override
-    public int getnnz() {
-        return num_val - num_row;
     }
-
 }

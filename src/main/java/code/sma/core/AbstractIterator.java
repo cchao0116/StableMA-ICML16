@@ -2,7 +2,7 @@ package code.sma.core;
 
 import java.util.Iterator;
 
-import code.sma.core.impl.CRefVector;
+import code.sma.core.impl.CPrjRefVector;
 
 /**
  * 
@@ -19,14 +19,14 @@ public abstract class AbstractIterator implements Iterator<DataElem> {
         cursor = 0;
 
         e = new DataElem();
-        e.setIndex_global(new CRefVector((int[]) null, 0, 0));
-        e.setValue_global(new CRefVector((float[]) null, 0, 0));
+        e.setIndex_global(new CPrjRefVector((int[]) null, 0, 0));
+        e.setValue_global(new CPrjRefVector((float[]) null, 0, 0));
 
-        e.setIndex_user(new CRefVector((int[]) null, 0, 0));
-        e.setValue_ufactor(new CRefVector((float[]) null, 0, 0));
+        e.setIndex_user(new CPrjRefVector((int[]) null, 0, 0));
+        e.setValue_ufactor(new CPrjRefVector((float[]) null, 0, 0));
 
-        e.setIndex_item(new CRefVector((int[]) null, 0, 0));
-        e.setValue_ifactor(new CRefVector((float[]) null, 0, 0));
+        e.setIndex_item(new CPrjRefVector((int[]) null, 0, 0));
+        e.setValue_ifactor(new CPrjRefVector((float[]) null, 0, 0));
     }
 
     /**
@@ -45,4 +45,21 @@ public abstract class AbstractIterator implements Iterator<DataElem> {
         throw new RuntimeException("This method has not been implemented in AbstractIterator!");
     }
 
+    /**
+     * Get the number of nonzero global feature 
+     * @return  number of nonzero global feature 
+     */
+    public abstract int get_num_global();
+
+    /**
+     * Get the number of nonzero user feature
+     * @return  number of nonzero user feature 
+     */
+    public abstract int get_num_ufactor();
+
+    /**
+     * Get the number of nonzero item feature
+     * @return  number of nonzero item feature
+     */
+    public abstract int get_num_ifactor();
 }
