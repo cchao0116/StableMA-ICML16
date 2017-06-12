@@ -34,13 +34,14 @@ public class CPrjRefVector extends CRefVector {
     @Override
     public float floatValue(int i) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-        if(prj_mpg == null) return super.floatValue(i);
-        
+        if (prj_mpg == null)
+            return super.floatValue(i);
+
         switch (refType) {
             case Ints:
-                return intPtr[prj_mpg[i]];
+                return intPtr[ptr_offset + prj_mpg[i]];
             case Floats:
-                return floatPtr[prj_mpg[i]];
+                return floatPtr[ptr_offset + prj_mpg[i]];
             default:
                 throw new RuntimeException("CRefArray only support Ints, Floats.");
         }
@@ -52,13 +53,14 @@ public class CPrjRefVector extends CRefVector {
     @Override
     public int intValue(int i) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-        if(prj_mpg == null) return super.intValue(i);
-        
+        if (prj_mpg == null)
+            return super.intValue(i);
+
         switch (refType) {
             case Ints:
-                return intPtr[prj_mpg[i]];
+                return intPtr[ptr_offset + prj_mpg[i]];
             case Floats:
-                return (int) floatPtr[prj_mpg[i]];
+                return (int) floatPtr[ptr_offset + prj_mpg[i]];
             default:
                 throw new RuntimeException("CRefArray only support Ints, Floats.");
         }

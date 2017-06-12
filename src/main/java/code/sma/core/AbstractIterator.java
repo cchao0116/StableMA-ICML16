@@ -46,6 +46,11 @@ public abstract class AbstractIterator implements Iterator<DataElem> {
     }
 
     /**
+     * @see java.lang.Object#clone()
+     */
+    public abstract AbstractIterator clone();
+
+    /**
      * Get the number of nonzero global feature 
      * @return  number of nonzero global feature 
      */

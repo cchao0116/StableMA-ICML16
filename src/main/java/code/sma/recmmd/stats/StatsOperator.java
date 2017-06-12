@@ -42,7 +42,7 @@ public final class StatsOperator {
                 if (acumltor != null) {
                     for (Accumulator acr : acumltor) {
                         if (acr != null) {
-                            acr.update(row, n, r);
+                            acr.update(row, n, r * r);
                         }
                     }
                 }
@@ -101,8 +101,8 @@ public final class StatsOperator {
 
     public static void updateVector(AbstractVector factor, int f, double up, Accumulator acumltor,
                                     int accId, int vId) {
-        float fVal = factor.floatValue(f);
-        factor.setValue(f, fVal + up);
+        double fVal = factor.floatValue(f) + up;
+        factor.setValue(f, fVal);
 
         if (acumltor != null) {
             acumltor.update(accId, vId, fVal * fVal);

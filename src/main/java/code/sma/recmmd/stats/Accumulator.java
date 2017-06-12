@@ -8,12 +8,12 @@ import java.util.Arrays;
  * @version $Id: Accumulator.java, v 0.1 2017年3月1日 下午1:55:02 Chao.Chen Exp $
  */
 public class Accumulator {
-    float[][] indvdlVal;
-    double[]  accVal;      // accumulated value
-    int[]     accNum;      // number of values in each calculator
+    float[][]  indvdlVal;
+    double[]   accVal;      // accumulated value
+    int[]      accNum;      // number of values in each calculator
 
-    int       cursor_vId;
-    int       cursor_accId;
+    public int cursor_vId;
+    public int cursor_accId;
 
     public Accumulator(int num, int dimnsn) {
         accVal = new double[num];

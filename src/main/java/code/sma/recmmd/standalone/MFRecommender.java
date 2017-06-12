@@ -91,10 +91,10 @@ public abstract class MFRecommender extends Recommender implements Plugin {
         itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
 
         runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
-            : (AbstractIterator) train.iterator(acc_ufi, acc_ifi);
+            : (AbstractIterator) train.iteratorJion(acc_ufi, acc_ifi);
         runtimes.itest = (test == null) ? null
             : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
-                : (AbstractIterator) test.iterator(acc_ufi, acc_ifi));
+                : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
         runtimes.nnz = runtimes.itrain.get_num_ifactor();
     }
 

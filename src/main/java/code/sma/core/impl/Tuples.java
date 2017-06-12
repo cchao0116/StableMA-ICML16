@@ -158,6 +158,14 @@ public class Tuples extends AbstractMatrix {
             return num_ifactor;
         }
 
+        /** 
+         * @see code.sma.core.AbstractIterator#clone()
+         */
+        @Override
+        public AbstractIterator clone() {
+            return new Iter();
+        }
+
     }
 
     /**

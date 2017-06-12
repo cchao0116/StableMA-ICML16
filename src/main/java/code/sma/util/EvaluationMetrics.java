@@ -26,12 +26,10 @@ public class EvaluationMetrics {
     private double avgPrecision;
 
     public EvaluationMetrics(Recommender recmmd) {
-        super();
         build(recmmd);
     }
 
     public EvaluationMetrics(Recommender recmmd, AbstractMatrix train, AbstractMatrix test, int N) {
-        super();
         this.N = N;
         //        build(train, test);
     }
@@ -43,9 +41,11 @@ public class EvaluationMetrics {
      */
     protected void build(Recommender recmmd) {
         // Rating Prediction evaluation
+        mae = 0.0d;
+        mse = 0.0d;
 
         int nnz = 0;
-        AbstractIterator iDataElem = recmmd.runtimes.itest.refresh();
+        AbstractIterator iDataElem = recmmd.runtimes.itest.clone();
         while (iDataElem.hasNext()) {
 
             DataElem e = iDataElem.next();

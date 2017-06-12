@@ -12,6 +12,7 @@ import code.sma.core.impl.SparseMatrix;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
+import code.sma.recmmd.RuntimeEnv;
 import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
@@ -76,9 +77,7 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
     public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
         // update approximated model
         synchronized (REDUCE_MUTEX) {
-
-            AbstractIterator iDataElem = (AbstractIterator) test.iterator();
-            iDataElem.refresh();
+            AbstractIterator iDataElem = ((MFRecommender) recmmd).runtimes.itest.refresh();
             while (iDataElem.hasNext()) {
                 DataElem e = iDataElem.next();
                 short num_ifactor = e.getNum_ifacotr();
@@ -109,10 +108,13 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
         // WARNING: this part is not thread safe in order to quick produce the evaluation
         EvaluationMetrics em = new EvaluationMetrics(this);
 
+        RuntimeEnv _runtimes = ((MFRecommender) recmmd).runtimes;
         LoggerUtil.info(resultLogger,
-            String.format("ThreadId: %d\tRMSE: %.6f - %.6f",
-                ((MFRecommender) recmmd).runtimes.threadId, em.getRMSE(),
-                ((MFRecommender) recmmd).runtimes.bestTestErr()));
+            String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f", _runtimes.threadId,
+                em.getRMSE(),
+                (_runtimes.itrain.get_num_ufactor() + _runtimes.itrain.get_num_ifactor()
+                 - _runtimes.itrain.get_num_global()),
+                _runtimes.itest.get_num_ifactor(), _runtimes.bestTestErr()));
     }
 
     /** 

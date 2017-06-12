@@ -7,6 +7,7 @@ import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.core.AbstractVector;
 import code.sma.core.DataElem;
+import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
@@ -52,17 +53,29 @@ public class GLOMA extends MFRecommender {
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
-        super.prepare_runtimes(train, test);
+        assert train != null : "Training data cannot be null.";
 
-        int nnz = runtimes.nnz;
         int userCount = runtimes.userCount;
         int itemCount = runtimes.itemCount;
         int featureCount = runtimes.featureCount;
 
+        boolean[] acc_ufi = runtimes.acc_uf_indicator;
+        boolean[] acc_ifi = runtimes.acc_if_indicator;
+
+        userDenseFeatures = new DenseMatrix(userCount, featureCount);
+        itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
+
+        runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
+            : (AbstractIterator) train.iteratorUion(acc_ufi, acc_ifi);
+        runtimes.itest = (test == null) ? null
+            : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
+                : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
+        runtimes.nnz = runtimes.itrain.get_num_global();
+
         runtimes.acumltors = new ArrayList<Accumulator>();
-        runtimes.acumltors.add(new Accumulator(1, nnz)); // accumulator to record difference between real and predicted value
-        runtimes.acumltors.add(new Accumulator(1, train.num_ifactor));
-        runtimes.acumltors.add(new Accumulator(1, train.num_ifactor)); // accumulator to record difference between real and predicted value
+        runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_global())); // accumulator to record difference between real and predicted value
+        runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_ufactor()));
+        runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_ifactor()));
         runtimes.acumltors.add(new Accumulator(userCount, featureCount)); // accumulator to record value of user latent factors
         runtimes.acumltors.add(new Accumulator(itemCount, featureCount)); // accumulator to record value of item latent factors
 
@@ -100,8 +113,11 @@ public class GLOMA extends MFRecommender {
         double regularizer = runtimes.regularizer;
 
         Accumulator acum_diff_LuLi = runtimes.acumltors.get(0);
+        assert acum_diff_LuLi.cursor_vId == 0 : "Check it! At every begin, cursor shouble be at 0";
         Accumulator acum_diff_LuGi = runtimes.acumltors.get(1);
+        assert acum_diff_LuGi.cursor_vId == 0 : "Check it! At every begin, cursor shouble be at 0";
         Accumulator acum_diff_GuLi = runtimes.acumltors.get(2);
+        assert acum_diff_GuLi.cursor_vId == 0 : "Check it! At every begin, cursor shouble be at 0";
         Accumulator acum_ufactor = runtimes.acumltors.get(3);
         Accumulator acum_ifactor = runtimes.acumltors.get(4);
 
@@ -115,32 +131,37 @@ public class GLOMA extends MFRecommender {
             short num_ifactor = e.getNum_ifacotr();
             int u = e.getIndex_user(0);
 
-            DenseVector lref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u,
-                acum_ufactor);
+            DenseVector lref_ufactor = null;
             DenseVector gref_ufactor = auxRec.userDenseFeatures.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
 
                 int i = e.getIndex_item(f);
-                DenseVector lref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i,
-                    acum_ifactor);
+                DenseVector lref_ifactor = null;
                 DenseVector gref_ifactor = auxRec.itemDenseFeatures.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
 
                 double LuLi = 0.0d;
-                if (acc_ufi[u] && acc_ifi[i])
+                if (acc_ufi[u] && acc_ifi[i]) {
+                    lref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u, acum_ufactor);
+                    lref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i, acum_ifactor);
                     LuLi = StatsOperator.innerProduct(lref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuLi);
+                }
 
                 double LuGi = 0.0d;
-                if (acc_ufi[u])
+                if (acc_ufi[u]) {
+                    lref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u, acum_ufactor);
                     LuGi = StatsOperator.innerProduct(lref_ufactor, gref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuGi);
+                }
 
                 double GuLi = 0.0d;
-                if (acc_ifi[i])
+                if (acc_ifi[i]) {
+                    lref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i, acum_ifactor);
                     GuLi = StatsOperator.innerProduct(gref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_GuLi);
+                }
 
                 double RMELuLi = acum_diff_LuLi.rm();
                 double RMELuGi = acum_diff_LuGi.rm();
@@ -152,28 +173,32 @@ public class GLOMA extends MFRecommender {
 
                 double tnW = 1 + 0.4 * runtimes.tnWs[dctzr.convert(AuiReal)];
                 for (int s = 0; s < featureCount; s++) {
-                    double Fus = lref_ufactor.floatValue(s);
+                    double Fus = acc_ufi[u] ? lref_ufactor.floatValue(s) : 0.0d;
                     double fus = gref_ufactor.floatValue(s);
-                    double Gis = lref_ifactor.floatValue(s);
+                    double Gis = acc_ifi[i] ? lref_ifactor.floatValue(s) : 0.0d;
                     double gis = gref_ifactor.floatValue(s);
 
-                    double update_uf = acc_ifi[i]
-                        ? (-deriWRTpLuLi * Gis * lambda[0] * tnW
-                           - deriWRTpLuGi * gis * lambda[1] * tnW
-                           - regularizer * regType.reg(acum_ufactor, u, Fus))
-                        : (-deriWRTpLuGi * gis * 3.0
-                           - regularizer * Regularizer.L2.reg(acum_ufactor, u, Fus));
-                    StatsOperator.updateVector(lref_ufactor, s, learningRate * update_uf,
-                        acum_ufactor, u, s);
+                    if (acc_ufi[u]) {
+                        double update_uf = acc_ifi[i]
+                            ? (-deriWRTpLuLi * Gis * lambda[0] * tnW
+                               - deriWRTpLuGi * gis * lambda[1] * tnW
+                               - regularizer * regType.reg(acum_ufactor, u, Fus))
+                            : (-deriWRTpLuGi * gis * 3.0
+                               - regularizer * Regularizer.L2.reg(acum_ufactor, u, Fus));
+                        StatsOperator.updateVector(lref_ufactor, s, learningRate * update_uf,
+                            acum_ufactor, u, s);
+                    }
 
-                    double update_if = acc_ufi[u]
-                        ? (-deriWRTpLuLi * Fus * lambda[0] * tnW
-                           - deriWRTpGuLi * fus * lambda[2] * tnW
-                           - regularizer * regType.reg(acum_ifactor, i, Gis))
-                        : (-deriWRTpGuLi * fus * 0.8
-                           - regularizer * Regularizer.L2.reg(acum_ifactor, i, Gis));
-                    StatsOperator.updateVector(lref_ifactor, s, learningRate * update_if,
-                        acum_ifactor, i, s);
+                    if (acc_ifi[i]) {
+                        double update_if = acc_ufi[u]
+                            ? (-deriWRTpLuLi * Fus * lambda[0] * tnW
+                               - deriWRTpGuLi * fus * lambda[2] * tnW
+                               - regularizer * regType.reg(acum_ifactor, i, Gis))
+                            : (-deriWRTpGuLi * fus * 0.8
+                               - regularizer * Regularizer.L2.reg(acum_ifactor, i, Gis));
+                        StatsOperator.updateVector(lref_ifactor, s, learningRate * update_if,
+                            acum_ifactor, i, s);
+                    }
                 }
             }
         }
@@ -193,7 +218,6 @@ public class GLOMA extends MFRecommender {
         Loss lossFunction = runtimes.lossFunction;
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
 
-        int id_diff = -1;
         iDataElem.refresh();
         while (iDataElem.hasNext()) {
             DataElem e = iDataElem.next();
@@ -203,7 +227,6 @@ public class GLOMA extends MFRecommender {
             DenseVector lref_ufactor = userDenseFeatures.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
                 int i = e.getIndex_item(f);
-                id_diff++;
 
                 if (!acc_ufi[u] || !acc_ifi[i]) {
                     continue;
@@ -213,7 +236,7 @@ public class GLOMA extends MFRecommender {
 
                 double AuiReal = e.getValue_ifactor(f);
                 double LuLi = (acc_ufi[u] && acc_ifi[i]) ? StatsOperator.innerProduct(lref_ufactor,
-                    lref_ifactor, lossFunction, AuiReal, acum_diff, 0, id_diff) : 0.0d;
+                    lref_ifactor, lossFunction, AuiReal, acum_diff) : 0.0d;
 
                 double RMELuLi = acum_diff.rm(0);
                 double deriWRTpLuLi = lossFunction.dervWRTPrdctn(AuiReal, LuLi) / RMELuLi;
@@ -248,7 +271,8 @@ public class GLOMA extends MFRecommender {
         runtimes.round++;
         runtimes.sumErr = 0.0;
 
-        if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
+        if (runtimes.showProgress && (runtimes.round % 5 == 0 || runtimes.round >= runtimes.maxIter)
+            && runtimes.itest != null) {
             EvaluationMetrics metric = new EvaluationMetrics(this);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, metric.printOneLine()));
@@ -279,11 +303,13 @@ public class GLOMA extends MFRecommender {
             LoggerUtil.debug(runningLogger,
                 String.format("null latent factors for (%d,%d)-entry", u, i));
         } else {
-            double LuLi = userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
-            double LuGi = userDenseFeatures.innerProduct(u, i, auxRec.itemDenseFeatures, false);
-            double GuLi = auxRec.userDenseFeatures.innerProduct(u, i, itemDenseFeatures, false);
-            double GuGi = auxRec.userDenseFeatures.innerProduct(u, i, auxRec.itemDenseFeatures,
-                false);
+            DenseVector gref_ufactor = auxRec.userDenseFeatures.getRowRef(u);
+            DenseVector gref_ifactor = auxRec.itemDenseFeatures.getRowRef(i);
+
+            double LuLi = ufactors.innerProduct(ifactors);
+            double LuGi = ufactors.innerProduct(gref_ifactor);
+            double GuLi = gref_ufactor.innerProduct(ifactors);
+            double GuGi = gref_ufactor.innerProduct(gref_ifactor);
             prediction += (LuLi + LuGi + GuLi + GuGi) / 4.0d;
         }
 

@@ -49,39 +49,73 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
     public abstract void loadNext(String line);
 
     /**
-     * Returns an iterator over a set of elements with a subset of user/item features
+     * Returns an iterator over a set of elements with a join subset of user/item features
      * 
      * @param acc_ufeature  indicator whether user feature is accessible
      * @param acc_ifeature  indicator whether item feature is accessible
      * @return  an Iterator.
      */
-    public Iterator<DataElem> iterator(boolean[]... acc_feature) {
+    public Iterator<DataElem> iteratorJion(boolean[]... acc_feature) {
         assert acc_feature.length == 2 : "2D Tensor requires row and column accessible indicator.";
-        return new Default2DMatrixIter(acc_feature[0], acc_feature[1]);
+        return new Default2DMatrixIter(acc_feature[0], acc_feature[1], false);
+    }
+
+    /**
+     * Returns an iterator over a set of elements with a uion subset of user/item features
+     * 
+     * @param acc_ufeature  indicator whether user feature is accessible
+     * @param acc_ifeature  indicator whether item feature is accessible
+     * @return  an Iterator.
+     */
+    public Iterator<DataElem> iteratorUion(boolean[]... acc_feature) {
+        assert acc_feature.length == 2 : "2D Tensor requires row and column accessible indicator.";
+        return new Default2DMatrixIter(acc_feature[0], acc_feature[1], true);
     }
 
     private final class Default2DMatrixIter extends AbstractIterator {
         private int              _num_row;
-        private int              _num_ifactors;
+        private int              _num_gfactors;     // ABUSE: used to record #Entry of both available users and items
+        private int              _num_ufactors;     // ABUSE: used to record #Entry of only available users 
+        private int              _num_ifactors;     // ABUSE: used to record #Entry of only available users
         private short[][]        _prj_map;
         private AbstractIterator iter;
-        private boolean[]        acc_ufeature;
+        private boolean[]        indicator_ufeature;
+        private boolean          needUion;
 
-        Default2DMatrixIter(boolean[] acc_ufeature, boolean[] acc_ifeature) {
+        Default2DMatrixIter(boolean[] acc_ufeature, boolean[] acc_ifeature, boolean needUion) {
             this.cursor = 0;
+            this._num_gfactors = 0;
+            this._num_ufactors = 0;
+            this._num_ifactors = 0;
+            this.needUion = needUion;
+            this.indicator_ufeature = new boolean[acc_ufeature.length];
             build(acc_ufeature, acc_ifeature);
+
+        }
+
+        public Default2DMatrixIter(int _num_row, int _num_gfactors, int _num_ufactors,
+                                   int _num_ifactors, short[][] _prj_map, AbstractIterator iter,
+                                   boolean[] indicator_ufeature, boolean needUion) {
+            super();
+            this._num_row = _num_row;
+            this._num_gfactors = _num_gfactors;
+            this._num_ufactors = _num_ufactors;
+            this._num_ifactors = _num_ifactors;
+            this._prj_map = _prj_map;
+            this.iter = iter;
+            this.indicator_ufeature = indicator_ufeature;
+            this.needUion = needUion;
         }
 
         private void build(boolean[] acc_ufeature, boolean[] acc_ifeature) {
             _num_row = 0;
             _prj_map = new short[num_row][0];
-            this.acc_ufeature = acc_ufeature;
 
             iter = (AbstractIterator) iterator();
             while (iter.hasNext()) {
                 DataElem e = iter.next();
                 int u = e.getIndex_user(0);
-                if (!acc_ufeature[u]) {
+                if (!needUion && !acc_ufeature[u]) {
                     continue;
                 }
 
@@ -89,15 +123,23 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
                 short _num_ifactor = e.getNum_ifacotr();
                 for (short f = 0; f < _num_ifactor; f++) {
                     int i = e.getIndex_item(f);
-                    if (!acc_ifeature[i]) {
-                        continue;
-                    }
 
-                    shorts.add(f);
-                    _num_ifactors++;
+                    if (acc_ufeature[u] && acc_ifeature[i]) {
+                        _num_gfactors++;
+                        _num_ufactors++;
+                        _num_ifactors++;
+                        shorts.add(f);
+                    } else if (needUion && acc_ufeature[u]) {
+                        _num_ufactors++;
+                        shorts.add(f);
+                    } else if (needUion && acc_ifeature[i]) {
+                        _num_ifactors++;
+                        shorts.add(f);
+                    }
                 }
 
                 if (shorts.size() != 0) {
+                    indicator_ufeature[u] = true;
                     _prj_map[_num_row] = shorts.toShortArray();
                     _num_row++;
                 }
@@ -121,14 +163,14 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
             while (iter.hasNext()) {
                 e = iter.next();
                 int u = e.getIndex_user(0);
-                if (!acc_ufeature[u]) {
+                if (!indicator_ufeature[u]) {
                     continue;
                 } else {
                     short num_ifactor = (short) _prj_map[cursor].length;
                     e.setNum_ifacotr(num_ifactor);
 
-                    CPrjRefVector value_ufactor = (CPrjRefVector) e.getValue_ufactor();
-                    value_ufactor.setPrj_mpg(_prj_map[cursor]);
+                    CPrjRefVector value_ifactor = (CPrjRefVector) e.getValue_ifactor();
+                    value_ifactor.setPrj_mpg(_prj_map[cursor]);
 
                     CPrjRefVector index_item = (CPrjRefVector) e.getIndex_item();
                     index_item.setPrj_mpg(_prj_map[cursor]);
@@ -156,7 +198,7 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
          */
         @Override
         public int get_num_global() {
-            return 0;
+            return _num_gfactors;
         }
 
         /** 
@@ -164,7 +206,7 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
          */
         @Override
         public int get_num_ufactor() {
-            return _num_row;
+            return _num_ufactors;
         }
 
         /** 
@@ -173,6 +215,15 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
         @Override
         public int get_num_ifactor() {
             return _num_ifactors;
+        }
+
+        /** 
+         * @see code.sma.core.AbstractIterator#clone()
+         */
+        @Override
+        public AbstractIterator clone() {
+            return new Default2DMatrixIter(_num_row, _num_gfactors, _num_ufactors, _num_ifactors,
+                _prj_map, (AbstractIterator) iterator(), indicator_ufeature, needUion);
         }
 
     }
