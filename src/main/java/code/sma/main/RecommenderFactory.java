@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Queue;
 
 import code.sma.dpncy.AbstractDpncyChecker;
+import code.sma.dpncy.ClusteringDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
@@ -51,6 +52,9 @@ public final class RecommenderFactory {
             return new GroupSparsityMF(conf, null);
         } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
             // WEMAREC: Accurate and Scalable Recommendation through Weighted and Ensemble Matrix Approximation
+            AbstractDpncyChecker checker = new ClusteringDpncyChecker();
+            checker.handler(conf);
+
             String rootDir = (String) conf.get("ROOT_DIR");
             String[] cDirStrs = ((String) conf.get("CLUSTERING_SET")).split("\\,");
 

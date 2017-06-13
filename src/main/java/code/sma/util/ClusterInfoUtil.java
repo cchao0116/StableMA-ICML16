@@ -237,7 +237,10 @@ public final class ClusterInfoUtil {
                 str.append(String.format("%d:%s\n", c, cluster.toString()));
                 c++;
             }
-            Files.write(str, new File(clusterDir + "RM"), Charset.defaultCharset());
+
+            File f = new File(clusterDir + "RM");
+            Files.createParentDirs(f);
+            Files.write(str, f, Charset.defaultCharset());
         }
 
         // writing column assignment functions
@@ -248,7 +251,10 @@ public final class ClusterInfoUtil {
                 str.append(String.format("%d:%s\n", c, cluster.toString()));
                 c++;
             }
-            Files.write(str, new File(clusterDir + "CM"), Charset.defaultCharset());
+
+            File f = new File(clusterDir + "CM");
+            Files.createParentDirs(f);
+            Files.write(str, f, Charset.defaultCharset());
         }
     }
 }

@@ -40,9 +40,9 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
      *========================================*/
     public WEMAREC(Configures conf, Map<String, Plugin> plugins, Queue<String> clusterDirs) {
         super(conf, plugins);
-        runtimes.doubles.add((float) conf.get("BETA0_VALUE"));
-        runtimes.doubles.add((float) conf.get("BETA1_VALUE"));
-        runtimes.doubles.add((float) conf.get("BETA2_VALUE"));
+        runtimes.doubles.add(conf.getDouble("BETA0_VALUE"));
+        runtimes.doubles.add(conf.getDouble("BETA1_VALUE"));
+        runtimes.doubles.add(conf.getDouble("BETA2_VALUE"));
 
         clusterDirList = clusterDirs;
         recmmdsBuffer = new LinkedList<Recommender>();

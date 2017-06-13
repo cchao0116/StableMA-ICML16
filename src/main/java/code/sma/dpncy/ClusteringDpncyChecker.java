@@ -55,9 +55,9 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
 
         if (!clusterDirs.isEmpty()) {
             // compute the undone clustering
-            int threadNum = ((Float) conf.get("THREAD_NUMBER_VALUE")).intValue();
-            int rowCount = ((Float) conf.get("USER_COUNT_VALUE")).intValue();
-            int colCount = ((Float) conf.get("ITEM_COUNT_VALUE")).intValue();
+            int threadNum = conf.getInteger("THREAD_NUMBER_VALUE");
+            int rowCount = conf.getInteger("USER_COUNT_VALUE");
+            int colCount = conf.getInteger("ITEM_COUNT_VALUE");
             String trainFile = rootDir + "trainingset";
             SparseMatrix rateMatrix = MatrixIOUtil.loadSparseMatrix(trainFile, rowCount, colCount);
 
