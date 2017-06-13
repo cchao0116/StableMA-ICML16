@@ -50,4 +50,10 @@ public abstract class Recommender implements Serializable {
      */
     public abstract double predict(int u, int i);
 
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public abstract String toString();
+
 }

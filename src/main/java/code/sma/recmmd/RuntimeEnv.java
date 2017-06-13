@@ -92,10 +92,14 @@ public final class RuntimeEnv implements Serializable {
         this.ints = new IntArrayList();
 
         // load configures
-        if(conf.containsKey("FEATURE_COUNT_VALUE" )) this.featureCount = conf.getInteger("FEATURE_COUNT_VALUE");
-        if(conf.containsKey("LEARNING_RATE_VALUE" )) this.learningRate = conf.getFloat("LEARNING_RATE_VALUE");
-        if(conf.containsKey("REGULAIZED_VALUE" )) this.regularizer = conf.getFloat("REGULAIZED_VALUE");
-        if(conf.containsKey("MAX_ITERATION_VALUE" )) this.maxIter = conf.getInteger("MAX_ITERATION_VALUE");
+        if (conf.containsKey("FEATURE_COUNT_VALUE"))
+            this.featureCount = conf.getInteger("FEATURE_COUNT_VALUE");
+        if (conf.containsKey("LEARNING_RATE_VALUE"))
+            this.learningRate = conf.getFloat("LEARNING_RATE_VALUE");
+        if (conf.containsKey("REGULAIZED_VALUE"))
+            this.regularizer = conf.getFloat("REGULAIZED_VALUE");
+        if (conf.containsKey("MAX_ITERATION_VALUE"))
+            this.maxIter = conf.getInteger("MAX_ITERATION_VALUE");
 
         this.userCount = conf.getInteger("USER_COUNT_VALUE");
         this.itemCount = conf.getInteger("ITEM_COUNT_VALUE");
@@ -117,5 +121,10 @@ public final class RuntimeEnv implements Serializable {
 
     public double bestTestErr() {
         return testErr.isEmpty() ? -1.0d : Doubles.min(testErr.toDoubleArray());
+    }
+
+    public String briefDesc() {
+        return String.format("[%d]_[%d]_[%d]", featureCount, (int) (learningRate * 1000),
+            (int) (regularizer * 1000));
     }
 }

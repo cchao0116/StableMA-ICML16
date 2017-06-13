@@ -72,12 +72,11 @@ public class RegSVD extends MFRecommender {
     }
 
     /** 
-     * @see java.lang.Object#toString()
+     * @see code.sma.recmmd.Recommender#toString()
      */
     @Override
     public String toString() {
-        return "Param: FC: " + runtimes.featureCount + " LR: " + runtimes.learningRate + " R: "
-               + runtimes.regularizer + " ALG[RegSVD]";
+        return String.format("RSVD%s", runtimes.briefDesc());
     }
 
 }

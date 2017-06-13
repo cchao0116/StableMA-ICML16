@@ -85,13 +85,12 @@ public class WeigtedSVD extends MFRecommender {
     }
 
     /** 
-     * @see java.lang.Object#toString()
+     * @see code.sma.recmmd.Recommender#toString()
      */
     @Override
     public String toString() {
-        return "Param: FC: " + runtimes.featureCount + " LR: " + runtimes.learningRate + " R: "
-               + runtimes.regularizer + " ALG[WSVD]["
-               + String.format("%.0f", runtimes.doubles.getDouble(0) * 100) + "%]";
+        return String.format("WSMA%s_Tn[%d]", runtimes.briefDesc(),
+            (int) (runtimes.doubles.getDouble(0) * 100));
     }
 
 }

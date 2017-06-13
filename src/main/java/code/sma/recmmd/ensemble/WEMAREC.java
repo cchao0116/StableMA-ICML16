@@ -112,4 +112,14 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
                + runtimes.doubles.getDouble(2) * runtimes.ensmblIWs[i][indx];
     }
 
+    /** 
+     * @see code.sma.recmmd.Recommender#toString()
+     */
+    @Override
+    public String toString() {
+        return String.format("WEMAREC%s_Tn[%d]_Ens[%d_%d]", runtimes.briefDesc(),
+            (int) (runtimes.doubles.getDouble(0)), (int) (runtimes.doubles.getDouble(1)),
+            (int) (runtimes.doubles.getDouble(2)));
+    }
+
 }

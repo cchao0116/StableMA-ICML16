@@ -279,14 +279,14 @@ public class GroupSparsityMF extends MFRecommender {
     }
 
     /** 
-     * @see java.lang.Object#toString()
+     * @see code.sma.recmmd.Recommender#toString()
      */
     @Override
     public String toString() {
-        int featureCount = runtimes.featureCount;
-        double learningRate = runtimes.learningRate;
-        double regularizer = runtimes.regularizer;
-        return "Param: FC: " + featureCount + " LR: " + learningRate + " R: " + regularizer
-               + " ALG[GSMF]";
+        return String.format("GSMF[%d]_L[%d]_[%d_%d_%d]", runtimes.featureCount, L,
+            (int) (runtimes.doubles.getDouble(0) * 100),
+            (int) (runtimes.doubles.getDouble(1) * 100),
+            (int) (runtimes.doubles.getDouble(2) * 100));
     }
+
 }

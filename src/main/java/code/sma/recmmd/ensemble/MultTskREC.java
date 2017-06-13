@@ -123,19 +123,14 @@ public class MultTskREC extends EnsembleMFRecommender {
                + runtimes.doubles.getDouble(1) * runtimes.ensmblIWs[i][indx];
     }
 
-    /**
-     * @see java.lang.Object#toString()
+    /** 
+     * @see code.sma.recmmd.Recommender#toString()
      */
     @Override
     public String toString() {
-        int maxIter = runtimes.maxIter;
-        int featureCount = runtimes.featureCount;
-        double learningRate = runtimes.learningRate;
-        double regularizer = runtimes.regularizer;
-
-        return String.format("Param[%d]: FC:%d LR:%.7f R:%.7f ALG[MultTskREC][%.2f]%s", maxIter,
-            featureCount, learningRate, regularizer, samplingRate,
-            runtimes.conf.getProperty("LAMBDA"));
+        return String.format("MTREC%s_SR[%d]_Ens[%d_%d]", runtimes.briefDesc(),
+            (int) (samplingRate * 100), (int) (runtimes.doubles.getDouble(0) * 100),
+            (int) (runtimes.doubles.getDouble(1) * 100));
     }
 
 }

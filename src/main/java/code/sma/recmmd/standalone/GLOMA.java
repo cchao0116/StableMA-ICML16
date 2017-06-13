@@ -315,4 +315,13 @@ public class GLOMA extends MFRecommender {
 
         return Math.max(minValue, Math.min(prediction, maxValue));
     }
+
+    /** 
+     * @see code.sma.recmmd.Recommender#toString()
+     */
+    @Override
+    public String toString() {
+        return String.format("GLOMA%s_[%d_%d_%d]", runtimes.briefDesc(), (int) (lambda[0] * 100),
+            (int) (lambda[1] * 100), (int) (lambda[2] * 100));
+    }
 }

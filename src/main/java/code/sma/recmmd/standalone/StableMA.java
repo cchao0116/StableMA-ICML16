@@ -156,4 +156,12 @@ public class StableMA extends MFRecommender {
         update_runtimes();
     }
 
+    /** 
+     * @see code.sma.recmmd.Recommender#toString()
+     */
+    @Override
+    public String toString() {
+        return String.format("SMA%s_[%d]", runtimes.briefDesc(), runtimes.ints.getInt(0));
+    }
+
 }
