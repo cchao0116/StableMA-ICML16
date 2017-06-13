@@ -1,4 +1,4 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.standalone;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -18,30 +18,31 @@ import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
-import junit.framework.TestCase;
+import code.sma.util.StringUtil;
 
 /**
  * 
  * @author Chao.Chen
- * @version $Id: MultTskREC.java, v 0.1 2017年2月28日 下午4:23:17 Chao.Chen Exp $
+ * @version $Id: AbstractTest.java, v 0.1 2017年6月13日 下午1:05:45 Chao.Chen Exp $
  */
-public class MultTskRECTest extends TestCase {
+public abstract class AbstractTest {
     /** the logger instance*/
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
-    /** 
-     * @see junit.framework.TestCase#setUp()
+    /**
+     * Get the configure file 
+     * @return
      */
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+    protected abstract String getConfig();
 
     @Test
     public void testAlg() throws IOException {
-        Configures conf = ConfigureUtil.read("src/main/resources/samples/MTREC.properties");
+        Configures conf = ConfigureUtil.read(getConfig());
         String[] rootDirs = conf.getProperty("ROOT_DIRs").split("\\,");
 
         for (String rootDir : rootDirs) {
+            rootDir = StringUtil.trim(rootDir);
+
             LoggerUtil.info(logger, "1. loading " + rootDir);
             conf.setProperty("ROOT_DIR", rootDir);
             String trainFile = rootDir + "trainingset";
@@ -76,12 +77,4 @@ public class MultTskRECTest extends TestCase {
             }
         }
     }
-
-    /** 
-     * @see junit.framework.TestCase#tearDown()
-     */
-    protected void tearDown() throws Exception {
-
-    }
-
 }
