@@ -1,6 +1,9 @@
 package code.sma.dpncy;
 
+import org.apache.log4j.Logger;
+
 import code.sma.main.Configures;
+import code.sma.util.LoggerDefineConstant;
 
 /**
  * To check the dependencies for every algorithm
@@ -9,6 +12,9 @@ import code.sma.main.Configures;
  * @version $Id: AbstractDpncyChecker.java, v 0.1 2016年9月28日 上午11:06:23 Chao.Chen Exp $
  */
 public abstract class AbstractDpncyChecker {
+    protected final static Logger  normalLogger = Logger
+        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
+
     /** the chain of responsibility*/
     protected AbstractDpncyChecker successor;
 

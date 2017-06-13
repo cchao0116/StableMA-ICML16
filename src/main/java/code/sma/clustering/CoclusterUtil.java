@@ -7,8 +7,8 @@ package code.sma.clustering;
 import org.apache.commons.math3.distribution.UniformIntegerDistribution;
 import org.apache.log4j.Logger;
 
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.SparseVector;
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.SparseVector;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 
@@ -72,8 +72,8 @@ public final class CoclusterUtil {
                                                             final int constraint,
                                                             final Distance dtncConst) {
         //check primary parameter
-        int rowCount = points.length()[0];
-        int colCount = points.length()[1];
+        int rowCount = points.shape()[0];
+        int colCount = points.shape()[1];
         if (rowCount < K || colCount < L) {
             throw new RuntimeException("Number of samples is less than the number of classes.");
         }
@@ -228,7 +228,7 @@ public final class CoclusterUtil {
                                                            double[] E_Uc, double[] E_V,
                                                            double[] E_Vc, double[][] E_U_Vc,
                                                            double[][] E_Uc_V, double E) {
-        int rowCount = points.length()[0];
+        int rowCount = points.shape()[0];
 
         //clear current clusters
         for (Cluster local : rowCluster) {
@@ -252,7 +252,7 @@ public final class CoclusterUtil {
                 for (int v : itemList) {
                     int Vc = colAssigmnt[v];
 
-                    double ZuvReal = ZuReal.getValue(v);
+                    double ZuvReal = ZuReal.floatValue(v);
                     // compute Zuv w.r.t constraints
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
@@ -324,7 +324,7 @@ public final class CoclusterUtil {
                                                          double[] E_Uc, double[] E_V, double[] E_Vc,
                                                          double[][] E_U_Vc, double[][] E_Uc_V,
                                                          double E) {
-        int rowCount = points.length()[0];
+        int rowCount = points.shape()[0];
 
         //clear current clusters
         for (Cluster local : rowCluster) {
@@ -348,7 +348,7 @@ public final class CoclusterUtil {
                 for (int v : itemList) {
                     int Vc = colAssigmnt[v];
 
-                    double ZuvReal = ZuReal.getValue(v);
+                    double ZuvReal = ZuReal.floatValue(v);
                     // compute Zuv w.r.t constraints
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
@@ -442,7 +442,7 @@ public final class CoclusterUtil {
                                                            double[] E_Uc, double[] E_V,
                                                            double[] E_Vc, double[][] E_U_Vc,
                                                            double[][] E_Uc_V, double E) {
-        int colCount = points.length()[1];
+        int colCount = points.shape()[1];
         //clear current clusters
         boolean[] emptyIndicator = new boolean[L];
         for (int i = 0; i < L; i++) {
@@ -476,7 +476,7 @@ public final class CoclusterUtil {
                     int Uc = rowAssigmnt[u];
 
                     // compute Zuv w.r.t constraints
-                    double ZuvReal = ZvReal.getValue(u);
+                    double ZuvReal = ZvReal.floatValue(u);
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
                         case C_1:
@@ -549,7 +549,7 @@ public final class CoclusterUtil {
                                                          double[] E_Uc, double[] E_V, double[] E_Vc,
                                                          double[][] E_U_Vc, double[][] E_Uc_V,
                                                          double E) {
-        int colCount = points.length()[1];
+        int colCount = points.shape()[1];
         //clear current clusters
         for (Cluster local : colCluster) {
             local.clear();
@@ -573,7 +573,7 @@ public final class CoclusterUtil {
                     int Uc = rowAssigmnt[u];
 
                     // compute Zuv w.r.t constraints
-                    double ZuvReal = ZvReal.getValue(u);
+                    double ZuvReal = ZvReal.floatValue(u);
                     double ZuvEstim = 0.0d;
                     switch (constraint) {
                         case C_1:
@@ -640,8 +640,8 @@ public final class CoclusterUtil {
                                             final Cluster[] rowCluster, final Cluster[] colCluster,
                                             double[][] E_Uc_Vc, double[] E_U, double[] E_Uc,
                                             double[] E_V, double[] E_Vc) {
-        int rowCount = points.length()[0];
-        int colCount = points.length()[1];
+        int rowCount = points.shape()[0];
+        int colCount = points.shape()[1];
 
         //1. cmp E_Uc_Vc
         for (int k = 0; k < K; k++) {
@@ -712,8 +712,8 @@ public final class CoclusterUtil {
                                                            double[] E_Uc, double[] E_V,
                                                            double[] E_Vc, double[][] E_U_Vc,
                                                            double[][] E_Uc_V) {
-        int rowCount = points.length()[0];
-        int colCount = points.length()[1];
+        int rowCount = points.shape()[0];
+        int colCount = points.shape()[1];
 
         //1. cmp E_Uc_Vc
         for (int k = 0; k < K; k++) {
@@ -778,7 +778,7 @@ public final class CoclusterUtil {
                 int itemCount = 0;
                 double sum = 0.0d;
                 for (int v : colLocal) {
-                    double val = Ru.getValue(v);
+                    double val = Ru.floatValue(v);
                     if (val != 0.0d) {
                         sum += val;
                         itemCount++;
@@ -797,7 +797,7 @@ public final class CoclusterUtil {
                 int itemCount = 0;
                 double sum = 0.0d;
                 for (int u : rowLocal) {
-                    double val = Rv.getValue(u);
+                    double val = Rv.floatValue(u);
                     if (val != 0.0d) {
                         sum += val;
                         itemCount++;

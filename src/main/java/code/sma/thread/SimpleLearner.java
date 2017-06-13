@@ -1,7 +1,7 @@
 package code.sma.thread;
 
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.recommender.Recommender;
+import code.sma.core.AbstractMatrix;
+import code.sma.recmmd.Recommender;
 
 /**
  * the general thread learner for recommender system
@@ -11,19 +11,19 @@ import code.sma.recommender.Recommender;
  */
 public class SimpleLearner extends Thread {
     /** learning task dispatcher*/
-    private TaskMsgDispatcher        dispatcher;
+    private TaskMsgDispatcher dispatcher;
     /** training data*/
-    private MatlabFasionSparseMatrix trainMatrix;
+    private AbstractMatrix    trainMatrix;
     /** testing data*/
-    private MatlabFasionSparseMatrix testMatrix;
+    private AbstractMatrix    testMatrix;
 
     /**
      * @param recmmnd       cf learner
      * @param trainMatrix   training data
      * @param testMatrix    testing data
      */
-    public SimpleLearner(TaskMsgDispatcher dispatcher, MatlabFasionSparseMatrix trainMatrix,
-                         MatlabFasionSparseMatrix testMatrix) {
+    public SimpleLearner(TaskMsgDispatcher dispatcher, AbstractMatrix trainMatrix,
+                         AbstractMatrix testMatrix) {
         super();
         this.dispatcher = dispatcher;
         this.trainMatrix = trainMatrix;

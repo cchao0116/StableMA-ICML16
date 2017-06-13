@@ -1,16 +1,23 @@
 package code.sma.main;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
-import code.sma.dpncy.NetflixMovieLensDiscretizer;
-import code.sma.recommender.RecConfigEnv;
-import code.sma.recommender.Recommender;
-import code.sma.recommender.ensemble.WEMAREC;
-import code.sma.recommender.standalone.GroupSparsityMF;
-import code.sma.recommender.standalone.RegularizedSVD;
-import code.sma.recommender.standalone.StableMA;
+import code.sma.dpncy.AbstractDpncyChecker;
+import code.sma.dpncy.ClusteringDpncyChecker;
+import code.sma.dpncy.ModelDpncyChecker;
+import code.sma.plugin.NetflixMovieLensDiscretizer;
+import code.sma.plugin.Plugin;
+import code.sma.recmmd.Recommender;
+import code.sma.recmmd.ensemble.WEMAREC;
+import code.sma.recmmd.standalone.GroupSparsityMF;
+import code.sma.recmmd.standalone.MFRecommender;
+import code.sma.recmmd.standalone.RegSVD;
+import code.sma.recmmd.standalone.StableMA;
+import code.sma.util.SerializeUtil;
 import code.sma.util.StringUtil;
 
 /**
@@ -23,50 +30,42 @@ public final class RecommenderFactory {
     private RecommenderFactory() {
     };
 
-    public static Recommender instance(String algName, RecConfigEnv rce) {
-        int featureCount = ((Double) rce.get("FEATURE_COUNT_VALUE")).intValue();
-        double lrate = (double) rce.get("LEARNING_RATE_VALUE");
-        double regularized = (double) rce.get("REGULAIZED_VALUE");
-        int maxIteration = ((Double) rce.get("MAX_ITERATION_VALUE")).intValue();
-
-        int userCount = ((Double) rce.get("USER_COUNT_VALUE")).intValue();
-        int itemCount = ((Double) rce.get("ITEM_COUNT_VALUE")).intValue();
-        double maxValue = ((Double) rce.get("MAX_RATING_VALUE")).doubleValue();
-        double minValue = ((Double) rce.get("MIN_RATING_VALUE")).doubleValue();
-        boolean showProgress = (Boolean) rce.get("VERBOSE_BOOLEAN");
-
+    public static Recommender instance(String algName, Configures conf) {
         if (StringUtil.equalsIgnoreCase(algName, "RegSVD")) {
             // Improving Regularized Singular Value Decomposition Collaborative Filtering
-            return new RegularizedSVD(userCount, itemCount, maxValue, minValue, featureCount, lrate,
-                regularized, 0, maxIteration, showProgress);
+            return new RegSVD(conf, null);
         } else if (StringUtil.equalsIgnoreCase(algName, "SMA")) {
+            AbstractDpncyChecker checker = new ModelDpncyChecker();
+            conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH",
+                conf.getProperty("ROOT_DIR") + conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH"));
+            checker.handler(conf);
+
             // Stable Matrix Approximation
-            int numHPSet = ((Double) rce.get("NUMBER_HARD_PREDICTION_SET_VALUE")).intValue();
-            return new StableMA(userCount, itemCount, maxValue, minValue, featureCount, lrate,
-                regularized, 0, maxIteration, numHPSet, showProgress);
+            Map<String, Plugin> plugins = new HashMap<String, Plugin>();
+            plugins.put("AUXILIARY_RCMMD_MODEL", (MFRecommender) SerializeUtil
+                .readObject(conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH")));
+
+            return new StableMA(conf, plugins);
         } else if (StringUtil.equalsIgnoreCase(algName, "GSMF")) {
             // Recommendation by Mining Multiple User Behaviors with Group Sparsity
-            double alpha = (double) rce.get("ALPA_VALUE");
-            double beta = (double) rce.get("BETA_VALUE");
-            double lambda = (double) rce.get("LAMBDA_VALUE");
-            return new GroupSparsityMF(userCount, itemCount, maxValue, minValue, featureCount,
-                alpha, beta, lambda, maxIteration, 3, showProgress);
+            return new GroupSparsityMF(conf, null);
         } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
             // WEMAREC: Accurate and Scalable Recommendation through Weighted and Ensemble Matrix Approximation
-            String rootDir = (String) rce.get("ROOT_DIR");
-            String[] cDirStrs = ((String) rce.get("CLUSTERING_SET")).split("\\,");
+            AbstractDpncyChecker checker = new ClusteringDpncyChecker();
+            checker.handler(conf);
+
+            String rootDir = (String) conf.get("ROOT_DIR");
+            String[] cDirStrs = ((String) conf.get("CLUSTERING_SET")).split("\\,");
 
             Queue<String> clusterDirs = new LinkedList<String>();
             for (String cDirStr : cDirStrs) {
                 String clusterDir = rootDir + cDirStr + File.separator;
                 clusterDirs.add(clusterDir);
             }
+            Map<String, Plugin> plugins = new HashMap<String, Plugin>();
+            plugins.put("DISCRETIZER", new NetflixMovieLensDiscretizer(conf));
 
-            return new WEMAREC(userCount, itemCount, maxValue, minValue, featureCount, lrate,
-                regularized, 0, maxIteration, showProgress, rce,
-                new NetflixMovieLensDiscretizer(userCount, itemCount, maxValue, minValue),
-                clusterDirs);
-
+            return new WEMAREC(conf, plugins, clusterDirs);
         } else {
             return null;
         }

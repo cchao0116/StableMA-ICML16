@@ -5,13 +5,16 @@
 package code.sma.clustering;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import code.sma.datastructure.SparseMatrix;
-import code.sma.datastructure.SparseVector;
+import com.google.common.primitives.Ints;
+
+import code.sma.core.impl.SparseMatrix;
+import code.sma.core.impl.SparseVector;
 
 /**
  * The cluster in K-mean with the matrix index
@@ -96,7 +99,7 @@ public final class Cluster implements Iterable<Integer> {
             return null;
         }
 
-        SparseVector result = new SparseVector(matrix.length()[1]);
+        SparseVector result = new SparseVector(matrix.shape()[1]);
         for (Integer memberId : elements) {
             SparseVector a = matrix.getRowRef(memberId);
             result = result.plus(a);
@@ -127,4 +130,13 @@ public final class Cluster implements Iterable<Integer> {
     public Iterator<Integer> iterator() {
         return elements.iterator();
     }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return Arrays.toString(Ints.toArray(elements));
+    }
+
 }

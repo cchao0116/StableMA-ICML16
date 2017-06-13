@@ -1,6 +1,6 @@
 package code.sma.clustering;
 
-import code.sma.datastructure.SparseVector;
+import code.sma.core.impl.SparseVector;
 
 /**
  * measure distance between two data point
@@ -42,8 +42,8 @@ public enum Distance {
             case KL:
                 double DklCon = 0.0d;
                 for (int indx : centroid.indexList()) {
-                    DklCon += a.getValue(indx)
-                              * Math.log(a.getValue(indx) / centroid.getValue(indx));
+                    DklCon += a.floatValue(indx)
+                              * Math.log(a.floatValue(indx) / centroid.floatValue(indx));
                 }
                 return DklCon;
             default:

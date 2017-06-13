@@ -1,27 +1,25 @@
 package code.sma.dpncy;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
 import code.sma.clustering.Cluster;
 import code.sma.clustering.CoclusterUtil;
 import code.sma.clustering.Distance;
-import code.sma.datastructure.MatlabFasionSparseMatrix;
-import code.sma.datastructure.SparseMatrix;
+import code.sma.core.AbstractMatrix;
+import code.sma.core.impl.SparseMatrix;
 import code.sma.main.Configures;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ClusterInfoUtil;
 import code.sma.util.ExceptionUtil;
-import code.sma.util.FileUtil;
-import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
-import code.sma.util.MatrixFileUtil;
+import code.sma.util.MatrixIOUtil;
 import code.sma.util.StringUtil;
 
 /**
@@ -31,11 +29,9 @@ import code.sma.util.StringUtil;
  */
 public class ClusteringDpncyChecker extends AbstractDpncyChecker implements TaskMsgDispatcher {
     /** the clusting tasks */
-    protected Queue<String>       clusterDirs;
+    protected Queue<String> clusterDirs;
     /** mutex using in map procedure*/
-    protected static Object       MAP_MUTEX    = new Object();
-    protected final static Logger normalLogger = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
+    protected static Object MAP_MUTEX = new Object();
 
     public ClusteringDpncyChecker() {
         clusterDirs = new LinkedList<String>();
@@ -52,19 +48,18 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
         // find the clusterings which are not obtained 
         for (String cDirStr : cDirStrs) {
             String clusterDir = rootDir + cDirStr;
-            if (!FileUtil.exists(clusterDir)) {
+            if (Files.notExists((new File(clusterDir)).toPath())) {
                 clusterDirs.add(cDirStr);
             }
         }
 
         if (!clusterDirs.isEmpty()) {
             // compute the undone clustering
-            int threadNum = ((Double) conf.get("THREAD_NUMBER_VALUE")).intValue();
-            int rowCount = ((Double) conf.get("USER_COUNT_VALUE")).intValue();
-            int colCount = ((Double) conf.get("ITEM_COUNT_VALUE")).intValue();
+            int threadNum = conf.getInteger("THREAD_NUMBER_VALUE");
+            int rowCount = conf.getInteger("USER_COUNT_VALUE");
+            int colCount = conf.getInteger("ITEM_COUNT_VALUE");
             String trainFile = rootDir + "trainingset";
-            SparseMatrix rateMatrix = MatrixFileUtil.read(trainFile, rowCount, colCount);
-            //        SparseMatrix rateMatrix = null;
+            SparseMatrix rateMatrix = MatrixIOUtil.loadSparseMatrix(trainFile, rowCount, colCount);
 
             try {
                 ExecutorService exec = Executors.newCachedThreadPool();
@@ -96,11 +91,11 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
     }
 
     /** 
-     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.datastructure.MatlabFasionSparseMatrix, code.sma.datastructure.MatlabFasionSparseMatrix)
+     * 
+     * @see code.sma.thread.TaskMsgDispatcher#reduce(java.lang.Object, code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void reduce(Object recmmd, MatlabFasionSparseMatrix tnMatrix,
-                       MatlabFasionSparseMatrix ttMatrix) {
+    public void reduce(Object recmmd, AbstractMatrix tnMatrix, AbstractMatrix ttMatrix) {
     }
 
     protected class ClusteringLearner extends Thread {
@@ -125,22 +120,26 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
         @Override
         public void run() {
             String rootDir = conf.getProperty("ROOT_DIR");
-
             String cDirStr = null;
-            while ((cDirStr = (String) dispatcher.map()) != null) {
-                String[] info = cDirStr.substring(cDirStr.lastIndexOf('/') + 1).split("\\_");
-                String dstInfo = info[0];
-                int k = Integer.valueOf(info[1].trim());
-                int l = Integer.valueOf(info[2].trim());
 
-                Distance dtncConst = Distance
-                    .valueOf(StringUtil.toUpperCase(dstInfo.substring(0, 2)));
-                int constrains = Integer.valueOf(dstInfo.substring(2, 3));
+            try {
+                while ((cDirStr = (String) dispatcher.map()) != null) {
+                    String[] info = cDirStr.substring(cDirStr.lastIndexOf('/') + 1).split("\\_");
+                    String dstInfo = info[0];
+                    int k = Integer.valueOf(info[1].trim());
+                    int l = Integer.valueOf(info[2].trim());
 
-                LoggerUtil.info(normalLogger, "...check...missing: " + cDirStr);
-                Cluster[][] result = CoclusterUtil.divideWithConjugateAssumption(tnMatrix, k, l, 15,
-                    constrains, dtncConst);
-                ClusterInfoUtil.saveClustering(result, rootDir + cDirStr + File.separator);
+                    Distance dtncConst = Distance
+                        .valueOf(StringUtil.toUpperCase(dstInfo.substring(0, 2)));
+                    int constrains = Integer.valueOf(dstInfo.substring(2, 3));
+
+                    LoggerUtil.info(normalLogger, "...check...missing: " + cDirStr);
+                    Cluster[][] result = CoclusterUtil.divideWithConjugateAssumption(tnMatrix, k, l,
+                        15, constrains, dtncConst);
+                    ClusterInfoUtil.saveClustering(result, rootDir + cDirStr + File.separator);
+                }
+            } catch (IOException e) {
+                ExceptionUtil.caught(e, "FILE: " + cDirStr);
             }
         }
 
