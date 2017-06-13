@@ -284,9 +284,9 @@ public class GroupSparsityMF extends MFRecommender {
     @Override
     public String toString() {
         return String.format("GSMF[%d]_L[%d]_[%d_%d_%d]", runtimes.featureCount, L,
-            (int) (runtimes.doubles.getDouble(0) * 100),
-            (int) (runtimes.doubles.getDouble(1) * 100),
-            (int) (runtimes.doubles.getDouble(2) * 100));
+            Math.round(runtimes.doubles.getDouble(0) * 100),
+            Math.round(runtimes.doubles.getDouble(1) * 100),
+            Math.round(runtimes.doubles.getDouble(2) * 100));
     }
 
 }

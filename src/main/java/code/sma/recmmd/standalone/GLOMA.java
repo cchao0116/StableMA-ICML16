@@ -321,7 +321,7 @@ public class GLOMA extends MFRecommender {
      */
     @Override
     public String toString() {
-        return String.format("GLOMA%s_[%d_%d_%d]", runtimes.briefDesc(), (int) (lambda[0] * 100),
-            (int) (lambda[1] * 100), (int) (lambda[2] * 100));
+        return String.format("GLOMA%s_[%d_%d_%d]", runtimes.briefDesc(),
+            Math.round(lambda[0] * 100), Math.round(lambda[1] * 100), Math.round(lambda[2] * 100));
     }
 }

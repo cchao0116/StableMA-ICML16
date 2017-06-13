@@ -90,7 +90,7 @@ public class WeigtedSVD extends MFRecommender {
     @Override
     public String toString() {
         return String.format("WSMA%s_Tn[%d]", runtimes.briefDesc(),
-            (int) (runtimes.doubles.getDouble(0) * 100));
+            Math.round(runtimes.doubles.getDouble(0) * 100));
     }
 
 }

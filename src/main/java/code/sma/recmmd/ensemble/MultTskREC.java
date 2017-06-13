@@ -129,8 +129,8 @@ public class MultTskREC extends EnsembleMFRecommender {
     @Override
     public String toString() {
         return String.format("MTREC%s_SR[%d]_Ens[%d_%d]", runtimes.briefDesc(),
-            (int) (samplingRate * 100), (int) (runtimes.doubles.getDouble(0) * 100),
-            (int) (runtimes.doubles.getDouble(1) * 100));
+            Math.round(samplingRate * 100), (int) (runtimes.doubles.getDouble(0) * 100),
+            Math.round(runtimes.doubles.getDouble(1) * 100));
     }
 
 }

@@ -161,7 +161,7 @@ public final class ClusterInfoUtil {
             }
 
             Scanner scanner = new Scanner(line);
-            scanner.useDelimiter(":+|[|]|,");
+            scanner.useDelimiter(":\\[|\\]|,\\s*");
 
             int c = scanner.nextInt();
 

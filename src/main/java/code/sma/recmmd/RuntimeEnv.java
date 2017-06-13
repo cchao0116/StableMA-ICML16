@@ -124,7 +124,7 @@ public final class RuntimeEnv implements Serializable {
     }
 
     public String briefDesc() {
-        return String.format("[%d]_[%d]_[%d]", featureCount, (int) (learningRate * 1000),
-            (int) (regularizer * 1000));
+        return String.format("[%d]_[%d]_[%d]", featureCount, Math.round(learningRate * 1000),
+            Math.round(regularizer * 1000));
     }
 }
