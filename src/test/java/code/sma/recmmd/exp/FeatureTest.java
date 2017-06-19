@@ -131,8 +131,8 @@ public class FeatureTest {
         }
 
         RegSVD rcmmd = new RegSVD(conf, null);
-        rcmmd.userDenseFeatures = userFeature;
-        rcmmd.itemDenseFeatures = itemFeature;
+        //        rcmmd.userDenseFeatures = userFeature;
+        //        rcmmd.itemDenseFeatures = itemFeature;
         return rcmmd;
     }
 
@@ -207,11 +207,11 @@ public class FeatureTest {
         }
 
         protected String getUFeats(List<GLOMA> modls, RegSVD auxRec, int u) {
-            DenseVector avec = auxRec.userDenseFeatures.getRowRef(u);
+            DenseVector avec = auxRec.factModel.ufactors.getRowRef(u);
 
             StringBuilder uFeats = new StringBuilder();
             for (GLOMA recmmd : modls) {
-                DenseVector vec = recmmd.userDenseFeatures.getRowRef(u);
+                DenseVector vec = auxRec.factModel.ufactors.getRowRef(u);
                 if (vec != null) {
                     DenseVector feat = new DenseVector(recmmd.runtimes.featureCount);
                     for (int k = 0; k < recmmd.runtimes.featureCount; k++) {
@@ -225,11 +225,11 @@ public class FeatureTest {
         }
 
         protected String getVFeats(List<GLOMA> modls, RegSVD auxRec, int i) {
-            DenseVector avec = auxRec.itemDenseFeatures.getRowRef(i);
+            DenseVector avec = auxRec.factModel.ifactors.getRowRef(i);
 
             StringBuilder uFeats = new StringBuilder();
             for (GLOMA recmmd : modls) {
-                DenseVector vec = recmmd.itemDenseFeatures.getRowRef(i);
+                DenseVector vec = recmmd.factModel.ifactors.getRowRef(i);
                 if (vec != null) {
                     DenseVector feat = new DenseVector(recmmd.runtimes.featureCount);
                     for (int k = 0; k < recmmd.runtimes.featureCount; k++) {

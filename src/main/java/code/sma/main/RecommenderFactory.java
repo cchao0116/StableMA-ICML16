@@ -9,13 +9,13 @@ import java.util.Queue;
 import code.sma.dpncy.AbstractDpncyChecker;
 import code.sma.dpncy.ClusteringDpncyChecker;
 import code.sma.dpncy.ModelDpncyChecker;
+import code.sma.model.AbstractModel;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.ensemble.MultTskREC;
 import code.sma.recmmd.ensemble.WEMAREC;
 import code.sma.recmmd.standalone.GroupSparsityMF;
-import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.recmmd.standalone.RegSVD;
 import code.sma.recmmd.standalone.StableMA;
 import code.sma.util.SerializeUtil;
@@ -43,7 +43,7 @@ public final class RecommenderFactory {
 
             // Stable Matrix Approximation
             Map<String, Plugin> plugins = new HashMap<String, Plugin>();
-            plugins.put("AUXILIARY_RCMMD_MODEL", (MFRecommender) SerializeUtil
+            plugins.put("AUXILIARY_RCMMD_MODEL", (AbstractModel) SerializeUtil
                 .readObject(conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH")));
 
             return new StableMA(conf, plugins);
@@ -75,7 +75,7 @@ public final class RecommenderFactory {
 
             Map<String, Plugin> plugins = new HashMap<String, Plugin>();
             plugins.put("DISCRETIZER", new NetflixMovieLensDiscretizer(conf));
-            plugins.put("AUXILIARY_RCMMD_MODEL", (MFRecommender) SerializeUtil
+            plugins.put("AUXILIARY_RCMMD_MODEL", (AbstractModel) SerializeUtil
                 .readObject(conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH")));
 
             return new MultTskREC(conf, plugins);

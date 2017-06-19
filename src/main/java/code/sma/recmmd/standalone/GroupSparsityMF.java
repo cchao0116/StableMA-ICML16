@@ -24,9 +24,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
  * @version $Id: GSMF.java, v 0.1 Jan 28, 2016 1:05:24 PM Exp $
  */
 public class GroupSparsityMF extends MFRecommender {
-    /**  SerialVersionNum */
-    private static final long        serialVersionUID = 1L;
-
     /** Number of item clusters*/
     private int                      L;
     /** User profile in low-rank matrix form. */
@@ -259,7 +256,6 @@ public class GroupSparsityMF extends MFRecommender {
             EvaluationMetrics metric = new EvaluationMetrics(this);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, metric.printOneLine()));
-            runtimes.testErr.add(metric.getRMSE());
         } else {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f", runtimes.round, runtimes.currErr));

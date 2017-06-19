@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.primitives.Doubles;
-
 import code.sma.core.AbstractIterator;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
@@ -50,8 +48,6 @@ public final class RuntimeEnv implements Serializable {
     public double                        prevErr          = 99999;
     public double                        currErr          = 9999;
     public double                        sumErr           = 0.0d;
-    public DoubleArrayList               trainErr;
-    public DoubleArrayList               testErr;
 
     //CLUSTERING
     public boolean[]                     acc_uf_indicator;        //user feature accessible indicator
@@ -86,8 +82,6 @@ public final class RuntimeEnv implements Serializable {
         this.conf = conf;
 
         // initiate containers
-        this.trainErr = new DoubleArrayList();
-        this.testErr = new DoubleArrayList();
         this.doubles = new DoubleArrayList();
         this.ints = new IntArrayList();
 
@@ -113,14 +107,6 @@ public final class RuntimeEnv implements Serializable {
             ? Loss.valueOf(conf.getProperty("LOSS_FUNCTION")) : Loss.LOSS_RMSE;
         this.regType = conf.contains("REG_TYPE") ? Regularizer.valueOf(conf.getProperty("REG_TYPE"))
             : Regularizer.L2;
-    }
-
-    public double bestTrainErr() {
-        return trainErr.isEmpty() ? -1.0d : Doubles.min(trainErr.toDoubleArray());
-    }
-
-    public double bestTestErr() {
-        return testErr.isEmpty() ? -1.0d : Doubles.min(testErr.toDoubleArray());
     }
 
     public String briefDesc() {

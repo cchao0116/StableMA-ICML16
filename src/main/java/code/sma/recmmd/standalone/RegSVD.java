@@ -19,8 +19,6 @@ import code.sma.recmmd.stats.StatsOperator;
  * @version 1.1
  */
 public class RegSVD extends MFRecommender {
-    /** SerialVersionNum */
-    private static final long serialVersionUID = 1L;
 
     /*========================================
      * Constructors
@@ -50,8 +48,8 @@ public class RegSVD extends MFRecommender {
         for (int f = 0; f < num_ifactor; f++) {
             int i = e.getIndex_item(f);
 
-            DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
-            DenseVector ref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i);
+            DenseVector ref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u);
+            DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i);
 
             double AuiReal = e.getValue_ifactor(f);
             double AuiEst = ref_ufactor.innerProduct(ref_ifactor);

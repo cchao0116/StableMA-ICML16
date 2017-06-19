@@ -7,9 +7,9 @@ import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.core.AbstractVector;
 import code.sma.core.DataElem;
-import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
+import code.sma.model.FactorModel;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
@@ -29,20 +29,18 @@ import code.sma.util.LoggerUtil;
  * @version $Id: GLOMA.java, v 0.1 2017年2月28日 下午1:46:27 Chao.Chen Exp $
  */
 public class GLOMA extends MFRecommender {
-    /** SerialVersionNum */
-    private static final long       serialVersionUID = 1L;
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]                lambda;
+    private double[]              lambda;
     /** Previously-trained model*/
-    private transient MFRecommender auxRec;
+    private transient FactorModel auxRec;
 
     /*========================================
      * Constructors
      *========================================*/
-    public GLOMA(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi, Map<String, Plugin> plugins,
-                 MFRecommender auxRec) {
+    public GLOMA(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
+                 Map<String, Plugin> plugins) {
         super(conf, acc_ufi, acc_ifi, plugins);
-        this.auxRec = auxRec;
+        this.auxRec = (FactorModel) plugins.get("AUXILIARY_RCMMD_MODEL");
 
         runtimes.plugins.put("DISCRETIZER", new NetflixMovieLensDiscretizer(conf));
         lambda = conf.getDoubleArr("LAMBDA");
@@ -58,12 +56,13 @@ public class GLOMA extends MFRecommender {
         int userCount = runtimes.userCount;
         int itemCount = runtimes.itemCount;
         int featureCount = runtimes.featureCount;
+        double maxValue = runtimes.maxValue;
+        double minValue = runtimes.minValue;
+
+        factModel = new FactorModel(userCount, itemCount, featureCount, (maxValue + minValue) / 2);
 
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
-
-        userDenseFeatures = new DenseMatrix(userCount, featureCount);
-        itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
 
         runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
             : (AbstractIterator) train.iteratorUion(acc_ufi, acc_ifi);
@@ -132,33 +131,33 @@ public class GLOMA extends MFRecommender {
             int u = e.getIndex_user(0);
 
             DenseVector lref_ufactor = null;
-            DenseVector gref_ufactor = auxRec.userDenseFeatures.getRowRef(u);
+            DenseVector gref_ufactor = auxRec.ufactors.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
 
                 int i = e.getIndex_item(f);
                 DenseVector lref_ifactor = null;
-                DenseVector gref_ifactor = auxRec.itemDenseFeatures.getRowRef(i);
+                DenseVector gref_ifactor = auxRec.ifactors.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
 
                 double LuLi = 0.0d;
                 if (acc_ufi[u] && acc_ifi[i]) {
-                    lref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u, acum_ufactor);
-                    lref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i, acum_ifactor);
+                    lref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u, acum_ufactor);
+                    lref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i, acum_ifactor);
                     LuLi = StatsOperator.innerProduct(lref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuLi);
                 }
 
                 double LuGi = 0.0d;
                 if (acc_ufi[u]) {
-                    lref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u, acum_ufactor);
+                    lref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u, acum_ufactor);
                     LuGi = StatsOperator.innerProduct(lref_ufactor, gref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuGi);
                 }
 
                 double GuLi = 0.0d;
                 if (acc_ifi[i]) {
-                    lref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i, acum_ifactor);
+                    lref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i, acum_ifactor);
                     GuLi = StatsOperator.innerProduct(gref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_GuLi);
                 }
@@ -224,7 +223,7 @@ public class GLOMA extends MFRecommender {
             short num_ifactor = e.getNum_ifacotr();
             int u = e.getIndex_user(0);
 
-            DenseVector lref_ufactor = userDenseFeatures.getRowRef(u);
+            DenseVector lref_ufactor = factModel.ufactors.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
                 int i = e.getIndex_item(f);
 
@@ -232,7 +231,7 @@ public class GLOMA extends MFRecommender {
                     continue;
                 }
 
-                DenseVector lref_ifactor = itemDenseFeatures.getRowRef(i);
+                DenseVector lref_ifactor = factModel.ifactors.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
                 double LuLi = (acc_ufi[u] && acc_ifi[i]) ? StatsOperator.innerProduct(lref_ufactor,
@@ -266,7 +265,7 @@ public class GLOMA extends MFRecommender {
     protected void update_runtimes() {
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = runtimes.acumltors.get(0).rm();
-        runtimes.trainErr.add(runtimes.currErr);
+        factModel.trainErr.add(runtimes.currErr);
 
         runtimes.round++;
         runtimes.sumErr = 0.0;
@@ -276,7 +275,7 @@ public class GLOMA extends MFRecommender {
             EvaluationMetrics metric = new EvaluationMetrics(this);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, metric.printOneLine()));
-            runtimes.testErr.add(metric.getRMSE());
+            factModel.testErr.add(metric.getRMSE());
         } else {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f,%.6f,%.6f", runtimes.round, runtimes.acumltors.get(0).rm(),
@@ -289,22 +288,22 @@ public class GLOMA extends MFRecommender {
      */
     @Override
     public double predict(int u, int i) {
-        assert (userDenseFeatures != null
-                && itemDenseFeatures != null) : "Feature matrix cannot be null";
+        assert (factModel.ufactors != null
+                && factModel.ifactors != null) : "Feature matrix cannot be null";
 
         double maxValue = runtimes.maxValue;
         double minValue = runtimes.minValue;
         double prediction = 0.0;
 
-        AbstractVector ufactors = userDenseFeatures.getRowRef(u);
-        AbstractVector ifactors = itemDenseFeatures.getRowRef(i);
+        AbstractVector ufactors = factModel.ufactors.getRowRef(u);
+        AbstractVector ifactors = factModel.ifactors.getRowRef(i);
         if (ufactors == null || ifactors == null) {
             prediction += (maxValue + minValue) / 2;
             LoggerUtil.debug(runningLogger,
                 String.format("null latent factors for (%d,%d)-entry", u, i));
         } else {
-            DenseVector gref_ufactor = auxRec.userDenseFeatures.getRowRef(u);
-            DenseVector gref_ifactor = auxRec.itemDenseFeatures.getRowRef(i);
+            DenseVector gref_ufactor = auxRec.ufactors.getRowRef(u);
+            DenseVector gref_ifactor = auxRec.ifactors.getRowRef(i);
 
             double LuLi = ufactors.innerProduct(ifactors);
             double LuGi = ufactors.innerProduct(gref_ifactor);

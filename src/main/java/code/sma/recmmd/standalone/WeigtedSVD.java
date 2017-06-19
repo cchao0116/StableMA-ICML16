@@ -20,12 +20,7 @@ import code.sma.recmmd.stats.StatsOperator;
  * @version $Id: WeigtedRSVD.java, v 0.1 2014-10-19 上午11:20:27 chench Exp $
  */
 public class WeigtedSVD extends MFRecommender {
-    /** SerialVersionNum */
-    private static final long serialVersionUID = 1L;
 
-    /*========================================
-     * Constructors
-     *========================================*/
     public WeigtedSVD(Configures conf, Map<String, Plugin> plugins) {
         super(conf, plugins);
 
@@ -62,8 +57,8 @@ public class WeigtedSVD extends MFRecommender {
         for (int f = 0; f < num_ifactor; f++) {
             int i = e.getIndex_item(f);
 
-            DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
-            DenseVector ref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i);
+            DenseVector ref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u);
+            DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i);
 
             double AuiReal = e.getValue_ifactor(f);
             double AuiEst = ref_ufactor.innerProduct(ref_ifactor);

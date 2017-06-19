@@ -8,6 +8,7 @@ import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
+import code.sma.model.AbstractModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.stats.Accumulator;
 import code.sma.recmmd.stats.StatsOperator;
@@ -22,10 +23,8 @@ import code.sma.recmmd.stats.StatsOperator;
  * @version $Id: StableSVD.java, v 0.1 Dec 22, 2015 11:43:15 AM Exp $
  */
 public class StableMA extends MFRecommender {
-    /** SerialVersionNum */
-    private static final long serialVersionUID = 1L;
     /** the indicator of hard-predictive set, where true means in the set*/
-    private boolean[][]       hps_indicator;
+    private boolean[][] hps_indicator;
 
     /*========================================
      * Constructors
@@ -50,8 +49,8 @@ public class StableMA extends MFRecommender {
 
         int[] num_en = new int[num_hps]; // number of chosen entries in each  hard-predictive subsets
         {
-            MFRecommender auxRec = (MFRecommender) runtimes.plugins.remove("AUXILIARY_RCMMD_MODEL");
-            double bestRMSE = auxRec.runtimes.bestTrainErr();
+            AbstractModel auxRec = (AbstractModel) runtimes.plugins.remove("AUXILIARY_RCMMD_MODEL");
+            double bestRMSE = auxRec.bestTrainErr();
 
             int id_en = 0;
 
@@ -113,8 +112,8 @@ public class StableMA extends MFRecommender {
             for (int f = 0; f < num_ifactor; f++) {
                 int i = e.getIndex_item(f);
 
-                DenseVector ref_ufactor = StatsOperator.getVectorRef(userDenseFeatures, u);
-                DenseVector ref_ifactor = StatsOperator.getVectorRef(itemDenseFeatures, i);
+                DenseVector ref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u);
+                DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i);
 
                 for (int h = 1; h <= num_hps; h++) {
                     acumltor[h] = hps_indicator[h - 1][rid] ? runtimes.acumltors.get(h) : null;

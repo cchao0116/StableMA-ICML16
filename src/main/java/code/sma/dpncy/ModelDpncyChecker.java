@@ -10,7 +10,6 @@ import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.standalone.MFRecommender;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
-import code.sma.util.SerializeUtil;
 
 /**
  * 
@@ -29,25 +28,20 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         auxRcmmdPath = parseModelParameter(lconf, auxRcmmdPath);
         conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", auxRcmmdPath);
 
-        MFRecommender auxRec = null;
+        MFRecommender auxRec = (MFRecommender) RecommenderFactory
+            .instance(lconf.getProperty("ALG_NAME"), lconf);
 
         if (Files.exists((new File(auxRcmmdPath)).toPath())) {
-            auxRec = (MFRecommender) SerializeUtil.readObject(auxRcmmdPath);
-        }
-
-        // failed in reading the object or these object doesn't exist
-        if (auxRec == null) {
+            auxRec.loadModel(auxRcmmdPath);
+        } else {
+            // failed in reading the object or these object doesn't exist
             LoggerUtil.info(normalLogger, "...check...missing: " + auxRcmmdPath);
-
             String rootDir = conf.getProperty("ROOT_DIR");
             String trainFile = rootDir + "trainingset";
             AbstractMatrix train = MatrixIOUtil.loadCSRMatrix(trainFile,
                 conf.getInteger("TRAIN_ROW_NUM_VALUE"), conf.getInteger("TRAIN_VAL_NUM_VALUE"));
-
-            auxRec = (MFRecommender) RecommenderFactory.instance(lconf.getProperty("ALG_NAME"),
-                lconf);
             auxRec.buildModel(train, null);
-            SerializeUtil.writeObject(auxRec, auxRcmmdPath);
+            auxRec.saveModel(auxRcmmdPath);
         }
 
         // debug information

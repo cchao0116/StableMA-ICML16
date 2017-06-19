@@ -11,7 +11,6 @@ import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.standalone.GLOMA;
-import code.sma.recmmd.standalone.MFRecommender;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 /**
@@ -21,7 +20,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
  */
 public class MultTskREC extends EnsembleMFRecommender {
     /** SerialVersionNum */
-    protected static final long     serialVersionUID = 1L;
+    protected static final long serialVersionUID = 1L;
 
     /*
      * ======================================== 
@@ -29,11 +28,9 @@ public class MultTskREC extends EnsembleMFRecommender {
      * ========================================
      */
     /** the arrays containing random seeds */
-    private Queue<Long>             randSeeds;
+    private Queue<Long>         randSeeds;
     /** the sampling rate of randomized submatrix */
-    private double                  samplingRate;
-    /** the instance of the auxiliary model */
-    private transient MFRecommender auxRec;
+    private double              samplingRate;
 
     /*
      * ======================================== Constructors
@@ -44,7 +41,6 @@ public class MultTskREC extends EnsembleMFRecommender {
         runtimes.doubles = new DoubleArrayList(conf.getDoubleArr("BETA"));
 
         samplingRate = conf.getDouble("SAMPLE_RATE_VALUE");
-        this.auxRec = (MFRecommender) plugins.get("AUXILIARY_RCMMD_MODEL");
 
         this.randSeeds = new LinkedList<Long>();
         {
@@ -106,7 +102,7 @@ public class MultTskREC extends EnsembleMFRecommender {
             }
         }
 
-        GLOMA rcmmd = new GLOMA(runtimes.conf, raf, caf, runtimes.plugins, auxRec);
+        GLOMA rcmmd = new GLOMA(runtimes.conf, raf, caf, runtimes.plugins);
         synchronized (MultTskREC.class) {
             rcmmd.runtimes.threadId = runtimes.threadId++;
         }

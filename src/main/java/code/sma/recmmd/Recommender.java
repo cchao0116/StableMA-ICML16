@@ -1,7 +1,5 @@
 package code.sma.recmmd;
 
-import java.io.Serializable;
-
 import code.sma.core.AbstractMatrix;
 import code.sma.util.EvaluationMetrics;
 
@@ -11,11 +9,9 @@ import code.sma.util.EvaluationMetrics;
  * @author Chao Chen
  * @version $Id: Recommender.java, v 0.1 2015-6-8 下午6:59:37 Exp $
  */
-public abstract class Recommender implements Serializable {
-    /** SerialVersionNum */
-    private static final long serialVersionUID = 1L;
+public abstract class Recommender {
     /** Runtime environment*/
-    public RuntimeEnv         runtimes;
+    public RuntimeEnv runtimes;
 
     /*========================================
      * Model Builder
@@ -49,6 +45,20 @@ public abstract class Recommender implements Serializable {
      * @return the predicted rating
      */
     public abstract double predict(int u, int i);
+
+    /**
+     * save model
+     * 
+     * @param fo    the output file
+     */
+    public abstract void saveModel(String fo);
+
+    /**
+     * load model 
+     * 
+     * @param fi    the input file
+     */
+    public abstract void loadModel(String fi);
 
     /** 
      * @see java.lang.Object#toString()

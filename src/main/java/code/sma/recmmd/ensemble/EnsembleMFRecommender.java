@@ -10,6 +10,7 @@ import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.SparseMatrix;
 import code.sma.main.Configures;
+import code.sma.model.AbstractModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
@@ -87,8 +88,8 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
                     int i = e.getIndex_item(f);
 
                     // update global approximation model
-                    if (((MFRecommender) recmmd).userDenseFeatures.getRowRef(u) == null
-                        || ((MFRecommender) recmmd).itemDenseFeatures.getRowRef(i) == null) {
+                    if (((MFRecommender) recmmd).factModel.ufactors.getRowRef(u) == null
+                        || ((MFRecommender) recmmd).factModel.ifactors.getRowRef(i) == null) {
                         continue;
                     }
 
@@ -109,12 +110,13 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
         EvaluationMetrics em = new EvaluationMetrics(this);
 
         RuntimeEnv _runtimes = ((MFRecommender) recmmd).runtimes;
+        AbstractModel _fm = ((MFRecommender) recmmd).factModel;
         LoggerUtil.info(resultLogger,
             String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f", _runtimes.threadId,
                 em.getRMSE(),
                 (_runtimes.itrain.get_num_ufactor() + _runtimes.itrain.get_num_ifactor()
                  - _runtimes.itrain.get_num_global()),
-                _runtimes.itest.get_num_ifactor(), _runtimes.bestTestErr()));
+                _runtimes.itest.get_num_ifactor(), _fm.bestTestErr()));
     }
 
     /** 

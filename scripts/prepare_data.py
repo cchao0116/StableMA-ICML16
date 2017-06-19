@@ -1,9 +1,13 @@
 # import numpy as np
 import re
 import os
+import sys
 import random
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import lil_matrix
+
+NUM_MAX_ROWS = 1000 * 1000
+NUM_MAX_COLUMNS = 1000 * 1000
 
 
 def load_data(FILEIN):
@@ -13,21 +17,26 @@ def load_data(FILEIN):
             minValue,
             maxValue"""
     fi = open(FILEIN, 'r')
-    indx_ufactor = []
-    indx_ifactor = []
-    value_ifactor = []
+    sm = lil_matrix((NUM_MAX_ROWS, NUM_MAX_COLUMNS), dtype=np.float16)
 
+    num_row = 0
+    num_col = 0
+    max_val = np.finfo(np.float16).min
+    min_val = np.finfo(np.float16).max
     for line in fi:
         elems = re.split("\\s+|:+", line)
-        indx_ufactor.append(elems[0].strip())
-        indx_ifactor.append(elems[1].strip())
-        value_ifactor.append(elems[2].strip())
+        u = int(elems[0].strip())
+        i = int(elems[1].strip())
+        v = np.float16(elems[2].strip())
+        sm[u, i] = v
+        num_row = max(num_row, u)
+        num_col = max(num_col, i)
+        max_val = max(max_val, v)
+        min_val = min(min_val, v)
 
-    vs = np.array(value_ifactor, dtype=np.float)
-    rs = np.array(indx_ufactor, dtype=np.int32)
-    cs = np.array(indx_ifactor, dtype=np.int32)
-    sm = csr_matrix((vs, (rs, cs)))
-    return sm, np.amax(rs), np.amax(cs), np.amin(vs), np.amax(vs)
+    num_row += 1
+    num_col += 1
+    return sm, num_row, num_col, max_val, min_val
 
 
 def uniformly_split_data(FILEOUT, sampRato, sm,
@@ -43,9 +52,8 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
     num_row_test = 0
     num_val_test = 0
 
-    shape = sm.shape
-    for r in range(shape[0]):
-        row = sm.getrow(r)
+    for r in range(max_rid):
+        row = sm.getrowview(r)
         if row.getnnz() == 0:
             continue
         if r % 500 == 0:
@@ -95,13 +103,18 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
 
 
 if __name__ == '__main__':
-    FILEIN = 'C:/Dataset/ml-1m/ratings.dat'
+    if len(sys.argv) != 2:
+        print('Please input the path of orignial ML-10M(1M)/Neflix Data')
+        exit(1)
+
+    ROOT_DIR = sys.argv[1]
+    FILEIN = '{0}ratings.dat'.format(ROOT_DIR)
     print('load data: {0}'.format(FILEIN))
-    sm, max_rid, max_cid, minVal, maxVal = load_data(FILEIN)
+    sm, max_row, max_col, minVal, maxVal = load_data(FILEIN)
 
     sampRato = 0.9
-    for num_splits in range(1, 5):
-        FILEOUT = 'C:/Dataset/ml-1m/{0}/'.format(num_splits)
+    for num_splits in range(1, 6):
+        FILEOUT = '{0}{1}/'.format(ROOT_DIR, num_splits)
         print('Split-{0}:{1}'.format(num_splits, FILEOUT))
         uniformly_split_data(FILEOUT, sampRato, sm,
-                             max_rid + 1, max_cid + 1, minVal, maxVal)
+                             max_row, max_col, minVal, maxVal)

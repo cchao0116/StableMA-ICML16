@@ -1,21 +1,23 @@
 package code.sma.recmmd.standalone;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
-import code.sma.core.AbstractVector;
 import code.sma.core.DataElem;
-import code.sma.core.impl.DenseMatrix;
 import code.sma.main.Configures;
+import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
 import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
+import code.sma.util.SerializeUtil;
 
 /**
  * This is an abstract class implementing four matrix-factorization-based methods
@@ -25,19 +27,14 @@ import code.sma.util.LoggerUtil;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public abstract class MFRecommender extends Recommender implements Plugin {
-    /** SerialVersionNum */
-    protected static final long             serialVersionUID = 1L;
-
-    /** User profile in low-rank matrix form. */
-    public DenseMatrix                      userDenseFeatures;
-    /** Item profile in low-rank matrix form. */
-    public DenseMatrix                      itemDenseFeatures;
+public abstract class MFRecommender extends Recommender {
+    /** Factorization model */
+    public FactorModel                      factModel;
 
     /** logger */
-    protected final static transient Logger runningLogger    = Logger
+    protected final static transient Logger runningLogger = Logger
         .getLogger(LoggerDefineConstant.SERVICE_CORE);
-    protected final static transient Logger resultLogger     = Logger
+    protected final static transient Logger resultLogger  = Logger
         .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
     /*========================================
@@ -83,12 +80,13 @@ public abstract class MFRecommender extends Recommender implements Plugin {
         int userCount = runtimes.userCount;
         int itemCount = runtimes.itemCount;
         int featureCount = runtimes.featureCount;
+        double maxValue = runtimes.maxValue;
+        double minValue = runtimes.minValue;
+
+        factModel = new FactorModel(userCount, itemCount, featureCount, (maxValue + minValue) / 2);
 
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
-
-        userDenseFeatures = new DenseMatrix(userCount, featureCount);
-        itemDenseFeatures = new DenseMatrix(itemCount, featureCount);
 
         runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
             : (AbstractIterator) train.iteratorJion(acc_ufi, acc_ifi);
@@ -120,16 +118,17 @@ public abstract class MFRecommender extends Recommender implements Plugin {
     protected void update_runtimes() {
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = Math.sqrt(runtimes.sumErr / runtimes.nnz);
-        runtimes.trainErr.add(runtimes.currErr);
 
         runtimes.round++;
         runtimes.sumErr = 0.0;
+
+        factModel.trainErr.add(runtimes.currErr);
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
             EvaluationMetrics metric = new EvaluationMetrics(this);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, metric.printOneLine()));
-            runtimes.testErr.add(metric.getRMSE());
+            factModel.testErr.add(metric.getRMSE());
         } else {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f", runtimes.round, runtimes.currErr));
@@ -152,24 +151,32 @@ public abstract class MFRecommender extends Recommender implements Plugin {
      */
     @Override
     public double predict(int u, int i) {
-        assert (userDenseFeatures != null
-                && itemDenseFeatures != null) : "Feature matrix cannot be null";
+        assert (factModel.ufactors != null
+                && factModel.ifactors != null) : "Feature matrix cannot be null";
+
+        double prediction = factModel.predict(u, i);
 
         double maxValue = runtimes.maxValue;
         double minValue = runtimes.minValue;
-        double prediction = 0.0;
-
-        AbstractVector ufactors = userDenseFeatures.getRowRef(u);
-        AbstractVector ifactors = itemDenseFeatures.getRowRef(i);
-        if (ufactors == null || ifactors == null) {
-            prediction += (maxValue + minValue) / 2;
-            LoggerUtil.debug(runningLogger,
-                String.format("null latent factors for (%d,%d)-entry", u, i));
-        } else {
-            prediction += ufactors.innerProduct(ifactors);
-        }
-
         return Math.max(minValue, Math.min(prediction, maxValue));
+    }
+
+    /** 
+     * @see code.sma.recmmd.Recommender#saveModel(java.lang.String)
+     */
+    @Override
+    public void saveModel(String fo) {
+        SerializeUtil.writeObject(factModel, fo);
+    }
+
+    /** 
+     * @see code.sma.recmmd.Recommender#loadModel(java.lang.String)
+     */
+    @Override
+    public void loadModel(String fi) {
+        assert Files.exists((new File(fi)).toPath()) : "The path does not exist.";
+
+        factModel = (FactorModel) SerializeUtil.readObject(fi);
     }
 
 }
