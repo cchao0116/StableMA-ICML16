@@ -5,6 +5,7 @@ import java.util.Map;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
+import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.stats.StatsOperator;
 
@@ -40,6 +41,7 @@ public class RegSVD extends MFRecommender {
      */
     @Override
     protected void update_each(DataElem e) {
+        FactorModel factModel = (FactorModel) model;
         double lr = runtimes.learningRate;
         double reg = runtimes.regularizer;
         short num_ifactor = e.getNum_ifacotr();

@@ -9,6 +9,7 @@ import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
+import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.stats.Accumulator;
 import code.sma.recmmd.stats.StatsOperator;
@@ -94,6 +95,7 @@ public class StableMA extends MFRecommender {
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {
+        FactorModel factModel = (FactorModel) model;
         double lr = runtimes.learningRate;
         double reg = runtimes.regularizer;
 

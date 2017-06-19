@@ -8,8 +8,10 @@ import code.sma.core.DataElem;
 import code.sma.core.impl.UJMPDenseMatrix;
 import code.sma.core.impl.UJMPDenseVector;
 import code.sma.main.Configures;
+import code.sma.model.UJMPFactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
+import code.sma.recmmd.RuntimeEnv;
 import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -26,10 +28,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 public class GroupSparsityMF extends MFRecommender {
     /** Number of item clusters*/
     private int                      L;
-    /** User profile in low-rank matrix form. */
-    private UJMPDenseMatrix          userUJMPFeatures;
-    /** Item profile in low-rank matrix form. */
-    private UJMPDenseMatrix          itemUJMPFeatures;
+
     /** The Indicator matrix indexed by user id*/
     private transient IntArrayList[] IijIndxU;
     /** The Indicator matrix indexed by item id*/
@@ -39,7 +38,10 @@ public class GroupSparsityMF extends MFRecommender {
      * Constructors
      *========================================*/
     public GroupSparsityMF(Configures conf, Map<String, Plugin> plugins) {
-        super(conf, plugins);
+        model = new UJMPFactorModel(conf);
+        runtimes = new RuntimeEnv(conf);
+        runtimes.plugins = plugins;
+
         this.L = conf.getInteger("ITEM_CLUSTER_NUM_VALUE");
 
         runtimes.doubles.add(conf.getDouble("ALPA_VALUE"));
@@ -64,21 +66,21 @@ public class GroupSparsityMF extends MFRecommender {
         int featureCount = runtimes.featureCount;
 
         {
+            UJMPFactorModel _m = (UJMPFactorModel) model;
+
             //user features
-            userUJMPFeatures = new UJMPDenseMatrix(userCount, featureCount);
             for (int u = 0; u < userCount; u++) {
                 for (int f = 0; f < featureCount; f++) {
                     double rdm = Math.random() / featureCount;
-                    userUJMPFeatures.setValue(u, f, rdm);
+                    _m.ufactors.setValue(u, f, rdm);
                 }
             }
 
             //item features
-            itemUJMPFeatures = new UJMPDenseMatrix(featureCount, itemCount);
             for (int i = 0; i < itemCount; i++) {
                 for (int f = 0; f < featureCount; f++) {
                     double rdm = Math.random() / featureCount;
-                    itemUJMPFeatures.setValue(f, i, rdm);
+                    _m.ifactors.setValue(f, i, rdm);
                 }
             }
         }
@@ -127,6 +129,7 @@ public class GroupSparsityMF extends MFRecommender {
     }
 
     protected void updateU(AbstractIterator iDataElem) {
+        UJMPFactorModel _m = (UJMPFactorModel) model;
         int userCount = runtimes.userCount;
         int featureCount = runtimes.featureCount;
 
@@ -145,7 +148,7 @@ public class GroupSparsityMF extends MFRecommender {
                 int i = e.getIndex_item(f);
 
                 double Rui = e.getValue_ifactor(f);
-                rightSideMtx.plusInRow(u, itemUJMPFeatures.getCol(i).scale(alpha * Rui));
+                rightSideMtx.plusInRow(u, _m.ifactors.getCol(i).scale(alpha * Rui));
             }
         }
 
@@ -153,19 +156,20 @@ public class GroupSparsityMF extends MFRecommender {
             // left matrix term, which will be inversed
             UJMPDenseMatrix leftSideMtx = UJMPDenseMatrix.makeIdentity(featureCount).scale(lambda);
             for (int ratedItemIndx : IijIndxU[i]) {
-                UJMPDenseVector Vj = itemUJMPFeatures.getCol(ratedItemIndx);
+                UJMPDenseVector Vj = _m.ifactors.getCol(ratedItemIndx);
                 leftSideMtx = leftSideMtx.plus(Vj.outerProduct(Vj).scale(alpha));
             }
 
             // follow Equation (7)
             UJMPDenseVector Ui = leftSideMtx.inverse().times(rightSideMtx.getRow(i));
             for (int fcIndx = 0; fcIndx < featureCount; fcIndx++) {
-                userUJMPFeatures.setValue(i, fcIndx, Ui.getValue(fcIndx));
+                _m.ufactors.setValue(i, fcIndx, Ui.getValue(fcIndx));
             }
         }
     }
 
     protected void updateI(AbstractIterator iDataElem) {
+        UJMPFactorModel _m = (UJMPFactorModel) model;
         int itemCount = runtimes.itemCount;
         int featureCount = runtimes.featureCount;
 
@@ -187,7 +191,7 @@ public class GroupSparsityMF extends MFRecommender {
                 int i = e.getIndex_item(f);
 
                 double Rui = e.getValue_ifactor(f);
-                rightSideMtx.plusInRow(i, userUJMPFeatures.getRow(u).scale(Rui));
+                rightSideMtx.plusInRow(i, _m.ufactors.getRow(u).scale(Rui));
             }
         }
 
@@ -199,7 +203,7 @@ public class GroupSparsityMF extends MFRecommender {
         for (int t = 0; t < featureCount; t++) {
             double[] Dtt = new double[L];
             for (int j = 0; j < itemCount; j++) {
-                Dtt[ia_func[j]] += Math.pow(itemUJMPFeatures.getValue(t, j), 2.0d);
+                Dtt[ia_func[j]] += Math.pow(_m.ifactors.getValue(t, j), 2.0d);
             }
 
             for (int l = 0; l < L; l++) {
@@ -214,14 +218,14 @@ public class GroupSparsityMF extends MFRecommender {
                 .scale(lambda / alpha).plus(Ds[ia_func[j]]);
 
             for (int usrRatedIndx : IijIndxI[j]) {
-                UJMPDenseVector Vj = userUJMPFeatures.getRow(usrRatedIndx);
+                UJMPDenseVector Vj = _m.ufactors.getRow(usrRatedIndx);
                 leftSideMtx = leftSideMtx.plus(Vj.outerProduct(Vj));
             }
 
             // follow Equation (5)
             UJMPDenseVector Vj = leftSideMtx.inverse().times(rightSideMtx.getRow(j));
             for (int fcIndx = 0; fcIndx < featureCount; fcIndx++) {
-                itemUJMPFeatures.setValue(fcIndx, j, Vj.getValue(fcIndx));
+                _m.ifactors.setValue(fcIndx, j, Vj.getValue(fcIndx));
             }
         }
     }
@@ -244,7 +248,7 @@ public class GroupSparsityMF extends MFRecommender {
                 int i = e.getIndex_item(f);
 
                 double Rui = e.getValue_ifactor(f);
-                runtimes.sumErr += lossfunc.diff(Rui, predict(u, i));
+                runtimes.sumErr += lossfunc.diff(Rui, model.predict(u, i));
             }
         }
 
@@ -253,25 +257,14 @@ public class GroupSparsityMF extends MFRecommender {
         runtimes.round++;
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
-            EvaluationMetrics metric = new EvaluationMetrics(this);
+            EvaluationMetrics em = new EvaluationMetrics();
+            em.evalRating(model, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
-                runtimes.currErr, metric.printOneLine()));
+                runtimes.currErr, em.printOneLine()));
         } else {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f", runtimes.round, runtimes.currErr));
         }
-    }
-
-    /** 
-     * @see MFRecommender.tongji.ml.matrix.MatrixFactorizationRecommender#predict(int, int)
-     */
-    @Override
-    public double predict(int u, int i) {
-        double maxValue = runtimes.maxValue;
-        double minValue = runtimes.minValue;
-
-        double prediction = userUJMPFeatures.getRow(u).innerProduct(itemUJMPFeatures.getCol(i));
-        return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
     /** 

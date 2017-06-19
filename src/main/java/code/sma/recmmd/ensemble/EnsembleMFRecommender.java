@@ -10,7 +10,8 @@ import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.SparseMatrix;
 import code.sma.main.Configures;
-import code.sma.model.AbstractModel;
+import code.sma.model.FactorModel;
+import code.sma.model.Model;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
@@ -27,7 +28,8 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: EnsembleMFRecommender.java, v 0.1 2016年9月26日 下午4:22:14 Chao.Chen Exp $
  */
-public abstract class EnsembleMFRecommender extends MFRecommender implements TaskMsgDispatcher {
+public abstract class EnsembleMFRecommender extends MFRecommender
+                                            implements TaskMsgDispatcher, Model {
     /** SerialVersionNum */
     protected static final long serialVersionUID = 1L;
     /** cumulative prediction */
@@ -76,6 +78,8 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
      */
     @Override
     public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
+        FactorModel _m = (FactorModel) ((Recommender) recmmd).model;
+
         // update approximated model
         synchronized (REDUCE_MUTEX) {
             AbstractIterator iDataElem = ((MFRecommender) recmmd).runtimes.itest.refresh();
@@ -88,12 +92,11 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
                     int i = e.getIndex_item(f);
 
                     // update global approximation model
-                    if (((MFRecommender) recmmd).factModel.ufactors.getRowRef(u) == null
-                        || ((MFRecommender) recmmd).factModel.ifactors.getRowRef(i) == null) {
+                    if (_m.ufactors.getRowRef(u) == null || _m.ifactors.getRowRef(i) == null) {
                         continue;
                     }
 
-                    double prediction = ((Recommender) recmmd).predict(u, i);
+                    double prediction = _m.predict(u, i);
                     double weight = ensnblWeight(u, i, prediction);
 
                     double newCumPrediction = prediction * weight + cumPrediction.getValue(u, i);
@@ -107,20 +110,20 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
 
         // evaluate approximated model
         // WARNING: this part is not thread safe in order to quick produce the evaluation
-        EvaluationMetrics em = new EvaluationMetrics(this);
+        EvaluationMetrics em = new EvaluationMetrics();
+        em.evalRating(this, runtimes.itest);
 
         RuntimeEnv _runtimes = ((MFRecommender) recmmd).runtimes;
-        AbstractModel _fm = ((MFRecommender) recmmd).factModel;
         LoggerUtil.info(resultLogger,
             String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f", _runtimes.threadId,
                 em.getRMSE(),
                 (_runtimes.itrain.get_num_ufactor() + _runtimes.itrain.get_num_ifactor()
                  - _runtimes.itrain.get_num_global()),
-                _runtimes.itest.get_num_ifactor(), _fm.bestTestErr()));
+                _runtimes.itest.get_num_ifactor(), _m.bestTestErr()));
     }
 
-    /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#predict(int, int)
+    /**
+     * @see code.sma.model.Model#predict(int, int)
      */
     @Override
     public double predict(int u, int i) {
@@ -130,6 +133,15 @@ public abstract class EnsembleMFRecommender extends MFRecommender implements Tas
         double prediction = (cumWeight.getValue(u, i) == 0.0) ? ((maxValue + minValue) / 2)
             : (cumPrediction.getValue(u, i) / cumWeight.getValue(u, i));
         return Math.max(minValue, Math.min(prediction, maxValue));
+    }
+
+    /** 
+     * @see code.sma.model.Model#predict(code.sma.core.DataElem)
+     */
+    @Override
+    public double predict(DataElem e) {
+        throw new RuntimeException(
+            "This method has not been implemented in EnsembleMFRecommender!");
     }
 
     /**

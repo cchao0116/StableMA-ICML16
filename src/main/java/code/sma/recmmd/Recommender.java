@@ -1,7 +1,7 @@
 package code.sma.recmmd;
 
 import code.sma.core.AbstractMatrix;
-import code.sma.util.EvaluationMetrics;
+import code.sma.model.AbstractModel;
 
 /**
  * Abstract Class for Recommender Model
@@ -11,7 +11,9 @@ import code.sma.util.EvaluationMetrics;
  */
 public abstract class Recommender {
     /** Runtime environment*/
-    public RuntimeEnv runtimes;
+    public RuntimeEnv    runtimes;
+    /** Resulting model */
+    public AbstractModel model;
 
     /*========================================
      * Model Builder
@@ -24,27 +26,6 @@ public abstract class Recommender {
      * @param test      test data
      */
     public abstract void buildModel(AbstractMatrix train, AbstractMatrix test);
-
-    /*========================================
-     * Prediction
-     *========================================*/
-    /**
-     * Evaluate the designated algorithm with the given test data.
-     * 
-     * @param testMatrix The rating matrix with test data.
-     * 
-     * @return The result of evaluation, such as MAE, RMSE, and rank-score.
-     */
-    public abstract EvaluationMetrics evaluate(AbstractMatrix testMatrix);
-
-    /**
-     * return the predicted rating
-     * 
-     * @param u the given user index
-     * @param i the given item index
-     * @return the predicted rating
-     */
-    public abstract double predict(int u, int i);
 
     /**
      * save model

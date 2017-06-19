@@ -7,7 +7,8 @@ import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
-import code.sma.recmmd.standalone.MFRecommender;
+import code.sma.recmmd.Recommender;
+import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
 
@@ -28,11 +29,11 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
         auxRcmmdPath = parseModelParameter(lconf, auxRcmmdPath);
         conf.setProperty("AUXILIARY_RCMMD_MODEL_PATH", auxRcmmdPath);
 
-        MFRecommender auxRec = (MFRecommender) RecommenderFactory
+        Recommender recmmd = (Recommender) RecommenderFactory
             .instance(lconf.getProperty("ALG_NAME"), lconf);
 
         if (Files.exists((new File(auxRcmmdPath)).toPath())) {
-            auxRec.loadModel(auxRcmmdPath);
+            recmmd.loadModel(auxRcmmdPath);
         } else {
             // failed in reading the object or these object doesn't exist
             LoggerUtil.info(normalLogger, "...check...missing: " + auxRcmmdPath);
@@ -40,19 +41,21 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
             String trainFile = rootDir + "trainingset";
             AbstractMatrix train = MatrixIOUtil.loadCSRMatrix(trainFile,
                 conf.getInteger("TRAIN_ROW_NUM_VALUE"), conf.getInteger("TRAIN_VAL_NUM_VALUE"));
-            auxRec.buildModel(train, null);
-            auxRec.saveModel(auxRcmmdPath);
+            recmmd.buildModel(train, null);
+            recmmd.saveModel(auxRcmmdPath);
         }
 
         // debug information
         if (normalLogger.isDebugEnabled()) {
             String rootDir = conf.getProperty("ROOT_DIR");
             String testFile = rootDir + "testingset";
-            auxRec.runtimes.itest = (AbstractIterator) MatrixIOUtil.loadCSRMatrix(testFile,
+            AbstractIterator itest = (AbstractIterator) MatrixIOUtil.loadCSRMatrix(testFile,
                 conf.getInteger("TEST_ROW_NUM_VALUE"), conf.getInteger("TEST_VAL_NUM_VALUE"))
                 .iterator();
-            LoggerUtil.debug(normalLogger,
-                String.format("ModelDpncyChecker:%s", auxRec.evaluate(null).printOneLine()));
+
+            EvaluationMetrics m = new EvaluationMetrics();
+            m.evalRating(recmmd.model, itest);
+            LoggerUtil.debug(normalLogger, String.format("ModelDpncyChecker:%s", m.printOneLine()));
         }
 
         if (this.successor != null) {

@@ -28,8 +28,6 @@ import code.sma.util.SerializeUtil;
  * @version 1.1
  */
 public abstract class MFRecommender extends Recommender {
-    /** Factorization model */
-    public FactorModel                      factModel;
 
     /** logger */
     protected final static transient Logger runningLogger = Logger
@@ -40,13 +38,19 @@ public abstract class MFRecommender extends Recommender {
     /*========================================
      * Constructors
      *========================================*/
+    protected MFRecommender() {
+    }
+
     public MFRecommender(Configures conf, Map<String, Plugin> plugins) {
+        model = new FactorModel(conf);
         runtimes = new RuntimeEnv(conf);
         runtimes.plugins = plugins;
     }
 
     public MFRecommender(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
                          Map<String, Plugin> plugins) {
+        model = new FactorModel(conf);
+
         runtimes = new RuntimeEnv(conf);
         runtimes.plugins = plugins;
 
@@ -76,14 +80,6 @@ public abstract class MFRecommender extends Recommender {
 
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
         assert train != null : "Training data cannot be null.";
-
-        int userCount = runtimes.userCount;
-        int itemCount = runtimes.itemCount;
-        int featureCount = runtimes.featureCount;
-        double maxValue = runtimes.maxValue;
-        double minValue = runtimes.minValue;
-
-        factModel = new FactorModel(userCount, itemCount, featureCount, (maxValue + minValue) / 2);
 
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
@@ -118,47 +114,21 @@ public abstract class MFRecommender extends Recommender {
     protected void update_runtimes() {
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = Math.sqrt(runtimes.sumErr / runtimes.nnz);
-
         runtimes.round++;
         runtimes.sumErr = 0.0;
 
-        factModel.trainErr.add(runtimes.currErr);
+        model.trainErr.add(runtimes.currErr);
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
-            EvaluationMetrics metric = new EvaluationMetrics(this);
+            EvaluationMetrics em = new EvaluationMetrics();
+            em.evalRating(model, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
-                runtimes.currErr, metric.printOneLine()));
-            factModel.testErr.add(metric.getRMSE());
+                runtimes.currErr, em.printOneLine()));
+            model.testErr.add(em.getRMSE());
         } else {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f", runtimes.round, runtimes.currErr));
         }
-    }
-
-    /*========================================
-     * Prediction
-     *========================================*/
-    /**
-     * @see code.sma.recmmd.Recommender#evaluate(code.sma.core.impl.Tuples)
-     */
-    @Override
-    public EvaluationMetrics evaluate(AbstractMatrix testMatrix) {
-        return new EvaluationMetrics(this);
-    }
-
-    /**
-     * @see edu.tongji.ml.Recommender#predict(int, int)
-     */
-    @Override
-    public double predict(int u, int i) {
-        assert (factModel.ufactors != null
-                && factModel.ifactors != null) : "Feature matrix cannot be null";
-
-        double prediction = factModel.predict(u, i);
-
-        double maxValue = runtimes.maxValue;
-        double minValue = runtimes.minValue;
-        return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
     /** 
@@ -166,7 +136,7 @@ public abstract class MFRecommender extends Recommender {
      */
     @Override
     public void saveModel(String fo) {
-        SerializeUtil.writeObject(factModel, fo);
+        SerializeUtil.writeObject(model, fo);
     }
 
     /** 
@@ -176,7 +146,7 @@ public abstract class MFRecommender extends Recommender {
     public void loadModel(String fi) {
         assert Files.exists((new File(fi)).toPath()) : "The path does not exist.";
 
-        factModel = (FactorModel) SerializeUtil.readObject(fi);
+        model = (FactorModel) SerializeUtil.readObject(fi);
     }
 
 }

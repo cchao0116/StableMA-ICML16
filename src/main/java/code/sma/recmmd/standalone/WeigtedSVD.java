@@ -6,6 +6,7 @@ import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
+import code.sma.model.FactorModel;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.stats.StatsOperator;
@@ -46,6 +47,7 @@ public class WeigtedSVD extends MFRecommender {
      */
     @Override
     protected void update_each(DataElem e) {
+        FactorModel factModel = (FactorModel) model;
         double learningRate = runtimes.learningRate;
         double regularizer = runtimes.regularizer;
         short num_ifactor = e.getNum_ifacotr();

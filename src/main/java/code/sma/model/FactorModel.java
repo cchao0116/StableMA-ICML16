@@ -3,6 +3,7 @@ package code.sma.model;
 import code.sma.core.AbstractVector;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseMatrix;
+import code.sma.main.Configures;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -17,14 +18,16 @@ public class FactorModel extends AbstractModel {
     public DenseMatrix        ufactors;
     /** Item profile in low-rank matrix form. */
     public DenseMatrix        ifactors;
-    /** the default predicted value */
-    protected double          defaultValue;
 
-    public FactorModel(int num_user, int num_item, int num_feature, double defaultValue) {
-        super();
-        this.ufactors = new DenseMatrix(num_user, num_feature);
-        this.ifactors = new DenseMatrix(num_item, num_feature);
-        this.defaultValue = defaultValue;
+    public FactorModel(Configures conf) {
+        super(conf);
+
+        int userCount = conf.getInteger("USER_COUNT_VALUE");
+        int itemCount = conf.getInteger("ITEM_COUNT_VALUE");
+        int featureCount = conf.getInteger("FEATURE_COUNT_VALUE");
+
+        this.ufactors = new DenseMatrix(userCount, featureCount);
+        this.ifactors = new DenseMatrix(itemCount, featureCount);
     }
 
     /** 
@@ -32,10 +35,11 @@ public class FactorModel extends AbstractModel {
      */
     @Override
     public double predict(int u, int i) {
+        assert (ufactors != null && ifactors != null) : "Feature matrix cannot be null";
         AbstractVector ufs = ufactors.getRowRef(u);
         AbstractVector ifs = ifactors.getRowRef(i);
 
-        if (ufactors == null || ifactors == null) {
+        if (ufs == null || ifs == null) {
             LoggerUtil.debug(runningLogger,
                 String.format("null latent factors for (%d,%d)-entry", u, i));
             return defaultValue;

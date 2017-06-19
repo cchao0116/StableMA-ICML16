@@ -8,8 +8,8 @@ import org.junit.Test;
 import code.sma.core.AbstractMatrix;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
-import code.sma.recmmd.Recommender;
 import code.sma.util.ConfigureUtil;
+import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
@@ -57,10 +57,13 @@ public abstract class AbstractEnsTest {
                 new_conf.getInteger("TEST_ROW_NUM_VALUE"),
                 new_conf.getInteger("TEST_VAL_NUM_VALUE"));
 
-            Recommender recmmd = RecommenderFactory.instance(algName, new_conf);
+            EnsembleMFRecommender recmmd = (EnsembleMFRecommender) RecommenderFactory
+                .instance(algName, new_conf);
             recmmd.buildModel(train, test);
-            LoggerUtil.info(logger,
-                String.format("%s:%s", recmmd, recmmd.evaluate(test).printOneLine()));
+
+            EvaluationMetrics m = new EvaluationMetrics();
+            m.evalRating(recmmd, recmmd.runtimes.itest);
+            LoggerUtil.info(logger, String.format("%s:%s", recmmd, m.printOneLine()));
         }
     }
 }

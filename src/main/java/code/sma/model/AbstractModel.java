@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 import com.google.common.primitives.Doubles;
 
-import code.sma.core.DataElem;
+import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
 import code.sma.util.LoggerDefineConstant;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -16,13 +16,21 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
  * @author Chao.Chen
  * @version $Id: AbstractModel.java, v 0.1 2017年6月19日 下午2:47:37 Chao.Chen Exp $
  */
-public abstract class AbstractModel implements Serializable, Plugin {
+public abstract class AbstractModel implements Serializable, Model, Plugin {
     private static final long serialVersionUID = 1L;
+
+    protected double          maxValue;
+    protected double          minValue;
+    protected double          defaultValue;
 
     public DoubleArrayList    trainErr;
     public DoubleArrayList    testErr;
 
-    public AbstractModel() {
+    protected AbstractModel(Configures conf) {
+        this.maxValue = conf.getFloat("MAX_RATING_VALUE");
+        this.minValue = conf.getFloat("MIN_RATING_VALUE");
+        this.defaultValue = (maxValue + minValue) / 2.0;
+
         this.trainErr = new DoubleArrayList();
         this.testErr = new DoubleArrayList();
     }
@@ -30,23 +38,6 @@ public abstract class AbstractModel implements Serializable, Plugin {
     /** logger */
     protected final static transient Logger runningLogger = Logger
         .getLogger(LoggerDefineConstant.SERVICE_CORE);
-
-    /**
-     * predict the rating/preference for u-th users on i-th item
-     * 
-     * @param u     user index
-     * @param i     item index
-     * @return      the predicted rating
-     */
-    public abstract double predict(int u, int i);
-
-    /**
-     * predict the missing label based on given features
-     * 
-     * @param e     user/item features
-     * @return      the predicted label
-     */
-    public abstract double predict(DataElem e);
 
     public double bestTrainErr() {
         return trainErr.isEmpty() ? -1.0d : Doubles.min(trainErr.toDoubleArray());

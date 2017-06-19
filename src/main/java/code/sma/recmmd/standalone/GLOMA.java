@@ -5,16 +5,17 @@ import java.util.Map;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
-import code.sma.core.AbstractVector;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
+import code.sma.model.CombFactorModel;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.Regularizer;
+import code.sma.recmmd.RuntimeEnv;
 import code.sma.recmmd.stats.Accumulator;
 import code.sma.recmmd.stats.StatsOperator;
 import code.sma.util.EvaluationMetrics;
@@ -30,17 +31,20 @@ import code.sma.util.LoggerUtil;
  */
 public class GLOMA extends MFRecommender {
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[]              lambda;
-    /** Previously-trained model*/
-    private transient FactorModel auxRec;
+    private double[] lambda;
 
     /*========================================
      * Constructors
      *========================================*/
     public GLOMA(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
                  Map<String, Plugin> plugins) {
-        super(conf, acc_ufi, acc_ifi, plugins);
-        this.auxRec = (FactorModel) plugins.get("AUXILIARY_RCMMD_MODEL");
+        runtimes = new RuntimeEnv(conf);
+        runtimes.plugins = plugins;
+
+        runtimes.acc_uf_indicator = acc_ufi;
+        runtimes.acc_if_indicator = acc_ifi;
+
+        model = new CombFactorModel(conf, (FactorModel) plugins.get("AUXILIARY_RCMMD_MODEL"));
 
         runtimes.plugins.put("DISCRETIZER", new NetflixMovieLensDiscretizer(conf));
         lambda = conf.getDoubleArr("LAMBDA");
@@ -56,10 +60,6 @@ public class GLOMA extends MFRecommender {
         int userCount = runtimes.userCount;
         int itemCount = runtimes.itemCount;
         int featureCount = runtimes.featureCount;
-        double maxValue = runtimes.maxValue;
-        double minValue = runtimes.minValue;
-
-        factModel = new FactorModel(userCount, itemCount, featureCount, (maxValue + minValue) / 2);
 
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
@@ -104,6 +104,7 @@ public class GLOMA extends MFRecommender {
     }
 
     protected void collab_update(AbstractIterator iDataElem) {
+        CombFactorModel factModel = (CombFactorModel) model;
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
@@ -131,12 +132,12 @@ public class GLOMA extends MFRecommender {
             int u = e.getIndex_user(0);
 
             DenseVector lref_ufactor = null;
-            DenseVector gref_ufactor = auxRec.ufactors.getRowRef(u);
+            DenseVector gref_ufactor = factModel.g_ufactors.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
 
                 int i = e.getIndex_item(f);
                 DenseVector lref_ifactor = null;
-                DenseVector gref_ifactor = auxRec.ifactors.getRowRef(i);
+                DenseVector gref_ifactor = factModel.g_ifactors.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
 
@@ -204,6 +205,7 @@ public class GLOMA extends MFRecommender {
     }
 
     protected void biased_fit(AbstractIterator iDataElem) {
+        CombFactorModel factModel = (CombFactorModel) model;
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
@@ -265,54 +267,23 @@ public class GLOMA extends MFRecommender {
     protected void update_runtimes() {
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = runtimes.acumltors.get(0).rm();
-        factModel.trainErr.add(runtimes.currErr);
-
         runtimes.round++;
         runtimes.sumErr = 0.0;
 
+        model.trainErr.add(runtimes.currErr);
+
         if (runtimes.showProgress && (runtimes.round % 5 == 0 || runtimes.round >= runtimes.maxIter)
             && runtimes.itest != null) {
-            EvaluationMetrics metric = new EvaluationMetrics(this);
+            EvaluationMetrics em = new EvaluationMetrics();
+            em.evalRating(model, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
-                runtimes.currErr, metric.printOneLine()));
-            factModel.testErr.add(metric.getRMSE());
+                runtimes.currErr, em.printOneLine()));
+            model.testErr.add(em.getRMSE());
         } else {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f,%.6f,%.6f", runtimes.round, runtimes.acumltors.get(0).rm(),
                     runtimes.acumltors.get(1).rm(), runtimes.acumltors.get(2).rm()));
         }
-    }
-
-    /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#predict(int, int)
-     */
-    @Override
-    public double predict(int u, int i) {
-        assert (factModel.ufactors != null
-                && factModel.ifactors != null) : "Feature matrix cannot be null";
-
-        double maxValue = runtimes.maxValue;
-        double minValue = runtimes.minValue;
-        double prediction = 0.0;
-
-        AbstractVector ufactors = factModel.ufactors.getRowRef(u);
-        AbstractVector ifactors = factModel.ifactors.getRowRef(i);
-        if (ufactors == null || ifactors == null) {
-            prediction += (maxValue + minValue) / 2;
-            LoggerUtil.debug(runningLogger,
-                String.format("null latent factors for (%d,%d)-entry", u, i));
-        } else {
-            DenseVector gref_ufactor = auxRec.ufactors.getRowRef(u);
-            DenseVector gref_ifactor = auxRec.ifactors.getRowRef(i);
-
-            double LuLi = ufactors.innerProduct(ifactors);
-            double LuGi = ufactors.innerProduct(gref_ifactor);
-            double GuLi = gref_ufactor.innerProduct(ifactors);
-            double GuGi = gref_ufactor.innerProduct(gref_ifactor);
-            prediction += (LuLi + LuGi + GuLi + GuGi) / 4.0d;
-        }
-
-        return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
     /** 
