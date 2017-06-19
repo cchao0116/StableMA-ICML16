@@ -44,7 +44,8 @@ public class FactorModel extends AbstractModel {
                 String.format("null latent factors for (%d,%d)-entry", u, i));
             return defaultValue;
         } else {
-            return ufs.innerProduct(ifs);
+            double prediction = ufs.innerProduct(ifs);
+            return Math.max(minValue, Math.min(prediction, maxValue));
         }
 
     }
