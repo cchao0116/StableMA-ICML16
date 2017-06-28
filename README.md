@@ -44,10 +44,18 @@ This code implemented:
 <h3>[Running Suggestion]</h3>
 <p>
   <ol type="1">
-  <li>We upload a MovieLens-10M data-set, which can be downloaded from 
-	<a href="https://drive.google.com/open?id=0Bz4myK9f22j4ZVpsY2xMZ0JfM3c">Google</a> or
-	<a href="http://pan.baidu.com/s/1hrITIhm">Baidu</a>.</li>
-  <li>If you put the dataset in the path "D:/", please set the variable "$ROOT_DIR_ARR=D:/" in src/main/resources.</li>
-  <li>Run the main function in the package: code.sma.main.</li>
+  <li>
+        We upload a workable MovieLens-10M and 20M data-set, which can be downloaded from 
+  	<a href="https://drive.google.com/open?id=0Bz4myK9f22j4NUpUMFZQb0pidm8">ML-10M</a> or
+	<a href="https://drive.google.com/open?id=0Bz4myK9f22j4a3Q3cTdwcUUtVEU">ML-20M</a>.
+  </li>
+  <li>
+  	If you upzip one dataset in the path "C:/Dataset/", 
+  	please set the variable "$ROOT_DIR_ARR=C:/Dataset/1/" 
+  	in the config file under folder "src/main/resources/samples".
+  </li>
+  <li>
+  	Run the test cases under folder "src/test/java".
+  </li>
   </ol>
 </p>
