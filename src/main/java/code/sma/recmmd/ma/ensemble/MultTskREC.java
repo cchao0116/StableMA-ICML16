@@ -1,4 +1,4 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.ma.ensemble;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -10,7 +10,7 @@ import code.sma.core.AbstractMatrix;
 import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.standalone.GLOMA;
+import code.sma.recmmd.ma.standalone.GLOMA;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 /**
@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
  * @author Chao.Chen
  * @version $Id: MultTskREC.java, v 0.1 2017年2月28日 下午12:32:54 Chao.Chen Exp $
  */
-public class MultTskREC extends EnsembleMFRecommender {
+public class MultTskREC extends EnsembleFactorRecmmder {
     /** SerialVersionNum */
     protected static final long serialVersionUID = 1L;
 
@@ -53,7 +53,7 @@ public class MultTskREC extends EnsembleMFRecommender {
     }
 
     /**
-     * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     public void buildModel(AbstractMatrix train, AbstractMatrix test) {
@@ -110,7 +110,7 @@ public class MultTskREC extends EnsembleMFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#ensnblWeight(int, int, double)
+     * @see code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder#ensnblWeight(int, int, double)
      */
     @Override
     public double ensnblWeight(int u, int i, double prediction) {

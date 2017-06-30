@@ -13,13 +13,13 @@ public enum Loss {
                   LOSS_HINGE;//  HINGE LOSS
 
     /**
-     * compute the difference between two values
+     * compute the distance between real and predicted values
      * 
      * @param realVal    real value
      * @param predVal    predicted value
-     * @return      the difference
+     * @return           the distance
      */
-    public double diff(double realVal, double predVal) {
+    public double calcLoss(double realVal, double predVal) {
         switch (this) {
             case LOSS_RMSE:
                 return Math.pow(realVal - predVal, 2.0d);
@@ -35,13 +35,13 @@ public enum Loss {
     }
 
     /**
-     * compute the derivative of the difference with respect to the predicted value
+     * compute the gradient w.r.t the prediction
      * 
      * @param realVal    real value
      * @param predVal    predicted value
      * @return
      */
-    public double dervWRTPrdctn(double realVal, double predVal) {
+    public double calcGrad(double realVal, double predVal) {
         switch (this) {
             case LOSS_RMSE:
                 return -realVal + predVal;
@@ -52,6 +52,24 @@ public enum Loss {
                 return -realVal * Math.exp(-1 * realVal * predVal);
             case LOSS_HINGE:
                 return realVal * predVal < 1 ? -realVal : 0.0d;
+            default:
+                return 0.0d;
+        }
+    }
+
+    /**
+     * compute the second order gradient w.r.t the prediction
+     * 
+     * @param realVal    real value
+     * @param predVal    predicted value
+     * @return           the second order gradient
+     */
+    public double calcHession(double realVal, double predVal) {
+        switch (this) {
+            case LOSS_RMSE:
+                return 1.0d;
+            case LOSS_HINGE:
+                return 1.0d;
             default:
                 return 0.0d;
         }

@@ -54,7 +54,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
                 .iterator();
 
             EvaluationMetrics m = new EvaluationMetrics();
-            m.evalRating(recmmd.model, itest);
+            m.evalRating(recmmd.getModel(), itest);
             LoggerUtil.debug(normalLogger, String.format("ModelDpncyChecker:%s", m.printOneLine()));
         }
 

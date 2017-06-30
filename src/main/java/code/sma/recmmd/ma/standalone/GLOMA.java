@@ -1,4 +1,4 @@
-package code.sma.recmmd.standalone;
+package code.sma.recmmd.ma.standalone;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -16,8 +16,8 @@ import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.Regularizer;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.recmmd.stats.Accumulator;
-import code.sma.recmmd.stats.StatsOperator;
+import code.sma.recmmd.ma.stats.Accumulator;
+import code.sma.recmmd.ma.stats.StatsOperator;
 import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
 
@@ -29,9 +29,11 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: GLOMA.java, v 0.1 2017年2月28日 下午1:46:27 Chao.Chen Exp $
  */
-public class GLOMA extends MFRecommender {
+public class GLOMA extends FactorRecmmder {
+    private CombFactorModel fmRef;
+
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
-    private double[] lambda;
+    private double[]        lambda;
 
     /*========================================
      * Constructors
@@ -44,14 +46,12 @@ public class GLOMA extends MFRecommender {
         runtimes.acc_uf_indicator = acc_ufi;
         runtimes.acc_if_indicator = acc_ifi;
 
-        model = new CombFactorModel(conf, (FactorModel) plugins.get("AUXILIARY_RCMMD_MODEL"));
-
         runtimes.plugins.put("DISCRETIZER", new NetflixMovieLensDiscretizer(conf));
         lambda = conf.getDoubleArr("LAMBDA");
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
@@ -80,10 +80,18 @@ public class GLOMA extends MFRecommender {
 
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
         runtimes.tnWs = dctzr.cmpTrainWs(runtimes.itrain);
+
+        if (model == null) {
+            fmRef = new CombFactorModel(runtimes.conf,
+                (FactorModel) runtimes.plugins.get("AUXILIARY_RCMMD_MODEL"));
+            model = fmRef;
+        } else {
+            fmRef = (CombFactorModel) model;
+        }
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#update_inner(code.sma.core.AbstractIterator)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {
@@ -92,19 +100,18 @@ public class GLOMA extends MFRecommender {
         collab_update(iDataElem);
 
         // update runtime environment
-        update_runtimes();
+        finish_round();
 
         // biased fit in final turn
         if (runtimes.round == runtimes.maxIter) {
             biased_fit(iDataElem);
 
             // update runtime environment
-            update_runtimes();
+            finish_round();
         }
     }
 
     protected void collab_update(AbstractIterator iDataElem) {
-        CombFactorModel factModel = (CombFactorModel) model;
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
@@ -132,33 +139,33 @@ public class GLOMA extends MFRecommender {
             int u = e.getIndex_user(0);
 
             DenseVector lref_ufactor = null;
-            DenseVector gref_ufactor = factModel.g_ufactors.getRowRef(u);
+            DenseVector gref_ufactor = fmRef.g_ufactors.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
 
                 int i = e.getIndex_item(f);
                 DenseVector lref_ifactor = null;
-                DenseVector gref_ifactor = factModel.g_ifactors.getRowRef(i);
+                DenseVector gref_ifactor = fmRef.g_ifactors.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
 
                 double LuLi = 0.0d;
                 if (acc_ufi[u] && acc_ifi[i]) {
-                    lref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u, acum_ufactor);
-                    lref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i, acum_ifactor);
+                    lref_ufactor = StatsOperator.getVectorRef(fmRef.ufactors, u, acum_ufactor);
+                    lref_ifactor = StatsOperator.getVectorRef(fmRef.ifactors, i, acum_ifactor);
                     LuLi = StatsOperator.innerProduct(lref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuLi);
                 }
 
                 double LuGi = 0.0d;
                 if (acc_ufi[u]) {
-                    lref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u, acum_ufactor);
+                    lref_ufactor = StatsOperator.getVectorRef(fmRef.ufactors, u, acum_ufactor);
                     LuGi = StatsOperator.innerProduct(lref_ufactor, gref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuGi);
                 }
 
                 double GuLi = 0.0d;
                 if (acc_ifi[i]) {
-                    lref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i, acum_ifactor);
+                    lref_ifactor = StatsOperator.getVectorRef(fmRef.ifactors, i, acum_ifactor);
                     GuLi = StatsOperator.innerProduct(gref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_GuLi);
                 }
@@ -167,9 +174,9 @@ public class GLOMA extends MFRecommender {
                 double RMELuGi = acum_diff_LuGi.rm();
                 double RMEGuli = acum_diff_GuLi.rm();
 
-                double deriWRTpLuLi = lossFunction.dervWRTPrdctn(AuiReal, LuLi) / RMELuLi;
-                double deriWRTpLuGi = lossFunction.dervWRTPrdctn(AuiReal, LuGi) / RMELuGi;
-                double deriWRTpGuLi = lossFunction.dervWRTPrdctn(AuiReal, GuLi) / RMEGuli;
+                double deriWRTpLuLi = lossFunction.calcGrad(AuiReal, LuLi) / RMELuLi;
+                double deriWRTpLuGi = lossFunction.calcGrad(AuiReal, LuGi) / RMELuGi;
+                double deriWRTpGuLi = lossFunction.calcGrad(AuiReal, GuLi) / RMEGuli;
 
                 double tnW = 1 + 0.4 * runtimes.tnWs[dctzr.convert(AuiReal)];
                 for (int s = 0; s < featureCount; s++) {
@@ -205,7 +212,6 @@ public class GLOMA extends MFRecommender {
     }
 
     protected void biased_fit(AbstractIterator iDataElem) {
-        CombFactorModel factModel = (CombFactorModel) model;
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
@@ -225,7 +231,7 @@ public class GLOMA extends MFRecommender {
             short num_ifactor = e.getNum_ifacotr();
             int u = e.getIndex_user(0);
 
-            DenseVector lref_ufactor = factModel.ufactors.getRowRef(u);
+            DenseVector lref_ufactor = fmRef.ufactors.getRowRef(u);
             for (int f = 0; f < num_ifactor; f++) {
                 int i = e.getIndex_item(f);
 
@@ -233,14 +239,14 @@ public class GLOMA extends MFRecommender {
                     continue;
                 }
 
-                DenseVector lref_ifactor = factModel.ifactors.getRowRef(i);
+                DenseVector lref_ifactor = fmRef.ifactors.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
                 double LuLi = (acc_ufi[u] && acc_ifi[i]) ? StatsOperator.innerProduct(lref_ufactor,
                     lref_ifactor, lossFunction, AuiReal, acum_diff) : 0.0d;
 
                 double RMELuLi = acum_diff.rm(0);
-                double deriWRTpLuLi = lossFunction.dervWRTPrdctn(AuiReal, LuLi) / RMELuLi;
+                double deriWRTpLuLi = lossFunction.calcGrad(AuiReal, LuLi) / RMELuLi;
                 double tnW = 1 + 0.4 * runtimes.tnWs[dctzr.convert(AuiReal)];
                 for (int s = 0; s < featureCount; s++) {
                     double Fus = lref_ufactor.floatValue(s);
@@ -261,10 +267,10 @@ public class GLOMA extends MFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#update_runtimes()
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#finish_round()
      */
     @Override
-    protected void update_runtimes() {
+    protected void finish_round() {
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = runtimes.acumltors.get(0).rm();
         runtimes.round++;
@@ -294,4 +300,5 @@ public class GLOMA extends MFRecommender {
         return String.format("GLOMA%s_[%d_%d_%d]", runtimes.briefDesc(),
             Math.round(lambda[0] * 100), Math.round(lambda[1] * 100), Math.round(lambda[2] * 100));
     }
+
 }

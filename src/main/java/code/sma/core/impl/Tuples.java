@@ -55,6 +55,34 @@ public class Tuples extends AbstractMatrix {
     }
 
     /** 
+     * @see code.sma.core.AbstractMatrix#rowRef(int)
+     */
+    @Override
+    public DataElem rowRef(int i) {
+        int cursor = i;
+        assert row_ptr[cursor
+                       + 1] > row_ptr[cursor] : "The number of item features in each row should be more than one";
+
+        int num_factor = row_ptr[cursor + 1] - row_ptr[cursor];
+        DataElem e = new DataElem();
+        e.getIndex_user().setIntPtr(rowIndx);
+        e.getIndex_user().setPtr_offset(row_ptr[cursor]);
+        e.getIndex_user().setNum_factors(num_factor);
+
+        e.getIndex_item().setIntPtr(colIndx);
+        e.getIndex_item().setPtr_offset(row_ptr[cursor]);
+        e.getIndex_item().setNum_factors(num_factor);
+
+        e.getValue_ifactor().setFloatPtr(vals);
+        e.getValue_ifactor().setPtr_offset(row_ptr[cursor]);
+        e.getValue_ifactor().setNum_factors(num_factor);
+        e.setNum_ifacotr((short) num_factor);
+
+        cursor++;
+        return e;
+    }
+
+    /** 
      * @see code.sma.core.AbstractMatrix#loadNext(java.lang.String)
      */
     @Override
@@ -166,6 +194,13 @@ public class Tuples extends AbstractMatrix {
             return new Iter();
         }
 
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_row()
+         */
+        @Override
+        public int get_num_row() {
+            return num_row;
+        }
     }
 
     /**

@@ -21,14 +21,6 @@ public abstract class AbstractVector implements Serializable {
     public abstract void setValue(int i, double value);
 
     /**
-     * Set a new value at the given index.
-     * 
-     * @param i The index to store new value.
-     * @param value The value to store.
-     */
-    public abstract void setValue(int i, float value);
-
-    /**
      * Retrieve a stored value from the given index.
      * 
      * @param i The index to retrieve.

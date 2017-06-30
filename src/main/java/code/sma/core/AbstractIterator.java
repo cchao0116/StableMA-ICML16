@@ -67,4 +67,10 @@ public abstract class AbstractIterator implements Iterator<DataElem> {
      * @return  number of nonzero item feature
      */
     public abstract int get_num_ifactor();
+
+    /**
+     * Get the number of data rows
+     * @return  the number of data rows
+     */
+    public abstract int get_num_row();
 }

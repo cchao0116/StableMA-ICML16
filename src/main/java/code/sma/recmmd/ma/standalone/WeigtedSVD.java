@@ -1,4 +1,4 @@
-package code.sma.recmmd.standalone;
+package code.sma.recmmd.ma.standalone;
 
 import java.util.Map;
 
@@ -9,7 +9,7 @@ import code.sma.main.Configures;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.stats.StatsOperator;
+import code.sma.recmmd.ma.stats.StatsOperator;
 
 /**
  * This is a class implementing WSVD (Weighted Matrix Approximation).
@@ -20,7 +20,7 @@ import code.sma.recmmd.stats.StatsOperator;
  * @author Chao Chen
  * @version $Id: WeigtedRSVD.java, v 0.1 2014-10-19 上午11:20:27 chench Exp $
  */
-public class WeigtedSVD extends MFRecommender {
+public class WeigtedSVD extends FactorRecmmder {
 
     public WeigtedSVD(Configures conf, Map<String, Plugin> plugins) {
         super(conf, plugins);
@@ -32,7 +32,7 @@ public class WeigtedSVD extends MFRecommender {
      * Model Builder
      *========================================*/
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
@@ -43,7 +43,7 @@ public class WeigtedSVD extends MFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#update_each(code.sma.core.DataElem)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_each(code.sma.core.DataElem)
      */
     @Override
     protected void update_each(DataElem e) {
@@ -64,9 +64,9 @@ public class WeigtedSVD extends MFRecommender {
 
             double AuiReal = e.getValue_ifactor(f);
             double AuiEst = ref_ufactor.innerProduct(ref_ifactor);
-            runtimes.sumErr += runtimes.lossFunction.diff(AuiReal, AuiEst);
+            runtimes.sumErr += runtimes.lossFunction.calcLoss(AuiReal, AuiEst);
 
-            double deriWRTp = runtimes.lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
+            double deriWRTp = runtimes.lossFunction.calcGrad(AuiReal, AuiEst);
             double tnW = 1 + beta0 * runtimes.tnWs[dctzr.convert(AuiReal)];
             for (int s = 0; s < runtimes.featureCount; s++) {
                 double Fus = ref_ufactor.floatValue(s);

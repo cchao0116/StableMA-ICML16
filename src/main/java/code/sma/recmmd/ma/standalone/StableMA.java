@@ -1,4 +1,4 @@
-package code.sma.recmmd.standalone;
+package code.sma.recmmd.ma.standalone;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -11,8 +11,8 @@ import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.stats.Accumulator;
-import code.sma.recmmd.stats.StatsOperator;
+import code.sma.recmmd.ma.stats.Accumulator;
+import code.sma.recmmd.ma.stats.StatsOperator;
 
 /**
  * This is a class implementing SMA (Stable Matrix Approximation).
@@ -23,7 +23,7 @@ import code.sma.recmmd.stats.StatsOperator;
  * @author Chao Chen
  * @version $Id: StableSVD.java, v 0.1 Dec 22, 2015 11:43:15 AM Exp $
  */
-public class StableMA extends MFRecommender {
+public class StableMA extends FactorRecmmder {
     /** the indicator of hard-predictive set, where true means in the set*/
     private boolean[][] hps_indicator;
 
@@ -38,7 +38,7 @@ public class StableMA extends MFRecommender {
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
@@ -88,10 +88,11 @@ public class StableMA extends MFRecommender {
         for (int h = 0; h < num_hps; h++) {
             runtimes.acumltors.add(new Accumulator(1, num_en[h]));
         }
+
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#update_inner(code.sma.core.AbstractIterator)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {
@@ -124,7 +125,7 @@ public class StableMA extends MFRecommender {
                 double AuiReal = e.getValue_ifactor(f);
                 double AuiEst = StatsOperator.innerProduct(ref_ufactor, ref_ifactor,
                     runtimes.lossFunction, AuiReal, acumltor);
-                runtimes.sumErr += runtimes.lossFunction.diff(AuiReal, AuiEst);
+                runtimes.sumErr += runtimes.lossFunction.calcLoss(AuiReal, AuiEst);
 
                 // compute RMSEs
                 double tnW = 1 / acumltor[0].rm();
@@ -135,7 +136,7 @@ public class StableMA extends MFRecommender {
                 }
 
                 // stochastic gradient descend
-                double deriWRTp = runtimes.lossFunction.dervWRTPrdctn(AuiReal, AuiEst);
+                double deriWRTp = runtimes.lossFunction.calcGrad(AuiReal, AuiEst);
                 for (int s = 0; s < runtimes.featureCount; s++) {
                     double Fus = ref_ufactor.floatValue(s);
                     double Gis = ref_ifactor.floatValue(s);
@@ -154,7 +155,7 @@ public class StableMA extends MFRecommender {
         }
 
         // update runtime environment
-        update_runtimes();
+        finish_round();
     }
 
     /** 

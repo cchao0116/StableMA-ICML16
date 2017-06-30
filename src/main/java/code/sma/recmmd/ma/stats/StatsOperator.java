@@ -1,4 +1,4 @@
-package code.sma.recmmd.stats;
+package code.sma.recmmd.ma.stats;
 
 import code.sma.core.AbstractVector;
 import code.sma.core.impl.DenseMatrix;
@@ -70,7 +70,7 @@ public final class StatsOperator {
         double ip = ufactor.innerProduct(ifactor);
 
         if (acumltor != null) {
-            acumltor.update(accId, vId, lossFunction.diff(real, ip));
+            acumltor.update(accId, vId, lossFunction.calcLoss(real, ip));
         }
         return ip;
     }
@@ -92,7 +92,7 @@ public final class StatsOperator {
         if (acumltor != null) {
             for (Accumulator acr : acumltor) {
                 if (acr != null) {
-                    acr.traverse(lossFunction.diff(real, ip));
+                    acr.traverse(lossFunction.calcLoss(real, ip));
                 }
             }
         }

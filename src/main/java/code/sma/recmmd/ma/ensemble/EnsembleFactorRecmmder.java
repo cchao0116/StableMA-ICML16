@@ -1,4 +1,4 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.ma.ensemble;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -15,7 +15,7 @@ import code.sma.model.Model;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.recmmd.standalone.MFRecommender;
+import code.sma.recmmd.ma.standalone.FactorRecmmder;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
 import code.sma.util.EvaluationMetrics;
@@ -28,7 +28,7 @@ import code.sma.util.LoggerUtil;
  * @author Chao.Chen
  * @version $Id: EnsembleMFRecommender.java, v 0.1 2016年9月26日 下午4:22:14 Chao.Chen Exp $
  */
-public abstract class EnsembleMFRecommender extends MFRecommender
+public abstract class EnsembleFactorRecmmder extends FactorRecmmder
                                             implements TaskMsgDispatcher, Model {
     /** SerialVersionNum */
     protected static final long serialVersionUID = 1L;
@@ -45,14 +45,14 @@ public abstract class EnsembleMFRecommender extends MFRecommender
     /*========================================
      * Constructors
      *========================================*/
-    public EnsembleMFRecommender(Configures conf, Map<String, Plugin> plugins) {
+    public EnsembleFactorRecmmder(Configures conf, Map<String, Plugin> plugins) {
         super(conf, plugins);
         cumPrediction = new SparseMatrix(runtimes.userCount, runtimes.itemCount);
         cumWeight = new SparseMatrix(runtimes.userCount, runtimes.itemCount);
     }
 
     /** 
-     * @see code.sma.recmmd.standalone.MFRecommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     public void buildModel(AbstractMatrix train, AbstractMatrix test) {
@@ -78,11 +78,11 @@ public abstract class EnsembleMFRecommender extends MFRecommender
      */
     @Override
     public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
-        FactorModel _m = (FactorModel) ((Recommender) recmmd).model;
+        FactorModel _m = (FactorModel) ((Recommender) recmmd).getModel();
 
         // update approximated model
         synchronized (REDUCE_MUTEX) {
-            AbstractIterator iDataElem = ((MFRecommender) recmmd).runtimes.itest.refresh();
+            AbstractIterator iDataElem = ((FactorRecmmder) recmmd).runtimes.itest.refresh();
             while (iDataElem.hasNext()) {
                 DataElem e = iDataElem.next();
                 short num_ifactor = e.getNum_ifacotr();
@@ -113,7 +113,7 @@ public abstract class EnsembleMFRecommender extends MFRecommender
         EvaluationMetrics em = new EvaluationMetrics();
         em.evalRating(this, runtimes.itest);
 
-        RuntimeEnv _runtimes = ((MFRecommender) recmmd).runtimes;
+        RuntimeEnv _runtimes = ((FactorRecmmder) recmmd).runtimes;
         LoggerUtil.info(resultLogger,
             String.format("ThreadId: %d\tRMSE: %.6f N[%d][%d]-%.6f", _runtimes.threadId,
                 em.getRMSE(),

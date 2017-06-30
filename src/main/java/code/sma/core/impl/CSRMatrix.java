@@ -89,6 +89,58 @@ public class CSRMatrix extends AbstractMatrix {
     }
 
     /** 
+     * @see code.sma.core.AbstractMatrix#rowRef(int)
+     */
+    @Override
+    public DataElem rowRef(int i) {
+        assert i >= 0 && i <= num_row : String.format("Parameter i=%d should be in [0, %d)", i,
+            num_row);
+
+        int cursor = i;
+
+        DataElem e = new DataElem();
+        e.setLabel(row_label[cursor]);
+
+        short num_global = (short) (row_ptr[3 * cursor + 1] - row_ptr[3 * cursor]);
+        short num_ufactor = (short) (row_ptr[3 * cursor + 2] - row_ptr[3 * cursor + 1]);
+        short num_ifactor = (short) (row_ptr[3 * cursor + 3] - row_ptr[3 * cursor + 2]);
+        e.setNum_global(num_global);
+        e.setNum_ufactor(num_ufactor);
+        e.setNum_ifacotr(num_ifactor);
+
+        CRefVector index_global = e.getIndex_global();
+        index_global.setIntPtr(feat_index);
+        index_global.setPtr_offset(row_ptr[3 * cursor + 0]);
+        index_global.setNum_factors(num_global);
+
+        CRefVector value_global = e.getValue_global();
+        value_global.setFloatPtr(feat_value);
+        value_global.setPtr_offset(row_ptr[3 * cursor + 0]);
+        value_global.setNum_factors(num_global);
+
+        CRefVector index_user = e.getIndex_user();
+        index_user.setIntPtr(feat_index);
+        index_user.setPtr_offset(row_ptr[3 * cursor + 1]);
+        index_user.setNum_factors(num_ufactor);
+
+        CRefVector value_ufactor = e.getValue_ufactor();
+        value_ufactor.setFloatPtr(feat_value);
+        value_ufactor.setPtr_offset(row_ptr[3 * cursor + 1]);
+        value_ufactor.setNum_factors(num_ufactor);
+
+        CRefVector index_item = e.getIndex_item();
+        index_item.setIntPtr(feat_index);
+        index_item.setPtr_offset(row_ptr[3 * cursor + 2]);
+        index_item.setNum_factors(num_ifactor);
+
+        CRefVector value_ifactor = e.getValue_ifactor();
+        value_ifactor.setFloatPtr(feat_value);
+        value_ifactor.setPtr_offset(row_ptr[3 * cursor + 2]);
+        value_ifactor.setNum_factors(num_ifactor);
+        return e;
+    }
+
+    /** 
      * @see java.lang.Iterable#iterator()
      */
     @Override
@@ -189,5 +241,14 @@ public class CSRMatrix extends AbstractMatrix {
             return new Iter();
         }
 
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_row()
+         */
+        @Override
+        public int get_num_row() {
+            return num_row;
+        }
+
     }
+
 }

@@ -13,11 +13,11 @@ import code.sma.model.AbstractModel;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
-import code.sma.recmmd.ensemble.MultTskREC;
-import code.sma.recmmd.ensemble.WEMAREC;
-import code.sma.recmmd.standalone.GroupSparsityMF;
-import code.sma.recmmd.standalone.RegSVD;
-import code.sma.recmmd.standalone.StableMA;
+import code.sma.recmmd.ma.ensemble.MultTskREC;
+import code.sma.recmmd.ma.ensemble.WEMAREC;
+import code.sma.recmmd.ma.standalone.GSMF;
+import code.sma.recmmd.ma.standalone.RegSVD;
+import code.sma.recmmd.ma.standalone.StableMA;
 import code.sma.util.SerializeUtil;
 import code.sma.util.StringUtil;
 
@@ -49,7 +49,7 @@ public final class RecommenderFactory {
             return new StableMA(conf, plugins);
         } else if (StringUtil.equalsIgnoreCase(algName, "GSMF")) {
             // Recommendation by Mining Multiple User Behaviors with Group Sparsity
-            return new GroupSparsityMF(conf, null);
+            return new GSMF(conf, null);
         } else if (StringUtil.equalsIgnoreCase(algName, "WEMAREC")) {
             // WEMAREC: Accurate and Scalable Recommendation through Weighted and Ensemble Matrix Approximation
             AbstractDpncyChecker checker = new ClusteringDpncyChecker();

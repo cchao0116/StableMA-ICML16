@@ -1,21 +1,18 @@
-package code.sma.recmmd.standalone;
+package code.sma.recmmd.ma.standalone;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
-import code.sma.core.DataElem;
 import code.sma.main.Configures;
+import code.sma.model.AbstractModel;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
 import code.sma.util.EvaluationMetrics;
-import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.SerializeUtil;
 
@@ -27,30 +24,23 @@ import code.sma.util.SerializeUtil;
  * @since 2012. 4. 20
  * @version 1.1
  */
-public abstract class MFRecommender extends Recommender {
-
-    /** logger */
-    protected final static transient Logger runningLogger = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_CORE);
-    protected final static transient Logger resultLogger  = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
+public abstract class FactorRecmmder extends Recommender {
+    /** Resulting model */
+    protected FactorModel model;
 
     /*========================================
      * Constructors
      *========================================*/
-    protected MFRecommender() {
+    protected FactorRecmmder() {
     }
 
-    public MFRecommender(Configures conf, Map<String, Plugin> plugins) {
-        model = new FactorModel(conf);
+    public FactorRecmmder(Configures conf, Map<String, Plugin> plugins) {
         runtimes = new RuntimeEnv(conf);
         runtimes.plugins = plugins;
     }
 
-    public MFRecommender(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
-                         Map<String, Plugin> plugins) {
-        model = new FactorModel(conf);
-
+    public FactorRecmmder(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
+                          Map<String, Plugin> plugins) {
         runtimes = new RuntimeEnv(conf);
         runtimes.plugins = plugins;
 
@@ -62,22 +52,9 @@ public abstract class MFRecommender extends Recommender {
      * Model Builder
      *========================================*/
     /**
-     * @see code.sma.recmmd.Recommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.Recommender#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
-    public void buildModel(AbstractMatrix train, AbstractMatrix test) {
-        LoggerUtil.info(runningLogger, this);
-
-        // prepare runtime environment
-        prepare_runtimes(train, test);
-
-        // update model
-        AbstractIterator iDataElem = runtimes.itrain;
-        while (runtimes.prevErr - runtimes.currErr > 0.0001 && runtimes.round < runtimes.maxIter) {
-            update_inner(iDataElem);
-        }
-    }
-
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
         assert train != null : "Training data cannot be null.";
 
@@ -90,28 +67,17 @@ public abstract class MFRecommender extends Recommender {
             : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
                 : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
         runtimes.nnz = runtimes.itrain.get_num_ifactor();
-    }
 
-    protected void update_inner(AbstractIterator iDataElem) {
-        iDataElem.refresh();
-        while (iDataElem.hasNext()) {
-            DataElem e = iDataElem.next();
-            update_each(e);
+        if (model == null) {
+            model = new FactorModel(runtimes.conf);
         }
-
-        // update runtime environment
-        update_runtimes();
     }
 
     /**
-     * update based on one-user's 
-     * 
-     * @param e user-grouped data, i.e., one-user's data
+     * @see code.sma.recmmd.Recommender#finish_round()
      */
-    protected void update_each(DataElem e) {
-    }
-
-    protected void update_runtimes() {
+    @Override
+    protected void finish_round() {
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = Math.sqrt(runtimes.sumErr / runtimes.nnz);
         runtimes.round++;
@@ -132,21 +98,20 @@ public abstract class MFRecommender extends Recommender {
     }
 
     /** 
-     * @see code.sma.recmmd.Recommender#saveModel(java.lang.String)
-     */
-    @Override
-    public void saveModel(String fo) {
-        SerializeUtil.writeObject(model, fo);
-    }
-
-    /** 
      * @see code.sma.recmmd.Recommender#loadModel(java.lang.String)
      */
     @Override
     public void loadModel(String fi) {
         assert Files.exists((new File(fi)).toPath()) : "The path does not exist.";
-
         model = (FactorModel) SerializeUtil.readObject(fi);
+    }
+
+    /** 
+     * @see code.sma.recmmd.Recommender#getModel()
+     */
+    @Override
+    public AbstractModel getModel() {
+        return model;
     }
 
 }

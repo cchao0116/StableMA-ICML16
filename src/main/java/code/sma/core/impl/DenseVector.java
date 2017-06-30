@@ -61,16 +61,6 @@ public class DenseVector extends AbstractVector {
         }
     }
 
-    /**
-     * @see code.sma.core.AbstractVector#setValue(int, double)
-     */
-    @Override
-    public void setValue(int i, float value) {
-        if (i < N) {
-            vals[i] = value;
-        }
-    }
-
     /** 
      * @see code.sma.core.AbstractVector#length()
      */

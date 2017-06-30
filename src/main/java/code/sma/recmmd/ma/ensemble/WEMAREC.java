@@ -1,4 +1,4 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.ma.ensemble;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -11,8 +11,8 @@ import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
-import code.sma.recmmd.standalone.MFRecommender;
-import code.sma.recmmd.standalone.WeigtedSVD;
+import code.sma.recmmd.ma.standalone.FactorRecmmder;
+import code.sma.recmmd.ma.standalone.WeigtedSVD;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ClusterInfoUtil;
 import code.sma.util.ExceptionUtil;
@@ -26,7 +26,7 @@ import code.sma.util.ExceptionUtil;
  * @author Chao.Chen
  * @version $Id: WEMARECDispatcherImpl.java, v 0.1 2016年9月26日 下午4:32:41 Chao.Chen Exp $
  */
-public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher {
+public class WEMAREC extends EnsembleFactorRecmmder implements TaskMsgDispatcher {
     /** SerialVersionNum */
     protected static final long            serialVersionUID = 1L;
 
@@ -49,7 +49,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     public void buildModel(AbstractMatrix train, AbstractMatrix test) {
@@ -84,7 +84,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
 
                     for (int ufi = 0; ufi < uf_indicator.length; ufi++) {
                         for (int ifi = 0; ifi < if_indicator.length; ifi++) {
-                            MFRecommender wsvd = new WeigtedSVD(runtimes.conf, runtimes.plugins);
+                            FactorRecmmder wsvd = new WeigtedSVD(runtimes.conf, runtimes.plugins);
                             wsvd.runtimes.acc_uf_indicator = uf_indicator[ufi];
                             wsvd.runtimes.acc_if_indicator = if_indicator[ifi];
                             wsvd.runtimes.threadId = runtimes.threadId++;
@@ -103,7 +103,7 @@ public class WEMAREC extends EnsembleMFRecommender implements TaskMsgDispatcher 
     }
 
     /** 
-     * @see code.sma.recmmd.ensemble.EnsembleMFRecommender#ensnblWeight(int, int, double)
+     * @see code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder#ensnblWeight(int, int, double)
      */
     @Override
     public double ensnblWeight(int u, int i, double prediction) {

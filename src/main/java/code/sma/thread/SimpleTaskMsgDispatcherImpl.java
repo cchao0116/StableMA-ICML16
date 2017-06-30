@@ -124,7 +124,7 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
     public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
         Recommender m = ((Recommender) recmmd);
         EvaluationMetrics em = new EvaluationMetrics();
-        em.evalRating(m.model, m.runtimes.itest);
+        em.evalRating(m.getModel(), m.runtimes.itest);
 
         LoggerUtil.info(normalLogger, String.format("%s:%s", m.toString(), em.printOneLine()));
     }

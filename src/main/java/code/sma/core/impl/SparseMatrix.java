@@ -77,7 +77,7 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
      */
     @Override
     public Iterator<DataElem> iterator() {
-        return null;
+        throw new RuntimeException("This method has not been implemented in SparseMatrix!");
     }
 
     /** 
@@ -135,6 +135,14 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
             rows[i].setValue(j, value);
             cols[j].setValue(i, value);
         }
+    }
+
+    /** 
+     * @see code.sma.core.AbstractMatrix#rowRef(int)
+     */
+    @Override
+    public DataElem rowRef(int i) {
+        throw new RuntimeException("This method has not been implemented in SparseMatrix!");
     }
 
     /**
@@ -825,4 +833,5 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
 
         return s;
     }
+
 }

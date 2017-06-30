@@ -7,8 +7,9 @@ import java.util.Map;
 import code.sma.core.AbstractIterator;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.stats.Accumulator;
+import code.sma.recmmd.ma.stats.Accumulator;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
@@ -39,6 +40,10 @@ public final class RuntimeEnv implements Serializable {
     public Loss                          lossFunction;
     public Regularizer                   regType;
 
+    // TREE
+    public int                           maxDepth;
+    public int                           minChildNum;
+
     // THREAD
     public int                           threadNum;
     public int                           threadId         = 0;
@@ -66,6 +71,7 @@ public final class RuntimeEnv implements Serializable {
     public double[][]                    ensmblIWs;
 
     // Extension
+    public FloatArrayList                floats;
     public DoubleArrayList               doubles;
     public IntArrayList                  ints;
 
@@ -82,6 +88,7 @@ public final class RuntimeEnv implements Serializable {
         this.conf = conf;
 
         // initiate containers
+        this.floats = new FloatArrayList();
         this.doubles = new DoubleArrayList();
         this.ints = new IntArrayList();
 
@@ -95,18 +102,33 @@ public final class RuntimeEnv implements Serializable {
         if (conf.containsKey("MAX_ITERATION_VALUE"))
             this.maxIter = conf.getInteger("MAX_ITERATION_VALUE");
 
-        this.userCount = conf.getInteger("USER_COUNT_VALUE");
-        this.itemCount = conf.getInteger("ITEM_COUNT_VALUE");
+        if (conf.containsKey("USER_COUNT_VALUE"))
+            this.userCount = conf.getInteger("USER_COUNT_VALUE");
+        if (conf.containsKey("ITEM_COUNT_VALUE"))
+            this.itemCount = conf.getInteger("ITEM_COUNT_VALUE");
         this.maxValue = conf.getFloat("MAX_RATING_VALUE");
         this.minValue = conf.getFloat("MIN_RATING_VALUE");
-        this.showProgress = conf.getBoolean("VERBOSE_BOOLEAN");
 
+        if (conf.containsKey("MAX_ITERATION_VALUE"))
+            this.showProgress = conf.getBoolean("MAX_ITERATION_VALUE");
+
+        // tree
+        if (conf.containsKey("MAX_DEPTH_VALUE"))
+            this.maxDepth = conf.getInteger("MAX_DEPTH_VALUE");
+        if (conf.containsKey("MIN_CHILDREN_NUM_VALUE"))
+            this.minChildNum = conf.getInteger("MIN_CHILDREN_NUM_VALUE");
+        else
+            this.minChildNum = 2;
+
+        // thread
         this.threadNum = conf.getInteger("THREAD_NUMBER_VALUE");
 
+        // loss and regularizer
         this.lossFunction = conf.contains("LOSS_FUNCTION")
             ? Loss.valueOf(conf.getProperty("LOSS_FUNCTION")) : Loss.LOSS_RMSE;
-        this.regType = conf.contains("REG_TYPE") ? Regularizer.valueOf(conf.getProperty("REG_TYPE"))
-            : Regularizer.L2;
+        this.regType = conf.contains("REG_TYPE")
+            ? Regularizer.valueOf(conf.getProperty("REG_TYPE")).lambda(regularizer)
+            : Regularizer.L2.lambda(regularizer);
     }
 
     public String briefDesc() {

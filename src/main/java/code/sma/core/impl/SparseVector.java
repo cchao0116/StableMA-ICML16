@@ -45,17 +45,6 @@ public class SparseVector extends AbstractVector {
      * Getter/Setter
      *========================================*/
     /**
-     * @see code.sma.core.AbstractVector#setValue(int, float)
-     */
-    @Override
-    public void setValue(int i, float value) {
-        if (value == 0.0)
-            map.remove(i);
-        else
-            map.put(i, value);
-    }
-
-    /**
      * @see code.sma.core.AbstractVector#setValue(int, double)
      */
     @Override

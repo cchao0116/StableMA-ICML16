@@ -42,15 +42,35 @@ public class CRefVector extends AbstractVector {
      */
     @Override
     public void setValue(int i, double value) {
-        throw new RuntimeException("This method has not been implemented in CRefVector!");
+        assert i >= 0 && i < num_factors : String.format("index should be in [%d, %d)", ptr_offset,
+            ptr_offset + num_factors);
+
+        switch (refType) {
+            case Ints:
+                intPtr[ptr_offset + i] = (int) value;
+            case Floats:
+                floatPtr[ptr_offset + i] = (float) value;
+            default:
+                throw new RuntimeException("CRefArray only support Ints, Floats.");
+        }
     }
 
     /** 
      * @see code.sma.core.AbstractVector#setValue(int, float)
      */
-    @Override
+//    @Override
     public void setValue(int i, float value) {
-        throw new RuntimeException("This method has not been implemented in CRefVector!");
+        assert i >= 0 && i < num_factors : String.format("index should be in [%d, %d)", ptr_offset,
+            ptr_offset + num_factors);
+
+        switch (refType) {
+            case Ints:
+                intPtr[ptr_offset + i] = (int) value;
+            case Floats:
+                floatPtr[ptr_offset + i] = (float) value;
+            default:
+                throw new RuntimeException("CRefArray only support Ints, Floats.");
+        }
     }
 
     /** 

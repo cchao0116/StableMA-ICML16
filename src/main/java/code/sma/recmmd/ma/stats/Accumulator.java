@@ -1,4 +1,4 @@
-package code.sma.recmmd.stats;
+package code.sma.recmmd.ma.stats;
 
 import java.util.Arrays;
 

@@ -29,6 +29,35 @@ public class CPrjRefVector extends CRefVector {
     }
 
     /** 
+     * @see code.sma.core.impl.CRefVector#setValue(int, double)
+     */
+    @Override
+    public void setValue(int i, double value) {
+        setValue(i, (float) value);
+    }
+
+    /** 
+     * @see code.sma.core.impl.CRefVector#setValue(int, float)
+     */
+    @Override
+    public void setValue(int i, float value) {
+        assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
+        if (prj_mpg == null) {
+            super.setValue(i, value);
+            return;
+        }
+
+        switch (refType) {
+            case Ints:
+                intPtr[ptr_offset + prj_mpg[i]] = (int) value;
+            case Floats:
+                floatPtr[ptr_offset + prj_mpg[i]] = (float) value;
+            default:
+                throw new RuntimeException("CRefArray only support Ints, Floats.");
+        }
+    }
+
+    /** 
      * @see code.sma.core.impl.CRefVector#floatValue(int)
      */
     @Override

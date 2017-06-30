@@ -42,6 +42,15 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
     public abstract void setValue(int i, int j, double value);
 
     /**
+     * Return a reference of a given row.
+     * Make sure to use this method only for read-only purpose.
+     * 
+     * @param index The row index to retrieve.
+     * @return A reference to the designated row.
+     */
+    public abstract DataElem rowRef(int i);
+
+    /**
      * Load one-row data. For example, <br/>
      * [LABEL] #GLOBAL_FEAT #USER_FEAT #ITEM_FEAT {gIndex:gVal} {uIndex:uVal} {iIndex:iVal}
      * @param line One line containing one-row data
@@ -224,6 +233,14 @@ public abstract class AbstractMatrix implements Iterable<DataElem> {
         public AbstractIterator clone() {
             return new Default2DMatrixIter(_num_row, _num_gfactors, _num_ufactors, _num_ifactors,
                 _prj_map, (AbstractIterator) iterator(), indicator_ufeature, needUion);
+        }
+
+        /** 
+         * @see code.sma.core.AbstractIterator#get_num_row()
+         */
+        @Override
+        public int get_num_row() {
+            return _num_row;
         }
 
     }
