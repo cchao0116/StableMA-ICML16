@@ -58,7 +58,7 @@ public class CRefVector extends AbstractVector {
     /** 
      * @see code.sma.core.AbstractVector#setValue(int, float)
      */
-//    @Override
+    //    @Override
     public void setValue(int i, float value) {
         assert i >= 0 && i < num_factors : String.format("index should be in [%d, %d)", ptr_offset,
             ptr_offset + num_factors);

@@ -12,16 +12,16 @@ import it.unimi.dsi.fastutil.shorts.ShortArrayList;
  */
 public abstract class AbstractMatrix implements Iterable<DataElem> {
     /** number of nonzero global feature */
-    public int    num_global;
+    public int num_global;
     /** number of nonzero user feature */
-    public int    num_ufactor;
+    public int num_ufactor;
     /** number of nonzero item feature*/
-    public int    num_ifactor;
+    public int num_ifactor;
 
     /**  number of rows in the sparse matrix */
-    protected int num_row;
+    public int num_row;
     /**  number of nonzero entries in sparse matrix */
-    protected int num_val;
+    public int num_val;
 
     /**
      * Retrieve a stored value from the given index.

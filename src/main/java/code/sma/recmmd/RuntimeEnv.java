@@ -41,8 +41,10 @@ public final class RuntimeEnv implements Serializable {
     public Regularizer                   regType;
 
     // TREE
-    public int                           maxDepth;
-    public int                           minChildNum;
+    public int                           maxDepth         = 6;     //maximum depth of a tree
+    public int                           minChildNum      = 2;     //minimum amount of weight allowed in a child
+    public double                        rt_epsilon       = 1e-5f; //minimum gap between two factor values
+    public double                        minSplitLoss     = 1e-5f; //minimum loss change required for a split
 
     // THREAD
     public int                           threadNum;
@@ -55,10 +57,10 @@ public final class RuntimeEnv implements Serializable {
     public double                        sumErr           = 0.0d;
 
     //CLUSTERING
-    public boolean[]                     acc_uf_indicator;        //user feature accessible indicator
-    public boolean[]                     acc_if_indicator;        //item feature accessible indicator
-    public short[]                       ua_func;                 //user assign function 
-    public short[]                       ia_func;                 //item assign function 
+    public boolean[]                     acc_uf_indicator;         //user feature accessible indicator
+    public boolean[]                     acc_if_indicator;         //item feature accessible indicator
+    public short[]                       ua_func;                  //user assign function 
+    public short[]                       ia_func;                  //item assign function 
 
     // DATA
     public int                           nnz;
@@ -117,8 +119,10 @@ public final class RuntimeEnv implements Serializable {
             this.maxDepth = conf.getInteger("MAX_DEPTH_VALUE");
         if (conf.containsKey("MIN_CHILDREN_NUM_VALUE"))
             this.minChildNum = conf.getInteger("MIN_CHILDREN_NUM_VALUE");
-        else
-            this.minChildNum = 2;
+        if (conf.containsKey("RT_EPSILON"))
+            this.rt_epsilon = conf.getDouble("RT_EPSILON");
+        if (conf.containsKey("MIN_SPLIT_LOSS"))
+            this.minSplitLoss = conf.getDouble("MIN_SPLIT_LOSS");
 
         // thread
         this.threadNum = conf.getInteger("THREAD_NUMBER_VALUE");

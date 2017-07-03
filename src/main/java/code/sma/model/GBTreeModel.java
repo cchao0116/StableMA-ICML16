@@ -70,6 +70,7 @@ public class GBTreeModel extends AbstractModel {
             int splitIndx = n.getSplitIndex();
             float splitCon = n.getSplitCond();
 
+            // left leaf is greater than right leaf
             if (sv_ufeatures.floatValue(splitIndx) > splitCon) {
                 // >= split condition, then choose left child
                 n = nodes.get(n.left);

@@ -34,10 +34,9 @@ public class TreeNode implements Serializable {
         parent = pidx;
     }
 
-    public void setSplit(int splitIndex, float splitCond, float leafVal) {
+    public void setSplit(int splitIndex, float splitCond) {
         this.splitIndex = splitIndex;
         this.splitCond = splitCond;
-        this.leafValue = leafVal;
     }
 
     public void setLeaf(double leafVal) {

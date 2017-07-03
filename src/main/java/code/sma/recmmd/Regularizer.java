@@ -68,6 +68,20 @@ public enum Regularizer {
         }
     }
 
+    public double calcCost(double sum_grad, double sum_hess) {
+        switch (this) {
+            case L1:
+                return Math.pow(threshold_L1(sum_grad, reg_lambda), 2.0d) / sum_hess;
+            case L2:
+                return Math.pow(sum_grad, 2.0f) / (sum_hess + reg_lambda);
+            case ELASTIC_NET: // elastic net
+                return Math.pow(threshold_L1(sum_grad, 0.5 * reg_lambda), 2.0f)
+                       / (sum_hess + 0.5 * reg_lambda);
+            default:
+                return Math.pow(sum_grad, 2.0d) / sum_hess;
+        }
+    }
+
     protected double smoothed_L1(double fValue, double alpha) {
         return 1.0 / (1.0 + Math.exp(-1.0 * alpha * fValue))
                - 1.0 / (1.0 + Math.exp(1.0 * alpha * fValue));

@@ -1,6 +1,8 @@
 package code.sma.recmmd.tree.gbm;
 
-import code.sma.core.impl.CRefVector;
+import java.util.ArrayList;
+import java.util.List;
+
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
@@ -12,14 +14,12 @@ import it.unimi.dsi.fastutil.ints.IntSet;
  */
 public final class CSRMImage {
     // the rowId-factorValue pair
-    /** REF: the row IDs*/
-    private int[]   index_row;
-    /** REF: the feature value in corresponding row*/
-    private float[] value_factor;
+    /** REF: the row IDs  and the feature value in corresponding row*/
+    private List<CSREntry> entries;
     /** the pointer of each feature with length N+1, N is the number of features */
-    private int[]   ptr_feature;
+    private int[]          ptr_feature;
     /** active feature indices*/
-    private IntSet  active_index;
+    private IntSet         active_index;
 
     public CSRMImage(int num_feature) {
         this.ptr_feature = new int[num_feature + 1];
@@ -49,8 +49,7 @@ public final class CSRMImage {
         }
 
         int num_val = start;
-        this.index_row = new int[num_val];
-        this.value_factor = new float[num_val];
+        entries = new ArrayList<CSREntry>(num_val);
     }
 
     /**
@@ -61,8 +60,7 @@ public final class CSRMImage {
      * @param value_factor      the factor value
      */
     public void addElement(int index_row, int index_factor, float value_factor) {
-        this.index_row[ptr_feature[index_factor]] = index_row;
-        this.value_factor[ptr_feature[index_factor]] = value_factor;
+        entries.set(ptr_feature[index_factor], new CSREntry(index_row, value_factor));
         ptr_feature[index_factor]++;
     }
 
@@ -70,12 +68,38 @@ public final class CSRMImage {
         return active_index;
     }
 
-    public CRefVector getRowIndxRef(int index_factor) {
-        return new CRefVector(index_row, ptr_feature[index_factor - 1], ptr_feature[index_factor]);
+    public List<CSREntry> getFeatureRef(int index_factor) {
+        return entries.subList(ptr_feature[index_factor - 1], ptr_feature[index_factor]);
     }
 
-    public CRefVector getFactorValRef(int index_factor) {
-        return new CRefVector(value_factor, ptr_feature[index_factor - 1],
-            ptr_feature[index_factor]);
+    public class CSREntry implements Comparable<CSREntry> {
+        /** row index*/
+        public int   index_row;
+        /** factor value*/
+        public float value_factor;
+
+        public CSREntry(int index_row, float value_factor) {
+            super();
+            this.index_row = index_row;
+            this.value_factor = value_factor;
+        }
+
+        /** 
+         * @see java.lang.Comparable#compareTo(java.lang.Object)
+         */
+        @Override
+        public int compareTo(CSREntry o) {
+            //in ascending order 
+            return Float.compare(this.fValue(), o.fValue());
+        }
+
+        public float fValue() {
+            return value_factor;
+        }
+
+        public int rIndex() {
+            return index_row;
+        }
+
     }
 }
