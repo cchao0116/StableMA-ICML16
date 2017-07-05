@@ -99,6 +99,14 @@ public class CSRMatrix extends AbstractMatrix {
         int cursor = i;
 
         DataElem e = new DataElem();
+        e.setIndex_global(new CRefVector((int[]) null, 0, 0));
+        e.setValue_global(new CRefVector((float[]) null, 0, 0));
+
+        e.setIndex_user(new CRefVector((int[]) null, 0, 0));
+        e.setValue_ufactor(new CRefVector((float[]) null, 0, 0));
+
+        e.setIndex_item(new CRefVector((int[]) null, 0, 0));
+        e.setValue_ifactor(new CRefVector((float[]) null, 0, 0));
         e.setLabel(row_label[cursor]);
 
         short num_global = (short) (row_ptr[3 * cursor + 1] - row_ptr[3 * cursor]);

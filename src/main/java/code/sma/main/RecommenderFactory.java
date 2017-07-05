@@ -13,11 +13,12 @@ import code.sma.model.AbstractModel;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
-import code.sma.recmmd.ma.ensemble.MultTskREC;
-import code.sma.recmmd.ma.ensemble.WEMAREC;
-import code.sma.recmmd.ma.standalone.GSMF;
-import code.sma.recmmd.ma.standalone.RegSVD;
-import code.sma.recmmd.ma.standalone.StableMA;
+import code.sma.recmmd.cf.ma.ensemble.MultTskREC;
+import code.sma.recmmd.cf.ma.ensemble.WEMAREC;
+import code.sma.recmmd.cf.ma.standalone.GSMF;
+import code.sma.recmmd.cf.ma.standalone.RegSVD;
+import code.sma.recmmd.cf.ma.standalone.StableMA;
+import code.sma.recmmd.fb.gbm.GBM;
 import code.sma.util.SerializeUtil;
 import code.sma.util.StringUtil;
 
@@ -79,6 +80,8 @@ public final class RecommenderFactory {
                 .readObject(conf.getProperty("AUXILIARY_RCMMD_MODEL_PATH")));
 
             return new MultTskREC(conf, plugins);
+        } else if (StringUtil.equalsIgnoreCase(algName, "GBM")) {
+            return new GBM(conf, null);
         } else {
             return null;
         }

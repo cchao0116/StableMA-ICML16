@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.standalone;
+package code.sma.recmmd.cf.ma.standalone;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -9,13 +9,14 @@ import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.UJMPDenseMatrix;
 import code.sma.core.impl.UJMPDenseVector;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
 import code.sma.model.UJMPFactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
 import code.sma.util.SerializeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -60,7 +61,7 @@ public class GSMF extends FactorRecmmder {
     }
 
     /**
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
@@ -121,7 +122,7 @@ public class GSMF extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {
@@ -236,7 +237,7 @@ public class GSMF extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#finish_round()
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#finish_round()
      */
     @Override
     protected void finish_round() {
@@ -262,7 +263,7 @@ public class GSMF extends FactorRecmmder {
         runtimes.round++;
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
-            EvaluationMetrics em = new EvaluationMetrics();
+            EvaluationMetrics em = new CollaFiltrMetrics();
             em.evalRating(model, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, em.printOneLine()));
@@ -284,7 +285,7 @@ public class GSMF extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#getModel()
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#getModel()
      */
     @Override
     public AbstractModel getModel() {
@@ -292,7 +293,7 @@ public class GSMF extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#loadModel(java.lang.String)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#loadModel(java.lang.String)
      */
     @Override
     public void loadModel(String fi) {

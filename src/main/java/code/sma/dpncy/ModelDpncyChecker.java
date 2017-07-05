@@ -5,10 +5,11 @@ import java.nio.file.Files;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.Recommender;
-import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
 
@@ -53,7 +54,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
                 conf.getInteger("TEST_ROW_NUM_VALUE"), conf.getInteger("TEST_VAL_NUM_VALUE"))
                 .iterator();
 
-            EvaluationMetrics m = new EvaluationMetrics();
+            EvaluationMetrics m = new CollaFiltrMetrics();
             m.evalRating(recmmd.getModel(), itest);
             LoggerUtil.debug(normalLogger, String.format("ModelDpncyChecker:%s", m.printOneLine()));
         }

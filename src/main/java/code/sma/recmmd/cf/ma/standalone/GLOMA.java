@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.standalone;
+package code.sma.recmmd.cf.ma.standalone;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -7,6 +7,8 @@ import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
 import code.sma.model.CombFactorModel;
 import code.sma.model.FactorModel;
@@ -16,9 +18,8 @@ import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
 import code.sma.recmmd.Regularizer;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.recmmd.ma.stats.Accumulator;
-import code.sma.recmmd.ma.stats.StatsOperator;
-import code.sma.util.EvaluationMetrics;
+import code.sma.recmmd.cf.ma.stats.Accumulator;
+import code.sma.recmmd.cf.ma.stats.StatsOperator;
 import code.sma.util.LoggerUtil;
 
 /**
@@ -51,7 +52,7 @@ public class GLOMA extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
@@ -91,7 +92,7 @@ public class GLOMA extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {
@@ -267,7 +268,7 @@ public class GLOMA extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#finish_round()
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#finish_round()
      */
     @Override
     protected void finish_round() {
@@ -280,7 +281,7 @@ public class GLOMA extends FactorRecmmder {
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0 || runtimes.round >= runtimes.maxIter)
             && runtimes.itest != null) {
-            EvaluationMetrics em = new EvaluationMetrics();
+            EvaluationMetrics em = new CollaFiltrMetrics();
             em.evalRating(model, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, em.printOneLine()));

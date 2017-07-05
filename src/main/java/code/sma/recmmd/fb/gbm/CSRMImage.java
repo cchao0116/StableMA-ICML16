@@ -1,4 +1,4 @@
-package code.sma.recmmd.tree.gbm;
+package code.sma.recmmd.fb.gbm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +50,9 @@ public final class CSRMImage {
 
         int num_val = start;
         entries = new ArrayList<CSREntry>(num_val);
+        for (int n = 0; n < num_val; n++) {
+            entries.add(null);
+        }
     }
 
     /**

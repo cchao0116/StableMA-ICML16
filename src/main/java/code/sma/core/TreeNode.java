@@ -23,6 +23,10 @@ public class TreeNode implements Serializable {
     /** statistics of current node*/
     private NodeStat          nodeStat;
 
+    public TreeNode() {
+        nodeStat = new NodeStat();
+    }
+
     public void set_parent(int pidx) {
         parent = pidx | (1 << 31);
     }
@@ -81,7 +85,11 @@ public class TreeNode implements Serializable {
      * @return property value of parent
      */
     public int getParent() {
-        return parent & ((1 << 31) - 1);
+        if (isRoot()) {
+            return -1;
+        } else {
+            return parent & ((1 << 31) - 1);
+        }
     }
 
     /**
@@ -112,4 +120,18 @@ public class TreeNode implements Serializable {
         /** number of child that is leaf node known up to now */
         public int                leaf_child_cnt;
     }
+
+    /** 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        if (isLeaf()) {
+            return String.format("P[%d] LV[%.5f]", getParent(), getLeafValue());
+        } else {
+            return String.format("P[%d] SI[%d] SC[%.5f]", getParent(), getSplitIndex(),
+                getSplitCond());
+        }
+    }
+
 }

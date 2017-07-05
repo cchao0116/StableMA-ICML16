@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.standalone;
+package code.sma.recmmd.cf.ma.standalone;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -6,13 +6,14 @@ import java.util.Map;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerUtil;
 import code.sma.util.SerializeUtil;
 
@@ -86,7 +87,7 @@ public abstract class FactorRecmmder extends Recommender {
         model.trainErr.add(runtimes.currErr);
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
-            EvaluationMetrics em = new EvaluationMetrics();
+            EvaluationMetrics em = new CollaFiltrMetrics();
             em.evalRating(model, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, em.printOneLine()));

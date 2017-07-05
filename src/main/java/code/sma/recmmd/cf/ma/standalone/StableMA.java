@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.standalone;
+package code.sma.recmmd.cf.ma.standalone;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -11,8 +11,8 @@ import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.ma.stats.Accumulator;
-import code.sma.recmmd.ma.stats.StatsOperator;
+import code.sma.recmmd.cf.ma.stats.Accumulator;
+import code.sma.recmmd.cf.ma.stats.StatsOperator;
 
 /**
  * This is a class implementing SMA (Stable Matrix Approximation).
@@ -38,7 +38,7 @@ public class StableMA extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
@@ -92,7 +92,7 @@ public class StableMA extends FactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#update_inner(code.sma.core.AbstractIterator)
      */
     @Override
     protected void update_inner(AbstractIterator iDataElem) {

@@ -1,4 +1,4 @@
-package code.sma.recmmd.tree.gbm;
+package code.sma.recmmd.fb.gbm;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -16,8 +16,8 @@ import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
 import code.sma.model.GBTreeModel;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.RuntimeEnv;
-import code.sma.recmmd.tree.gbm.CSRMImage.CSREntry;
+import code.sma.recmmd.fb.gbm.CSRMImage.CSREntry;
+import code.sma.util.LoggerUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -28,27 +28,19 @@ import it.unimi.dsi.fastutil.ints.IntList;
  * @author Chao.Chen
  * @version $Id: GBMachine.java, v 0.1 Jun 28, 2017 11:56:39 AM$
  */
-public class CARTBooster implements Booster {
-    /** Runtime environment*/
-    public RuntimeEnv      runtimes;
+public class CARTBooster extends Booster {
     /** Task list*/
-    protected Queue<Task>  tasks;
-
+    protected Queue<Task> tasks;
     /** tree model*/
-    private GBTreeModel    tree;
-    /** the gradients of each training data*/
-    private FloatArrayList grad;
-    /** the hessians of each training data*/
-    private FloatArrayList hess;
+    private GBTreeModel   tree;
 
     public CARTBooster(Configures conf, Map<String, Plugin> plugins) {
-        runtimes = new RuntimeEnv(conf);
-        runtimes.plugins = plugins;
+        super(conf, plugins);
         tasks = new LinkedList<Task>();
     }
 
     /** 
-     * @see code.sma.recmmd.tree.gbm.Booster#doBoost(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix, it.unimi.dsi.fastutil.floats.FloatArrayList, it.unimi.dsi.fastutil.floats.FloatArrayList)
+     * @see code.sma.recmmd.fb.gbm.Booster#doBoost(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix, it.unimi.dsi.fastutil.floats.FloatArrayList, it.unimi.dsi.fastutil.floats.FloatArrayList)
      */
     @Override
     public AbstractModel doBoost(AbstractMatrix train, AbstractMatrix test, FloatArrayList grad,
@@ -71,21 +63,24 @@ public class CARTBooster implements Booster {
     protected void initTasks(AbstractMatrix train, AbstractMatrix test) {
         assert train != null : "Training data cannot be null.";
 
+        // initialized model
+        this.tree.initModel();
+
         // prepare run-times
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
-        runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
-            : (AbstractIterator) train.iteratorJion(acc_ufi, acc_ifi);
+        runtimes.itrain = ((acc_ufi == null && acc_ifi == null)
+            ? (AbstractIterator) train.iterator()
+            : (AbstractIterator) train.iteratorJion(acc_ufi, acc_ifi));
         runtimes.itest = (test == null) ? null
             : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
                 : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
         runtimes.nnz = runtimes.itrain.get_num_row();
-
         {
             //maintain a list of row indices, which indicate the members in the group
             int num_row = runtimes.nnz;
-            IntArrayList ids = new IntArrayList(num_row);
+            IntArrayList ids = new IntArrayList(new int[num_row]);
             for (int i = 0; i < num_row; i++) {
                 ids.set(i, i);
             }
@@ -119,7 +114,7 @@ public class CARTBooster implements Booster {
         //In GBM, all features are seen as user-factors, 
         //EXT: the group/leaf information/index is treated as item-factors
         double rsum_grad = 0.0d, rsum_hess = 0.0d; // the statistics of current node
-        CSRMImage image = new CSRMImage(runtimes.conf.getInteger("MAX_NUM_FEATURE"));
+        CSRMImage image = new CSRMImage(runtimes.conf.getInteger("MAX_FEATURE_NUM_VALUE"));
         {
             // 1. compute number of samples belonging to each feature
             int length = tsk.idset.size();
@@ -162,8 +157,9 @@ public class CARTBooster implements Booster {
         for (int fIndx : image.getAcctvInd()) {
             List<CSREntry> fEntries = image.getFeatureRef(fIndx);
 
-            // sort the entries in terms of factor value
+            // sort the entries to ascending list in terms of factor value 
             Collections.sort(fEntries);
+
             enumerate(sGlobal, fIndx, fEntries, rsum_grad, rsum_hess, root_cost);
         }
 
@@ -207,7 +203,7 @@ public class CARTBooster implements Booster {
                 double loss_chg = runtimes.regType.calcCost(csum_grad, csum_hess)
                                   + runtimes.regType.calcCost(rsum_grad - csum_grad, dsum_hess)
                                   - root_cost;
-                sLocal.push(fEntries, loss_chg, fIndx, i,
+                sLocal.push(fEntries, loss_chg, i, fIndx,
                     i == length - 1 ? entry.fValue() + runtimes.rt_epsilon
                         : 0.5 * (fEntries.get(i).fValue() + fEntries.get(i + 1).fValue()));
             }
@@ -233,15 +229,16 @@ public class CARTBooster implements Booster {
         // make child nodes
         tree.addChildren(tsk.nid);
 
+        // assume the list is sorted 
+        IntList idset = tsk.idset;
+
         // row members in the left tree node
-        IntList memb_lnode = new IntArrayList(sGlobal.split_index);
-        for (int i = 0; i < sGlobal.split_index; i++) {
+        IntList memb_lnode = new IntArrayList(sGlobal.num_lnode);
+        for (int i = idset.size() - sGlobal.num_lnode; i < idset.size(); i++) {
             memb_lnode.add(sGlobal.ref_entries.get(i).rIndex());
         }
         Collections.sort(memb_lnode);
 
-        // assume the list is sorted 
-        IntList idset = tsk.idset;
         // move the members of right tree node in left
         // in merge-sort fashion
         for (int i = 0, top = 0; i < idset.size(); i++) {
@@ -258,9 +255,8 @@ public class CARTBooster implements Booster {
         }
 
         TreeNode n = tree.get(tsk.nid);
-        Task left = new Task(n.left,
-            idset.subList(idset.size() - sGlobal.split_index, idset.size()));
-        Task right = new Task(n.right, idset.subList(0, idset.size() - sGlobal.split_index));
+        Task left = new Task(n.left, idset.subList(idset.size() - sGlobal.num_lnode, idset.size()));
+        Task right = new Task(n.right, idset.subList(0, idset.size() - sGlobal.num_lnode));
 
         // re-store left tree members
         for (int i = 0; i < memb_lnode.size(); i++) {
@@ -269,6 +265,9 @@ public class CARTBooster implements Booster {
 
         addTask(left);
         addTask(right);
+
+        LoggerUtil.debug(runningLogger,
+            String.format("MakeSplit: [%d] %s", tsk.nid, tree.get(tsk.nid)));
     }
 
     /**
@@ -293,6 +292,10 @@ public class CARTBooster implements Booster {
         tree.get(tsk.nid)
             .setLeaf(runtimes.learningRate * runtimes.regType.calcWeight(sum_grad, sum_hess));
         tryPruneLeaf(tsk.nid, tree.getDetph(tsk.nid));
+
+        LoggerUtil.debug(runningLogger,
+            String.format("MakeLeaf: [%d] %s", tsk.nid, tree.get(tsk.nid)));
+        ;
     }
 
     /**
@@ -342,8 +345,8 @@ public class CARTBooster implements Booster {
         /**  information gain*/
         private float         loss_chg;
 
-        /** feature index*/
-        public int            index_feature;
+        /** number of members in left node*/
+        public int            num_lnode;
         /** REF: a point to all data of one feature*/
         public List<CSREntry> ref_entries;
 
@@ -351,12 +354,12 @@ public class CARTBooster implements Booster {
         public int            split_index;
         public float          split_cond;
 
-        public void push(List<CSREntry> ref_entries, double loss_chg, int index_feature,
+        public void push(List<CSREntry> ref_entries, double loss_chg, int num_lnode,
                          int split_index, double split_cond) {
             if (loss_chg > this.loss_chg) {
                 this.ref_entries = ref_entries;
                 this.loss_chg = (float) loss_chg;
-                this.index_feature = index_feature;
+                this.num_lnode = num_lnode;
                 this.split_index = split_index;
                 this.split_cond = (float) split_cond;
             }
@@ -366,7 +369,7 @@ public class CARTBooster implements Booster {
             if (s.loss_chg > this.loss_chg) {
                 this.ref_entries = s.ref_entries;
                 this.loss_chg = s.loss_chg;
-                this.index_feature = s.index_feature;
+                this.num_lnode = s.num_lnode;
                 this.split_index = s.split_index;
                 this.split_cond = s.split_cond;
             }

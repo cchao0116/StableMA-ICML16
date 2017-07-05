@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.standalone;
+package code.sma.recmmd.cf.ma.standalone;
 
 import java.util.Map;
 
@@ -7,7 +7,7 @@ import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.ma.stats.StatsOperator;
+import code.sma.recmmd.cf.ma.stats.StatsOperator;
 
 /**
  * This is a class implementing Regularized SVD (Singular Value Decomposition).
@@ -37,7 +37,7 @@ public class RegSVD extends FactorRecmmder {
      * Model Builder
      *========================================*/
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#update_each(code.sma.core.DataElem)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#update_each(code.sma.core.DataElem)
      */
     @Override
     protected void update_each(DataElem e) {

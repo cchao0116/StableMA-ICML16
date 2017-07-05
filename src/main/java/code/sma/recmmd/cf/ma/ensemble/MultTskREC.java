@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.ensemble;
+package code.sma.recmmd.cf.ma.ensemble;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -10,7 +10,7 @@ import code.sma.core.AbstractMatrix;
 import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.ma.standalone.GLOMA;
+import code.sma.recmmd.cf.ma.standalone.GLOMA;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 /**
@@ -53,7 +53,7 @@ public class MultTskREC extends EnsembleFactorRecmmder {
     }
 
     /**
-     * @see code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.cf.ma.ensemble.EnsembleFactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     public void buildModel(AbstractMatrix train, AbstractMatrix test) {
@@ -110,7 +110,7 @@ public class MultTskREC extends EnsembleFactorRecmmder {
     }
 
     /** 
-     * @see code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder#ensnblWeight(int, int, double)
+     * @see code.sma.recmmd.cf.ma.ensemble.EnsembleFactorRecmmder#ensnblWeight(int, int, double)
      */
     @Override
     public double ensnblWeight(int u, int i, double prediction) {

@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.stats;
+package code.sma.recmmd.cf.ma.stats;
 
 import code.sma.core.AbstractVector;
 import code.sma.core.impl.DenseMatrix;

@@ -6,11 +6,12 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import code.sma.core.AbstractMatrix;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
-import code.sma.recmmd.ma.ensemble.EnsembleFactorRecmmder;
+import code.sma.recmmd.cf.ma.ensemble.EnsembleFactorRecmmder;
 import code.sma.util.ConfigureUtil;
-import code.sma.util.EvaluationMetrics;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
@@ -62,7 +63,7 @@ public abstract class AbstractEnsTest {
                 .instance(algName, new_conf);
             recmmd.buildModel(train, test);
 
-            EvaluationMetrics m = new EvaluationMetrics();
+            EvaluationMetrics m = new CollaFiltrMetrics();
             m.evalRating(recmmd, recmmd.runtimes.itest);
             LoggerUtil.info(logger, String.format("%s:%s", recmmd, m.printOneLine()));
         }

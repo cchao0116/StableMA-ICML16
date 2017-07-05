@@ -1,4 +1,4 @@
-package code.sma.recmmd.tree.gbm;
+package code.sma.recmmd.fb.gbm;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -7,13 +7,14 @@ import java.util.Map;
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
+import code.sma.eval.EvaluationMetrics;
+import code.sma.eval.FeatureBasedMetrics;
 import code.sma.main.Configures;
 import code.sma.model.AbstractModel;
 import code.sma.model.BoostedModel;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.util.EvaluationMetrics;
+import code.sma.recmmd.fb.FeatureBasedRecmmder;
 import code.sma.util.LoggerUtil;
 import code.sma.util.SerializeUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -23,7 +24,7 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
  * @author Chao.Chen
  * @version $Id: GBM.java, Jul 3, 2017 4:23:15 PM$
  */
-public class GBM extends Recommender {
+public class GBM extends FeatureBasedRecmmder {
     /** model*/
     protected BoostedModel gbm;
     /** gradients*/
@@ -41,8 +42,22 @@ public class GBM extends Recommender {
      */
     @Override
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
-        grad = new FloatArrayList(train.num_row);
-        hess = new FloatArrayList(train.num_row);
+        assert train != null : "Training data cannot be null.";
+
+        boolean[] acc_ufi = runtimes.acc_uf_indicator;
+        boolean[] acc_ifi = runtimes.acc_if_indicator;
+
+        runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
+            : (AbstractIterator) train.iteratorJion(acc_ufi, acc_ifi);
+        runtimes.itest = (test == null) ? null
+            : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
+                : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
+        grad = new FloatArrayList(new float[train.num_row]);
+        hess = new FloatArrayList(new float[train.num_row]);
+
+        if (gbm == null) {
+            gbm = new BoostedModel(runtimes.conf);
+        }
 
     }
 
@@ -53,14 +68,14 @@ public class GBM extends Recommender {
     protected void finish_round() {
         {
             runtimes.round++;
-            EvaluationMetrics em = new EvaluationMetrics();
+            EvaluationMetrics em = new FeatureBasedMetrics();
             em.evalRating(gbm, runtimes.itrain);
             runtimes.prevErr = runtimes.currErr;
             runtimes.currErr = em.getRMSE();
         }
 
         if (runtimes.showProgress && (runtimes.round % 5 == 0) && runtimes.itest != null) {
-            EvaluationMetrics em = new EvaluationMetrics();
+            EvaluationMetrics em = new FeatureBasedMetrics();
             em.evalRating(gbm, runtimes.itest);
             LoggerUtil.info(runningLogger, String.format("%d\t%.6f [%s]", runtimes.round,
                 runtimes.currErr, em.printOneLine()));
@@ -93,8 +108,8 @@ public class GBM extends Recommender {
                 double label = e.getLabel();
                 double pred = gbm.predict(e);
 
-                double grad = -runtimes.lossFunction.calcGrad(label, pred);
-                double hess = -runtimes.lossFunction.calcHession(label, pred);
+                double grad = runtimes.lossFunction.calcGrad(label, pred);
+                double hess = runtimes.lossFunction.calcHession(label, pred);
 
                 this.grad.set(rowId, (float) grad);
                 this.hess.set(rowId, (float) hess);

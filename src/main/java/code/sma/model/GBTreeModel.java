@@ -44,6 +44,22 @@ public class GBTreeModel extends AbstractModel {
     }
 
     /**
+     * initialized the model
+     * 
+     * @return  the resulting model
+     */
+    public GBTreeModel initModel() {
+        num_nodes = 1;
+
+        TreeNode root = new TreeNode();
+        root.set_parent(-1);
+        root.setLeaf(0.0d);
+        nodes.add(root);
+
+        return this;
+    }
+
+    /**
      * @see code.sma.model.AbstractModel#predict(int, int)
      */
     @Override

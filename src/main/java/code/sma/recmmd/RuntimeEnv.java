@@ -7,7 +7,7 @@ import java.util.Map;
 import code.sma.core.AbstractIterator;
 import code.sma.main.Configures;
 import code.sma.plugin.Plugin;
-import code.sma.recmmd.ma.stats.Accumulator;
+import code.sma.recmmd.cf.ma.stats.Accumulator;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -111,18 +111,18 @@ public final class RuntimeEnv implements Serializable {
         this.maxValue = conf.getFloat("MAX_RATING_VALUE");
         this.minValue = conf.getFloat("MIN_RATING_VALUE");
 
-        if (conf.containsKey("MAX_ITERATION_VALUE"))
-            this.showProgress = conf.getBoolean("MAX_ITERATION_VALUE");
+        if (conf.containsKey("VERBOSE_BOOLEAN"))
+            this.showProgress = conf.getBoolean("VERBOSE_BOOLEAN");
 
         // tree
         if (conf.containsKey("MAX_DEPTH_VALUE"))
             this.maxDepth = conf.getInteger("MAX_DEPTH_VALUE");
         if (conf.containsKey("MIN_CHILDREN_NUM_VALUE"))
             this.minChildNum = conf.getInteger("MIN_CHILDREN_NUM_VALUE");
-        if (conf.containsKey("RT_EPSILON"))
+        if (conf.containsKey("RT_EPSILON_VALUE"))
             this.rt_epsilon = conf.getDouble("RT_EPSILON");
-        if (conf.containsKey("MIN_SPLIT_LOSS"))
-            this.minSplitLoss = conf.getDouble("MIN_SPLIT_LOSS");
+        if (conf.containsKey("MIN_SPLIT_LOSS_VALUE"))
+            this.minSplitLoss = conf.getDouble("MIN_SPLIT_LOSS_VALUE");
 
         // thread
         this.threadNum = conf.getInteger("THREAD_NUMBER_VALUE");

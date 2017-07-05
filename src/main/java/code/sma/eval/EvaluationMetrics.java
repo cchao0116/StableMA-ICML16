@@ -1,7 +1,6 @@
-package code.sma.util;
+package code.sma.eval;
 
 import code.sma.core.AbstractIterator;
-import code.sma.core.DataElem;
 import code.sma.model.Model;
 
 /**
@@ -11,53 +10,27 @@ import code.sma.model.Model;
  * @author Chao.Chen
  * @version $Id: EvaluationMetrics.java, v 0.1 2016年9月29日 下午2:09:04 Chao.Chen Exp $
  */
-public class EvaluationMetrics {
+public abstract class EvaluationMetrics {
     /** Top-N recommendations*/
-    private int    N = -1;
+    protected int    N = -1;
     /** Mean Absoulte Error (MAE) */
-    private double mae;
+    protected double mae;
     /** Mean Squared Error (MSE) */
-    private double mse;
+    protected double mse;
+
     /** Rank-based Normalized Discounted Cumulative Gain (NDCG) */
-    private double ndcg;
-    private double recall;
+    protected double ndcg;
+    protected double recall;
     /** Average Precision */
-    private double avgPrecision;
+    protected double avgPrecision;
 
     /**
-     * compute all the evaluations
+     * evaluate the model in terms of RMSE and MAE
      * 
-     * @param ttMatrix  test data
+     * @param model     model to be evaluated
+     * @param idata     iterator of testing data
      */
-    public void evalRating(Model model, AbstractIterator idata) {
-        // Rating Prediction evaluation
-        mae = 0.0d;
-        mse = 0.0d;
-
-        idata = idata.clone();
-        int nnz = 0;
-        while (idata.hasNext()) {
-
-            DataElem e = idata.next();
-            short num_ifactor = e.getNum_ifacotr();
-
-            int u = e.getIndex_user(0);
-            for (int f = 0; f < num_ifactor; f++) {
-                int i = e.getIndex_item(f);
-
-                double realVal = e.getValue_ifactor(f);
-                double predVal = model.predict(u, i);
-
-                mae += Math.abs(realVal - predVal);
-                mse += Math.pow(realVal - predVal, 2.0d);
-                nnz++;
-            }
-
-        }
-        mae /= nnz;
-        mse /= nnz;
-
-    }
+    public abstract void evalRating(Model model, AbstractIterator idata);
 
     public double getRecall() {
         return recall;

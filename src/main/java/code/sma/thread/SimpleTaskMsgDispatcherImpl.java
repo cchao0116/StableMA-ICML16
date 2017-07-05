@@ -9,10 +9,13 @@ import org.apache.log4j.Logger;
 
 import code.sma.core.AbstractMatrix;
 import code.sma.core.impl.DenseVector;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
+import code.sma.eval.FeatureBasedMetrics;
 import code.sma.main.Configures;
 import code.sma.main.RecommenderFactory;
 import code.sma.recmmd.Recommender;
-import code.sma.util.EvaluationMetrics;
+import code.sma.recmmd.fb.FeatureBasedRecmmder;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.StringUtil;
@@ -123,7 +126,13 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
     @Override
     public void reduce(Object recmmd, AbstractMatrix train, AbstractMatrix test) {
         Recommender m = ((Recommender) recmmd);
-        EvaluationMetrics em = new EvaluationMetrics();
+
+        EvaluationMetrics em = null;
+        if (recmmd instanceof FeatureBasedRecmmder) {
+            em = new FeatureBasedMetrics();
+        } else {
+            em = new CollaFiltrMetrics();
+        }
         em.evalRating(m.getModel(), m.runtimes.itest);
 
         LoggerUtil.info(normalLogger, String.format("%s:%s", m.toString(), em.printOneLine()));

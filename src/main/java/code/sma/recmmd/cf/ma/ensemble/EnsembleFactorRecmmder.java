@@ -1,4 +1,4 @@
-package code.sma.recmmd.ma.ensemble;
+package code.sma.recmmd.cf.ma.ensemble;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -9,16 +9,17 @@ import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.SparseMatrix;
+import code.sma.eval.CollaFiltrMetrics;
+import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
 import code.sma.model.FactorModel;
 import code.sma.model.Model;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
-import code.sma.recmmd.ma.standalone.FactorRecmmder;
+import code.sma.recmmd.cf.ma.standalone.FactorRecmmder;
 import code.sma.thread.TaskMsgDispatcher;
 import code.sma.thread.WeakLearner;
-import code.sma.util.EvaluationMetrics;
 import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerUtil;
 
@@ -29,7 +30,7 @@ import code.sma.util.LoggerUtil;
  * @version $Id: EnsembleMFRecommender.java, v 0.1 2016年9月26日 下午4:22:14 Chao.Chen Exp $
  */
 public abstract class EnsembleFactorRecmmder extends FactorRecmmder
-                                            implements TaskMsgDispatcher, Model {
+                                             implements TaskMsgDispatcher, Model {
     /** SerialVersionNum */
     protected static final long serialVersionUID = 1L;
     /** cumulative prediction */
@@ -52,7 +53,7 @@ public abstract class EnsembleFactorRecmmder extends FactorRecmmder
     }
 
     /** 
-     * @see code.sma.recmmd.ma.standalone.FactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#buildModel(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
      */
     @Override
     public void buildModel(AbstractMatrix train, AbstractMatrix test) {
@@ -110,7 +111,7 @@ public abstract class EnsembleFactorRecmmder extends FactorRecmmder
 
         // evaluate approximated model
         // WARNING: this part is not thread safe in order to quick produce the evaluation
-        EvaluationMetrics em = new EvaluationMetrics();
+        EvaluationMetrics em = new CollaFiltrMetrics();
         em.evalRating(this, runtimes.itest);
 
         RuntimeEnv _runtimes = ((FactorRecmmder) recmmd).runtimes;

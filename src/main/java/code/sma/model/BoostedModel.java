@@ -22,7 +22,7 @@ public class BoostedModel extends AbstractModel {
     /**
      * @param conf
      */
-    protected BoostedModel(Configures conf) {
+    public BoostedModel(Configures conf) {
         super(conf);
         boosters = new ArrayList<AbstractModel>();
         learningRate = conf.getDouble("LEARNING_RATE_VALUE");
