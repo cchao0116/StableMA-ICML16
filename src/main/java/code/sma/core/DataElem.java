@@ -33,6 +33,13 @@ public class DataElem {
     protected CRefVector value_ifactor;
 
     public DataElem() {
+        index_global = new CRefVector((int[]) null, 0, 0);
+        index_user = new CRefVector((int[]) null, 0, 0);
+        index_item = new CRefVector((int[]) null, 0, 0);
+
+        value_global = new CRefVector((float[]) null, 0, 0);
+        value_ufactor = new CRefVector((float[]) null, 0, 0);
+        value_ifactor = new CRefVector((float[]) null, 0, 0);
     }
 
     public DataElem(float label) {

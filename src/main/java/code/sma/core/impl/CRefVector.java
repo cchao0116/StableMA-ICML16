@@ -1,6 +1,7 @@
 package code.sma.core.impl;
 
 import code.sma.core.AbstractVector;
+import it.unimi.dsi.fastutil.chars.Char2FloatMap;
 
 /**
  * 
@@ -22,6 +23,9 @@ public class CRefVector extends AbstractVector {
     protected int[]           intPtr;
     /** point to float array*/
     protected float[]         floatPtr;
+    /** point to float array*/
+    protected char[]          charPtr;
+    protected Char2FloatMap   char2num;
 
     public CRefVector(float[] data, int ptr_offset, int num_factors) {
         this.floatPtr = data;
@@ -37,6 +41,14 @@ public class CRefVector extends AbstractVector {
         refType = CRefType.Ints;
     }
 
+    public CRefVector(char[] data, int ptr_offset, int num_factors, Char2FloatMap char2num) {
+        this.char2num = char2num;
+        this.charPtr = data;
+        this.num_factors = num_factors;
+        this.ptr_offset = ptr_offset;
+        refType = CRefType.Chars;
+    }
+
     /** 
      * @see code.sma.core.AbstractVector#setValue(int, double)
      */
@@ -50,24 +62,8 @@ public class CRefVector extends AbstractVector {
                 intPtr[ptr_offset + i] = (int) value;
             case Floats:
                 floatPtr[ptr_offset + i] = (float) value;
-            default:
-                throw new RuntimeException("CRefArray only support Ints, Floats.");
-        }
-    }
-
-    /** 
-     * @see code.sma.core.AbstractVector#setValue(int, float)
-     */
-    //    @Override
-    public void setValue(int i, float value) {
-        assert i >= 0 && i < num_factors : String.format("index should be in [%d, %d)", ptr_offset,
-            ptr_offset + num_factors);
-
-        switch (refType) {
-            case Ints:
-                intPtr[ptr_offset + i] = (int) value;
-            case Floats:
-                floatPtr[ptr_offset + i] = (float) value;
+            case Chars:
+                throw new RuntimeException("CRefArray only support Chars.");
             default:
                 throw new RuntimeException("CRefArray only support Ints, Floats.");
         }
@@ -86,6 +82,8 @@ public class CRefVector extends AbstractVector {
                 return intPtr[ptr_offset + i];
             case Floats:
                 return floatPtr[ptr_offset + i];
+            case Chars:
+                return char2num.get(charPtr[ptr_offset + i]);
             default:
                 throw new RuntimeException("CRefArray only support Ints, Floats.");
         }
@@ -96,17 +94,7 @@ public class CRefVector extends AbstractVector {
      */
     @Override
     public int intValue(int i) {
-        assert i >= 0 && i < num_factors : String.format("index should be in [%d, %d)", ptr_offset,
-            ptr_offset + num_factors);
-
-        switch (refType) {
-            case Ints:
-                return intPtr[ptr_offset + i];
-            case Floats:
-                return (int) floatPtr[ptr_offset + i];
-            default:
-                throw new RuntimeException("CRefArray only support Ints, Floats.");
-        }
+        return (int) floatValue(i);
     }
 
     /** 
@@ -164,13 +152,23 @@ public class CRefVector extends AbstractVector {
     }
 
     /**
+     * Setter method for property <tt>charPtr</tt>.
+     * 
+     * @param charPtr value to be assigned to property charPtr
+     */
+    public void setCharPtr(char[] charPtr) {
+        this.charPtr = charPtr;
+        this.refType = CRefType.Chars;
+    }
+
+    /**
      * The type of arrays
      * 
      * @author Chao.Chen
      * @version $Id: CRefVector.java, v 0.1 2017年6月5日 下午12:43:22 Chao.Chen Exp $
      */
     protected enum CRefType {
-                             Ints, Floats;
+        Ints, Floats, Chars;
     }
 
 }

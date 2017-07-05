@@ -28,7 +28,10 @@ public class CSRMatrix extends AbstractMatrix {
     /** array of the indices*/
     protected int[]   feat_index;
     /** array of the  features*/
-    protected float[] feat_value;
+    private float[]   feat_value;
+
+    protected CSRMatrix() {
+    }
 
     public CSRMatrix(int num_row, int num_val) {
         row_label = new float[num_row];
@@ -99,14 +102,6 @@ public class CSRMatrix extends AbstractMatrix {
         int cursor = i;
 
         DataElem e = new DataElem();
-        e.setIndex_global(new CRefVector((int[]) null, 0, 0));
-        e.setValue_global(new CRefVector((float[]) null, 0, 0));
-
-        e.setIndex_user(new CRefVector((int[]) null, 0, 0));
-        e.setValue_ufactor(new CRefVector((float[]) null, 0, 0));
-
-        e.setIndex_item(new CRefVector((int[]) null, 0, 0));
-        e.setValue_ifactor(new CRefVector((float[]) null, 0, 0));
         e.setLabel(row_label[cursor]);
 
         short num_global = (short) (row_ptr[3 * cursor + 1] - row_ptr[3 * cursor]);
@@ -116,36 +111,27 @@ public class CSRMatrix extends AbstractMatrix {
         e.setNum_ufactor(num_ufactor);
         e.setNum_ifacotr(num_ifactor);
 
-        CRefVector index_global = e.getIndex_global();
-        index_global.setIntPtr(feat_index);
-        index_global.setPtr_offset(row_ptr[3 * cursor + 0]);
-        index_global.setNum_factors(num_global);
+        setIndexRefVec(e.getIndex_global(), row_ptr[3 * cursor + 0], num_global);
+        setValueRefVec(e.getValue_global(), row_ptr[3 * cursor + 0], num_global);
 
-        CRefVector value_global = e.getValue_global();
-        value_global.setFloatPtr(feat_value);
-        value_global.setPtr_offset(row_ptr[3 * cursor + 0]);
-        value_global.setNum_factors(num_global);
+        setIndexRefVec(e.getIndex_user(), row_ptr[3 * cursor + 1], num_ufactor);
+        setValueRefVec(e.getValue_ufactor(), row_ptr[3 * cursor + 1], num_ufactor);
 
-        CRefVector index_user = e.getIndex_user();
-        index_user.setIntPtr(feat_index);
-        index_user.setPtr_offset(row_ptr[3 * cursor + 1]);
-        index_user.setNum_factors(num_ufactor);
-
-        CRefVector value_ufactor = e.getValue_ufactor();
-        value_ufactor.setFloatPtr(feat_value);
-        value_ufactor.setPtr_offset(row_ptr[3 * cursor + 1]);
-        value_ufactor.setNum_factors(num_ufactor);
-
-        CRefVector index_item = e.getIndex_item();
-        index_item.setIntPtr(feat_index);
-        index_item.setPtr_offset(row_ptr[3 * cursor + 2]);
-        index_item.setNum_factors(num_ifactor);
-
-        CRefVector value_ifactor = e.getValue_ifactor();
-        value_ifactor.setFloatPtr(feat_value);
-        value_ifactor.setPtr_offset(row_ptr[3 * cursor + 2]);
-        value_ifactor.setNum_factors(num_ifactor);
+        setIndexRefVec(e.getIndex_item(), row_ptr[3 * cursor + 2], num_ifactor);
+        setValueRefVec(e.getValue_ifactor(), row_ptr[3 * cursor + 2], num_ifactor);
         return e;
+    }
+
+    protected void setIndexRefVec(CRefVector refvec, int offset, int num_factors) {
+        refvec.setIntPtr(feat_index);
+        refvec.setPtr_offset(offset);
+        refvec.setNum_factors(num_factors);
+    }
+
+    protected void setValueRefVec(CRefVector refvec, int offset, int num_factors) {
+        refvec.setFloatPtr(feat_value);
+        refvec.setPtr_offset(offset);
+        refvec.setNum_factors(num_factors);
     }
 
     /** 
@@ -183,35 +169,14 @@ public class CSRMatrix extends AbstractMatrix {
             e.setNum_ufactor(num_ufactor);
             e.setNum_ifacotr(num_ifactor);
 
-            CRefVector index_global = e.getIndex_global();
-            index_global.setIntPtr(feat_index);
-            index_global.setPtr_offset(row_ptr[3 * cursor + 0]);
-            index_global.setNum_factors(num_global);
+            setIndexRefVec(e.getIndex_global(), row_ptr[3 * cursor + 0], num_global);
+            setValueRefVec(e.getValue_global(), row_ptr[3 * cursor + 0], num_global);
 
-            CRefVector value_global = e.getValue_global();
-            value_global.setFloatPtr(feat_value);
-            value_global.setPtr_offset(row_ptr[3 * cursor + 0]);
-            value_global.setNum_factors(num_global);
+            setIndexRefVec(e.getIndex_user(), row_ptr[3 * cursor + 1], num_ufactor);
+            setValueRefVec(e.getValue_ufactor(), row_ptr[3 * cursor + 1], num_ufactor);
 
-            CRefVector index_user = e.getIndex_user();
-            index_user.setIntPtr(feat_index);
-            index_user.setPtr_offset(row_ptr[3 * cursor + 1]);
-            index_user.setNum_factors(num_ufactor);
-
-            CRefVector value_ufactor = e.getValue_ufactor();
-            value_ufactor.setFloatPtr(feat_value);
-            value_ufactor.setPtr_offset(row_ptr[3 * cursor + 1]);
-            value_ufactor.setNum_factors(num_ufactor);
-
-            CRefVector index_item = e.getIndex_item();
-            index_item.setIntPtr(feat_index);
-            index_item.setPtr_offset(row_ptr[3 * cursor + 2]);
-            index_item.setNum_factors(num_ifactor);
-
-            CRefVector value_ifactor = e.getValue_ifactor();
-            value_ifactor.setFloatPtr(feat_value);
-            value_ifactor.setPtr_offset(row_ptr[3 * cursor + 2]);
-            value_ifactor.setNum_factors(num_ifactor);
+            setIndexRefVec(e.getIndex_item(), row_ptr[3 * cursor + 2], num_ifactor);
+            setValueRefVec(e.getValue_ifactor(), row_ptr[3 * cursor + 2], num_ifactor);
 
             cursor++;
             return e;

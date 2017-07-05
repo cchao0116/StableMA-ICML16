@@ -33,9 +33,6 @@ public class FeatureBasedMetrics extends EvaluationMetrics {
             mae += Math.abs(realVal - predVal);
             mse += Math.pow(realVal - predVal, 2.0d);
             nnz++;
-
-            System.out.println(String.format("%.1f,%.1f", realVal, predVal));
-
         }
         mae /= nnz;
         mse /= nnz;

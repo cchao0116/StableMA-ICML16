@@ -1,5 +1,7 @@
 package code.sma.core.impl;
 
+import it.unimi.dsi.fastutil.chars.Char2FloatMap;
+
 /**
  * 
  * @author Chao.Chen
@@ -28,33 +30,24 @@ public class CPrjRefVector extends CRefVector {
         this.prj_mpg = prj_mpg;
     }
 
+    public CPrjRefVector(char[] data, int ptr_offset, int num_factors, Char2FloatMap char2num) {
+        super(data, ptr_offset, num_factors, char2num);
+    }
+
+    public CPrjRefVector(char[] data, int ptr_offset, int num_factors, Char2FloatMap char2num,
+                         short[] prj_mpg) {
+        super(data, ptr_offset, num_factors, char2num);
+        this.prj_mpg = prj_mpg;
+    }
+
     /** 
      * @see code.sma.core.impl.CRefVector#setValue(int, double)
      */
     @Override
     public void setValue(int i, double value) {
-        setValue(i, (float) value);
-    }
-
-    /** 
-     * @see code.sma.core.impl.CRefVector#setValue(int, float)
-     */
-    @Override
-    public void setValue(int i, float value) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-        if (prj_mpg == null) {
-            super.setValue(i, value);
-            return;
-        }
 
-        switch (refType) {
-            case Ints:
-                intPtr[ptr_offset + prj_mpg[i]] = (int) value;
-            case Floats:
-                floatPtr[ptr_offset + prj_mpg[i]] = (float) value;
-            default:
-                throw new RuntimeException("CRefArray only support Ints, Floats.");
-        }
+        super.setValue(prj_mpg == null ? i : prj_mpg[i], value);
     }
 
     /** 
@@ -63,17 +56,8 @@ public class CPrjRefVector extends CRefVector {
     @Override
     public float floatValue(int i) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-        if (prj_mpg == null)
-            return super.floatValue(i);
 
-        switch (refType) {
-            case Ints:
-                return intPtr[ptr_offset + prj_mpg[i]];
-            case Floats:
-                return floatPtr[ptr_offset + prj_mpg[i]];
-            default:
-                throw new RuntimeException("CRefArray only support Ints, Floats.");
-        }
+        return super.floatValue(prj_mpg == null ? i : prj_mpg[i]);
     }
 
     /** 
@@ -82,17 +66,8 @@ public class CPrjRefVector extends CRefVector {
     @Override
     public int intValue(int i) {
         assert i >= 0 && i < num_factors : String.format("index should be in [0, %d)", num_factors);
-        if (prj_mpg == null)
-            return super.intValue(i);
 
-        switch (refType) {
-            case Ints:
-                return intPtr[ptr_offset + prj_mpg[i]];
-            case Floats:
-                return (int) floatPtr[ptr_offset + prj_mpg[i]];
-            default:
-                throw new RuntimeException("CRefArray only support Ints, Floats.");
-        }
+        return super.intValue(prj_mpg == null ? i : prj_mpg[i]);
     }
 
     /**
