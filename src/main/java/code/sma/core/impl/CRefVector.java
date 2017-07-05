@@ -94,7 +94,19 @@ public class CRefVector extends AbstractVector {
      */
     @Override
     public int intValue(int i) {
-        return (int) floatValue(i);
+        assert i >= 0 && i < num_factors : String.format("index should be in [%d, %d)", ptr_offset,
+            ptr_offset + num_factors);
+
+        switch (refType) {
+            case Ints:
+                return intPtr[ptr_offset + i];
+            case Floats:
+                return (int) floatPtr[ptr_offset + i];
+            case Chars:
+                return (int) char2num.get(charPtr[ptr_offset + i]);
+            default:
+                throw new RuntimeException("CRefArray only support Ints, Floats.");
+        }
     }
 
     /** 

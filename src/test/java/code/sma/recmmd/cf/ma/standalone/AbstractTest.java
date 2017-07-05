@@ -1,17 +1,20 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.cf.ma.standalone;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import code.sma.core.AbstractMatrix;
-import code.sma.eval.CollaFiltrMetrics;
-import code.sma.eval.EvaluationMetrics;
 import code.sma.main.Configures;
-import code.sma.main.RecommenderFactory;
-import code.sma.recmmd.cf.ma.ensemble.EnsembleFactorRecmmder;
+import code.sma.thread.SimpleLearner;
+import code.sma.thread.SimpleTaskMsgDispatcherImpl;
+import code.sma.thread.TaskMsgDispatcher;
 import code.sma.util.ConfigureUtil;
+import code.sma.util.ExceptionUtil;
 import code.sma.util.LoggerDefineConstant;
 import code.sma.util.LoggerUtil;
 import code.sma.util.MatrixIOUtil;
@@ -20,9 +23,9 @@ import code.sma.util.StringUtil;
 /**
  * 
  * @author Chao.Chen
- * @version $Id: AbstractEnsTest.java, v 0.1 2017年6月13日 下午1:22:54 Chao.Chen Exp $
+ * @version $Id: AbstractTest.java, v 0.1 2017年6月13日 下午1:05:45 Chao.Chen Exp $
  */
-public abstract class AbstractEnsTest {
+public abstract class AbstractTest {
     /** the logger instance*/
     protected final static Logger logger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
@@ -52,6 +55,9 @@ public abstract class AbstractEnsTest {
             String algName = new_conf.getProperty("ALG_NAME");
             LoggerUtil.info(logger, "2. running " + algName);
 
+            TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(new_conf);
+            int threadNum = new_conf.getInteger("THREAD_NUMBER_VALUE");
+
             AbstractMatrix train = MatrixIOUtil.loadCSRMatrix(trainFile,
                 new_conf.getInteger("TRAIN_ROW_NUM_VALUE"),
                 new_conf.getInteger("TRAIN_VAL_NUM_VALUE"));
@@ -59,13 +65,16 @@ public abstract class AbstractEnsTest {
                 new_conf.getInteger("TEST_ROW_NUM_VALUE"),
                 new_conf.getInteger("TEST_VAL_NUM_VALUE"));
 
-            EnsembleFactorRecmmder recmmd = (EnsembleFactorRecmmder) RecommenderFactory
-                .instance(algName, new_conf);
-            recmmd.buildModel(train, test);
-
-            EvaluationMetrics m = new CollaFiltrMetrics();
-            m.evalRating(recmmd, recmmd.runtimes.itest);
-            LoggerUtil.info(logger, String.format("%s:%s", recmmd, m.printOneLine()));
+            try {
+                ExecutorService exec = Executors.newCachedThreadPool();
+                for (int t = 0; t < threadNum; t++) {
+                    exec.execute(new SimpleLearner(stkmImpl, train, test));
+                }
+                exec.shutdown();
+                exec.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+            } catch (InterruptedException e) {
+                ExceptionUtil.caught(e, "Stand-alone model Thead!");
+            }
         }
     }
 }

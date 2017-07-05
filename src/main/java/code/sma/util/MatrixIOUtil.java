@@ -10,6 +10,7 @@ import org.apache.commons.io.IOUtils;
 
 import code.sma.core.AbstractMatrix;
 import code.sma.core.impl.CSRMatrix;
+import code.sma.core.impl.DCSRMatrix;
 import code.sma.core.impl.SparseMatrix;
 import code.sma.core.impl.Tuples;
 
@@ -31,6 +32,12 @@ public final class MatrixIOUtil {
     //=============================================
     //      Read methods
     //=============================================
+    public static DCSRMatrix loadDCSRMatrix(String filePath, int num_row, int num_val) {
+        DCSRMatrix dcsrm = new DCSRMatrix(num_row, num_val);
+        loadData(filePath, dcsrm);
+        return dcsrm;
+    }
+
     public static CSRMatrix loadCSRMatrix(String filePath, int num_row, int num_val) {
         CSRMatrix csm = new CSRMatrix(num_row, num_val);
         loadData(filePath, csm);

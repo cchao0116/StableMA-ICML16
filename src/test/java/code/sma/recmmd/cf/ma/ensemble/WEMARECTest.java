@@ -1,4 +1,4 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.cf.ma.ensemble;
 
 /**
  * 
@@ -8,7 +8,7 @@ package code.sma.recmmd.ensemble;
 public class WEMARECTest extends AbstractEnsTest {
 
     /** 
-     * @see code.sma.recmmd.standalone.AbstractTest#getConfig()
+     * @see code.sma.recmmd.cf.ma.standalone.AbstractTest#getConfig()
      */
     @Override
     protected String getConfig() {

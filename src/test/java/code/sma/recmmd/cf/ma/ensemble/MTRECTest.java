@@ -1,4 +1,4 @@
-package code.sma.recmmd.ensemble;
+package code.sma.recmmd.cf.ma.ensemble;
 
 /**
  * 
@@ -8,7 +8,7 @@ package code.sma.recmmd.ensemble;
 public class MTRECTest extends AbstractEnsTest {
 
     /** 
-     * @see code.sma.recmmd.ensemble.AbstractEnsTest#getConfig()
+     * @see code.sma.recmmd.cf.ma.ensemble.AbstractEnsTest#getConfig()
      */
     @Override
     protected String getConfig() {

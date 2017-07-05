@@ -1,4 +1,4 @@
-package code.sma.recmmd.standalone;
+package code.sma.recmmd.cf.ma.standalone;
 
 /**
  * 
@@ -8,7 +8,7 @@ package code.sma.recmmd.standalone;
 public class RegSVDTest extends AbstractTest {
 
     /** 
-     * @see code.sma.recmmd.standalone.AbstractTest#getConfig()
+     * @see code.sma.recmmd.cf.ma.standalone.AbstractTest#getConfig()
      */
     @Override
     protected String getConfig() {

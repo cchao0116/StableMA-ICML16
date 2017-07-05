@@ -1,6 +1,6 @@
-package code.sma.recmmd.tree;
+package code.sma.recmmd.fb.gbm;
 
-import code.sma.recmmd.standalone.AbstractTest;
+import code.sma.recmmd.cf.ma.standalone.AbstractTest;
 
 /**
  * 
@@ -10,7 +10,7 @@ import code.sma.recmmd.standalone.AbstractTest;
 public class GBDT extends AbstractTest {
 
     /**
-     * @see code.sma.recmmd.standalone.AbstractTest#getConfig()
+     * @see code.sma.recmmd.cf.ma.standalone.AbstractTest#getConfig()
      */
     @Override
     protected String getConfig() {
