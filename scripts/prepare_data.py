@@ -129,7 +129,7 @@ if __name__ == '__main__':
         FILEIN = '{0}ratings.dat'.format(ROOT_DIR)
 
     print('load data: {0}'.format(FILEIN))
-    sm, max_row, max_col, minVal, maxVal = load_data(FILEIN)
+    sm, max_row, max_col, maxVal, minVal = load_data(FILEIN)
 
     sampRato = 0.9
     for num_splits in range(1, 6):

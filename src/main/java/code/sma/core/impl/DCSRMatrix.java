@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 import org.apache.commons.io.IOUtils;
 
+import code.sma.core.AbstractIterator;
 import code.sma.core.DataElem;
 import code.sma.util.StringUtil;
 import it.unimi.dsi.fastutil.chars.Char2FloatMap;
@@ -97,5 +98,14 @@ public class DCSRMatrix extends CSRMatrix {
             e.setValue_ufactor(new CPrjRefVector((char[]) null, 0, 0, char2num));
             e.setValue_ifactor(new CPrjRefVector((char[]) null, 0, 0, char2num));
         }
+
+        /** 
+         * @see code.sma.core.impl.CSRMatrix.Iter#clone()
+         */
+        @Override
+        public AbstractIterator clone() {
+            return new CharIter();
+        }
+
     }
 }
