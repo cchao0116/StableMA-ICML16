@@ -1,4 +1,3 @@
-# import numpy as np
 import re
 import os
 import sys
@@ -52,6 +51,8 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
     num_row_test = 0
     num_val_test = 0
 
+    discrete_set = set([])
+
     for r in range(max_rid):
         row = sm.getrowview(r)
         if row.getnnz() == 0:
@@ -64,6 +65,7 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
         feat_test = ''
         count_test = 0
 
+        # randomly split the data into training and testing data
         rnz = row.nonzero()
         for rl, cl in zip(rnz[0], rnz[1]):
             if random.random() <= sampRato:
@@ -72,6 +74,9 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
             else:
                 feat_test += ' {0}:{1}'.format(cl, row[rl, cl])
                 count_test += 1
+
+            if len(discrete_set) <= 260:
+                discrete_set.add(row[rl, cl])
 
         if count_train != 0:
             num_row_train += 1
@@ -83,6 +88,8 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
             num_val_test += count_test + 1
             fo_test.write('0 0 1 {0} {1}:1{2}\n'.format(
                 count_test, r, feat_test))
+
+    # configure file
     fo_conf.write(
         """$USER_COUNT_VALUE={0}
         $ITEM_COUNT_VALUE={1}
@@ -93,9 +100,16 @@ def uniformly_split_data(FILEOUT, sampRato, sm,
         $TRAIN_VAL_NUM_VALUE={5}
 
         $TEST_ROW_NUM_VALUE={6}
-        $TEST_VAL_NUM_VALUE={7}"""
-        .format(max_rid, max_cid, maxVal, minVal,
-                num_row_train, num_val_train, num_row_test, num_val_test))
+        $TEST_VAL_NUM_VALUE={7}\n""".format(max_rid, max_cid, maxVal, minVal,
+                                            num_row_train, num_val_train,
+                                            num_row_test, num_val_test))
+
+    # optimize for discrete input
+    len_ds = len(discrete_set)
+    if len_ds <= 256:
+        ds_str = str(discrete_set)
+        len_ds = len(ds_str)
+        fo_conf.write('$DISCRETE_INPUT_SET={0}'.format(ds_str[1:len_ds - 1]))
 
     fo_train.close()
     fo_test.close()
@@ -108,7 +122,12 @@ if __name__ == '__main__':
         exit(1)
 
     ROOT_DIR = sys.argv[1]
-    FILEIN = '{0}ratings.dat'.format(ROOT_DIR)
+    if os.path.isfile(ROOT_DIR):
+        FILEIN = ROOT_DIR
+        ROOT_DIR = '{0}/'.format(os.path.dirname(FILEIN))
+    else:
+        FILEIN = '{0}ratings.dat'.format(ROOT_DIR)
+
     print('load data: {0}'.format(FILEIN))
     sm, max_row, max_col, minVal, maxVal = load_data(FILEIN)
 

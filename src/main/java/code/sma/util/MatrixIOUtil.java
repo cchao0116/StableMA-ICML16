@@ -13,6 +13,11 @@ import code.sma.core.impl.CSRMatrix;
 import code.sma.core.impl.DCSRMatrix;
 import code.sma.core.impl.SparseMatrix;
 import code.sma.core.impl.Tuples;
+import code.sma.main.Configures;
+import it.unimi.dsi.fastutil.chars.Char2FloatMap;
+import it.unimi.dsi.fastutil.chars.Char2FloatOpenHashMap;
+import it.unimi.dsi.fastutil.floats.Float2CharMap;
+import it.unimi.dsi.fastutil.floats.Float2CharOpenHashMap;
 
 /**
  * Matrix write utilities
@@ -32,8 +37,24 @@ public final class MatrixIOUtil {
     //=============================================
     //      Read methods
     //=============================================
-    public static DCSRMatrix loadDCSRMatrix(String filePath, int num_row, int num_val) {
-        DCSRMatrix dcsrm = new DCSRMatrix(num_row, num_val);
+    public static DCSRMatrix loadDCSRMatrix(String filePath, int num_row, int num_val,
+                                            Configures conf) {
+        assert conf.containsKey(
+            "DISCRETE_INPUT_SET") : "DSCRMatrix require DISCRETE_INPUT_SET in configure";
+
+        float[] discrete_value = conf.getFloatArr("DISCRETE_INPUT_SET");
+
+        // make char2float map
+        char c = 0;
+        Char2FloatMap char2num = new Char2FloatOpenHashMap();
+        Float2CharMap num2char = new Float2CharOpenHashMap();
+        for (float d : discrete_value) {
+            char2num.put(c, d);
+            num2char.put(d, c);
+            c++;
+        }
+
+        DCSRMatrix dcsrm = new DCSRMatrix(num_row, num_val, char2num, num2char);
         loadData(filePath, dcsrm);
         return dcsrm;
     }

@@ -8,9 +8,7 @@ import org.apache.commons.io.IOUtils;
 import code.sma.core.DataElem;
 import code.sma.util.StringUtil;
 import it.unimi.dsi.fastutil.chars.Char2FloatMap;
-import it.unimi.dsi.fastutil.chars.Char2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.floats.Float2CharMap;
-import it.unimi.dsi.fastutil.floats.Float2CharOpenHashMap;
 
 /**
  * storage block of random order 'DISCRETE' input, 
@@ -27,7 +25,7 @@ public class DCSRMatrix extends CSRMatrix {
     protected Char2FloatMap char2num;
     protected Float2CharMap num2char;
 
-    public DCSRMatrix(int num_row, int num_val) {
+    public DCSRMatrix(int num_row, int num_val, Char2FloatMap char2num, Float2CharMap num2char) {
         super();
 
         row_label = new float[num_row];
@@ -36,8 +34,8 @@ public class DCSRMatrix extends CSRMatrix {
         feat_index = new int[num_val];
 
         dscrt_feat_value = new char[num_val];
-        char2num = new Char2FloatOpenHashMap();
-        num2char = new Float2CharOpenHashMap();
+        this.char2num = char2num;
+        this.num2char = num2char;
     }
 
     /** 
