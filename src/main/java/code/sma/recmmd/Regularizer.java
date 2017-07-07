@@ -7,7 +7,8 @@ package code.sma.recmmd;
  * @version $Id: Regularizer.java, v 0.1 2017年3月9日 下午1:55:44 Chao.Chen Exp $
  */
 public enum Regularizer {
-    L1, //L1-norm
+    SMOOTH_L1, //L1-norm
+    THRESHOLD_L1, //L1-norm
     L2, // L2-norm
     L12, // Group-sparse norm
     ELASTIC_NET; // Elastic net
@@ -22,20 +23,35 @@ public enum Regularizer {
     /**
      * compute the regularization of the given parameter
      * 
-     * @param accFactr      the accumulator of the latent factor
-     * @param accId         the index within the accumulator
      * @param factrVal      the value of the latent factor
+     * @param param         extension
      * @return
      */
     public double calcReg(double factrVal, double... param) {
         switch (this) {
-            case L1:
+            case SMOOTH_L1:
                 return smoothed_L1(factrVal, reg_lambda, 1000.0 * 1000.0);
             case L2:
-                return (1 - reg_lambda) * factrVal;
+                return reg_lambda * factrVal;
             case L12:
                 assert param.length >= 1 : "L12 of each row is required.";
                 return reg_lambda * factrVal * factrVal / param[0];
+            default:
+                return 0.0d;
+        }
+    }
+
+    /**
+     * perform regularization of the given parameter
+     * 
+     * @param factrVal      the value of the latent factor
+     * @param param         extension
+     * @return
+     */
+    public double afterReg(double factrVal, double... param) {
+        switch (this) {
+            case THRESHOLD_L1:
+                return threshold_L1(factrVal, reg_lambda);
             default:
                 return factrVal;
         }
@@ -54,7 +70,7 @@ public enum Regularizer {
         } else {
             assert sum_hess > 1e-5 : "second order derivative too low";
             switch (this) {
-                case L1:
+                case THRESHOLD_L1:
                     return -threshold_L1(sum_grad, reg_lambda) / sum_hess;
                 case L2:
                     return -sum_grad / (sum_hess + reg_lambda);
@@ -69,7 +85,7 @@ public enum Regularizer {
 
     public double calcCost(double sum_grad, double sum_hess) {
         switch (this) {
-            case L1:
+            case THRESHOLD_L1:
                 return Math.pow(threshold_L1(sum_grad, reg_lambda), 2.0d) / sum_hess;
             case L2:
                 return Math.pow(sum_grad, 2.0f) / (sum_hess + reg_lambda);

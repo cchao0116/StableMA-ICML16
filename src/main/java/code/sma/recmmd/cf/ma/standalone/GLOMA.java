@@ -185,10 +185,9 @@ public class GLOMA extends FactorRecmmder {
                             ? (-deriWRTpLuLi * Gis * lambda[0] * tnW
                                - deriWRTpLuGi * gis * lambda[1] * tnW)
                             : (-deriWRTpLuGi * gis * 3.0);
-                        double newFus = Fus + learningRate * update_uf;
-
-                        StatsOperator.updateVector(lref_ufactor, s,
-                            runtimes.regType.calcReg(newFus, acum_ufactor.rs()));
+                        double newFus = runtimes.regType.calcReg(Fus, acum_ufactor.rs())
+                                        + learningRate * update_uf;
+                        StatsOperator.updateVector(lref_ufactor, s, newFus);
                     }
 
                     if (acc_ifi[i]) {
@@ -196,9 +195,9 @@ public class GLOMA extends FactorRecmmder {
                             ? (-deriWRTpLuLi * Fus * lambda[0] * tnW
                                - deriWRTpGuLi * fus * lambda[2] * tnW)
                             : (-deriWRTpGuLi * fus * 0.8);
-                        double newGis = Gis + learningRate * update_if;
-                        StatsOperator.updateVector(lref_ifactor, s,
-                            runtimes.regType.calcReg(newGis, acum_ufactor.rs()));
+                        double newGis = runtimes.regType.calcReg(Gis, acum_ufactor.rs())
+                                        + learningRate * update_if;
+                        StatsOperator.updateVector(lref_ifactor, s, newGis);
                     }
                 }
             }
@@ -210,7 +209,7 @@ public class GLOMA extends FactorRecmmder {
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
         int featureCount = runtimes.featureCount;
-        double learningRate = runtimes.learningRate;
+        double lr = runtimes.learningRate;
 
         Accumulator acum_diff = runtimes.acumltors.get(0);
 
@@ -244,12 +243,13 @@ public class GLOMA extends FactorRecmmder {
                     double Fus = lref_ufactor.floatValue(s);
                     double Gis = lref_ifactor.floatValue(s);
 
-                    double newFus = Fus + learningRate * (-deriWRTpLuLi * Gis) * tnW;
-                    double newGis = Gis + learningRate * (-deriWRTpLuLi * Fus) * tnW;
+                    // perform gradient descent
+                    double newFus = Fus + lr * (-deriWRTpLuLi * Gis * tnW - 0.01 * Fus);
+                    double newGis = Gis + lr * (-deriWRTpLuLi * Fus * tnW - 0.01 * Gis);
 
                     // DEFAULT: L2 Regularization
-                    StatsOperator.updateVector(lref_ufactor, s, 0.99 * newFus);
-                    StatsOperator.updateVector(lref_ifactor, s, 0.99 * newGis);
+                    StatsOperator.updateVector(lref_ufactor, s, newFus);
+                    StatsOperator.updateVector(lref_ifactor, s, newGis);
                 }
             }
         }

@@ -72,12 +72,12 @@ public class WeigtedSVD extends FactorRecmmder {
                 double Gis = ref_ifactor.floatValue(s);
 
                 // perform gradient descent
-                double newFus = Fus + lr * (-deriWRTp * Gis * tnW);
-                double newGis = Gis + lr * (-deriWRTp * Fus * tnW);
+                double newFus = Fus + lr * (-deriWRTp * Gis * tnW - runtimes.regType.calcReg(Fus));
+                double newGis = Gis + lr * (-deriWRTp * Fus * tnW - runtimes.regType.calcReg(Gis));
 
                 // perform regularization
-                ref_ufactor.setValue(s, runtimes.regType.calcReg(newFus));
-                ref_ifactor.setValue(s, runtimes.regType.calcReg(newGis));
+                ref_ufactor.setValue(s, runtimes.regType.afterReg(newFus));
+                ref_ifactor.setValue(s, runtimes.regType.afterReg(newGis));
             }
         }
     }

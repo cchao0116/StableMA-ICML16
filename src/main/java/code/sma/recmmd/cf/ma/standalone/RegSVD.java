@@ -62,12 +62,12 @@ public class RegSVD extends FactorRecmmder {
                 double Gis = ref_ifactor.floatValue(s);
 
                 // perform gradient descent
-                double newFus = Fus + lr * (-deriWRTp * Gis);
-                double newGis = Gis + lr * (-deriWRTp * Fus);
+                double newFus = Fus + lr * (-deriWRTp * Gis - runtimes.regType.calcReg(Fus));
+                double newGis = Gis + lr * (-deriWRTp * Fus - runtimes.regType.calcReg(Gis));
 
                 // perform regularization
-                ref_ufactor.setValue(s, runtimes.regType.calcReg(newFus));
-                ref_ifactor.setValue(s, runtimes.regType.calcReg(newGis));
+                ref_ufactor.setValue(s, runtimes.regType.afterReg(newFus));
+                ref_ifactor.setValue(s, runtimes.regType.afterReg(newGis));
             }
         }
     }
