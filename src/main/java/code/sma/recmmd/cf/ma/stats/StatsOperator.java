@@ -32,23 +32,25 @@ public final class StatsOperator {
         DenseVector vec = factor.getRowRef(row);
 
         if (vec == null) {
-
             vec = new DenseVector(shape[1]);
-
             for (int n = 0; n < shape[1]; n++) {
                 float r = (float) (Math.random() / shape[1]);
                 vec.setValue(n, r);
-
-                if (acumltor != null) {
-                    for (Accumulator acr : acumltor) {
-                        if (acr != null) {
-                            acr.update(row, n, r * r);
-                        }
-                    }
-                }
             }
             factor.setRowRef(row, vec);
         }
+
+        // initialize vector statistics
+        if (acumltor != null) {
+            for (Accumulator acr : acumltor) {
+                if (acr != null) {
+                    for (int n = 0; n < shape[1]; n++) {
+                        acr.update(0, n, Math.pow(vec.floatValue(n), 2.0d));
+                    }
+                }
+            }
+        }
+
         return vec;
     }
 
@@ -99,13 +101,17 @@ public final class StatsOperator {
         return ip;
     }
 
-    public static void updateVector(AbstractVector factor, int f, double up, Accumulator acumltor,
-                                    int accId, int vId) {
-        double fVal = factor.floatValue(f) + up;
+    public static void updateVector(AbstractVector factor, int f, double fVal,
+                                    Accumulator... acumltor) {
         factor.setValue(f, fVal);
 
         if (acumltor != null) {
-            acumltor.update(accId, vId, fVal * fVal);
+            for (Accumulator acr : acumltor) {
+                if (acr != null) {
+                    acr.update(0, f, fVal * fVal);
+                }
+            }
         }
     }
+
 }

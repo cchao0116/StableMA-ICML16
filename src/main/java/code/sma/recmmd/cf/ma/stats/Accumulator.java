@@ -106,4 +106,28 @@ public class Accumulator {
         }
         return Math.sqrt(sse / availNum);
     }
+
+    /**
+     * set all data to zero
+     */
+    public Accumulator toZero() {
+        cursor_vId = 0;
+        cursor_accId = 0;
+
+        for (float[] iVal : indvdlVal) {
+            if (iVal != null) {
+                Arrays.fill(iVal, iVal.length);
+            }
+        }
+
+        if (accVal != null) {
+            Arrays.fill(accVal, accVal.length);
+        }
+
+        if (accNum != null) {
+            Arrays.fill(accNum, accNum.length);
+        }
+
+        return this;
+    }
 }

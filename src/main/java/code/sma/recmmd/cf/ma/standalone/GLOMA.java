@@ -16,7 +16,6 @@ import code.sma.plugin.Discretizer;
 import code.sma.plugin.NetflixMovieLensDiscretizer;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Loss;
-import code.sma.recmmd.Regularizer;
 import code.sma.recmmd.RuntimeEnv;
 import code.sma.recmmd.cf.ma.stats.Accumulator;
 import code.sma.recmmd.cf.ma.stats.StatsOperator;
@@ -35,6 +34,10 @@ public class GLOMA extends FactorRecmmder {
 
     /** Contribution of each component, i.e., LuLi, LuGi, GuLi */
     private double[]        lambda;
+
+    /** Statistics for user factor values*/
+    private Accumulator     acum_ufactor;
+    private Accumulator     acum_ifactor;
 
     /*========================================
      * Constructors
@@ -58,10 +61,6 @@ public class GLOMA extends FactorRecmmder {
     protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
         assert train != null : "Training data cannot be null.";
 
-        int userCount = runtimes.userCount;
-        int itemCount = runtimes.itemCount;
-        int featureCount = runtimes.featureCount;
-
         boolean[] acc_ufi = runtimes.acc_uf_indicator;
         boolean[] acc_ifi = runtimes.acc_if_indicator;
 
@@ -76,8 +75,9 @@ public class GLOMA extends FactorRecmmder {
         runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_global())); // accumulator to record difference between real and predicted value
         runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_ufactor()));
         runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_ifactor()));
-        runtimes.acumltors.add(new Accumulator(userCount, featureCount)); // accumulator to record value of user latent factors
-        runtimes.acumltors.add(new Accumulator(itemCount, featureCount)); // accumulator to record value of item latent factors
+
+        acum_ufactor = new Accumulator(1, runtimes.featureCount);
+        acum_ifactor = new Accumulator(1, runtimes.featureCount);
 
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
         runtimes.tnWs = dctzr.cmpTrainWs(runtimes.itrain);
@@ -118,7 +118,6 @@ public class GLOMA extends FactorRecmmder {
 
         int featureCount = runtimes.featureCount;
         double learningRate = runtimes.learningRate;
-        double regularizer = runtimes.regularizer;
 
         Accumulator acum_diff_LuLi = runtimes.acumltors.get(0);
         assert acum_diff_LuLi.cursor_vId == 0 : "Check it! At every begin, cursor shouble be at 0";
@@ -126,10 +125,7 @@ public class GLOMA extends FactorRecmmder {
         assert acum_diff_LuGi.cursor_vId == 0 : "Check it! At every begin, cursor shouble be at 0";
         Accumulator acum_diff_GuLi = runtimes.acumltors.get(2);
         assert acum_diff_GuLi.cursor_vId == 0 : "Check it! At every begin, cursor shouble be at 0";
-        Accumulator acum_ufactor = runtimes.acumltors.get(3);
-        Accumulator acum_ifactor = runtimes.acumltors.get(4);
 
-        Regularizer regType = runtimes.regType;
         Loss lossFunction = runtimes.lossFunction;
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
 
@@ -139,34 +135,32 @@ public class GLOMA extends FactorRecmmder {
             short num_ifactor = e.getNum_ifacotr();
             int u = e.getIndex_user(0);
 
-            DenseVector lref_ufactor = null;
+            DenseVector lref_ufactor = acc_ufi[u]
+                ? StatsOperator.getVectorRef(fmRef.ufactors, u, acum_ufactor.toZero()) : null;
             DenseVector gref_ufactor = fmRef.g_ufactors.getRowRef(u);
-            for (int f = 0; f < num_ifactor; f++) {
 
+            for (int f = 0; f < num_ifactor; f++) {
                 int i = e.getIndex_item(f);
-                DenseVector lref_ifactor = null;
+
+                DenseVector lref_ifactor = acc_ifi[i]
+                    ? StatsOperator.getVectorRef(fmRef.ifactors, i, acum_ifactor.toZero()) : null;
                 DenseVector gref_ifactor = fmRef.g_ifactors.getRowRef(i);
 
                 double AuiReal = e.getValue_ifactor(f);
-
                 double LuLi = 0.0d;
                 if (acc_ufi[u] && acc_ifi[i]) {
-                    lref_ufactor = StatsOperator.getVectorRef(fmRef.ufactors, u, acum_ufactor);
-                    lref_ifactor = StatsOperator.getVectorRef(fmRef.ifactors, i, acum_ifactor);
                     LuLi = StatsOperator.innerProduct(lref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuLi);
                 }
 
                 double LuGi = 0.0d;
                 if (acc_ufi[u]) {
-                    lref_ufactor = StatsOperator.getVectorRef(fmRef.ufactors, u, acum_ufactor);
                     LuGi = StatsOperator.innerProduct(lref_ufactor, gref_ifactor, lossFunction,
                         AuiReal, acum_diff_LuGi);
                 }
 
                 double GuLi = 0.0d;
                 if (acc_ifi[i]) {
-                    lref_ifactor = StatsOperator.getVectorRef(fmRef.ifactors, i, acum_ifactor);
                     GuLi = StatsOperator.innerProduct(gref_ufactor, lref_ifactor, lossFunction,
                         AuiReal, acum_diff_GuLi);
                 }
@@ -189,23 +183,22 @@ public class GLOMA extends FactorRecmmder {
                     if (acc_ufi[u]) {
                         double update_uf = acc_ifi[i]
                             ? (-deriWRTpLuLi * Gis * lambda[0] * tnW
-                               - deriWRTpLuGi * gis * lambda[1] * tnW
-                               - regularizer * regType.reg(acum_ufactor, u, Fus))
-                            : (-deriWRTpLuGi * gis * 3.0
-                               - regularizer * Regularizer.L2.reg(acum_ufactor, u, Fus));
-                        StatsOperator.updateVector(lref_ufactor, s, learningRate * update_uf,
-                            acum_ufactor, u, s);
+                               - deriWRTpLuGi * gis * lambda[1] * tnW)
+                            : (-deriWRTpLuGi * gis * 3.0);
+                        double newFus = Fus + learningRate * update_uf;
+
+                        StatsOperator.updateVector(lref_ufactor, s,
+                            runtimes.regType.calcReg(newFus, acum_ufactor.rs(s)));
                     }
 
                     if (acc_ifi[i]) {
                         double update_if = acc_ufi[u]
                             ? (-deriWRTpLuLi * Fus * lambda[0] * tnW
-                               - deriWRTpGuLi * fus * lambda[2] * tnW
-                               - regularizer * regType.reg(acum_ifactor, i, Gis))
-                            : (-deriWRTpGuLi * fus * 0.8
-                               - regularizer * Regularizer.L2.reg(acum_ifactor, i, Gis));
-                        StatsOperator.updateVector(lref_ifactor, s, learningRate * update_if,
-                            acum_ifactor, i, s);
+                               - deriWRTpGuLi * fus * lambda[2] * tnW)
+                            : (-deriWRTpGuLi * fus * 0.8);
+                        double newGis = Gis + learningRate * update_if;
+                        StatsOperator.updateVector(lref_ifactor, s,
+                            runtimes.regType.calcReg(newGis, acum_ufactor.rs(s)));
                     }
                 }
             }
@@ -220,8 +213,6 @@ public class GLOMA extends FactorRecmmder {
         double learningRate = runtimes.learningRate;
 
         Accumulator acum_diff = runtimes.acumltors.get(0);
-        Accumulator acum_ufactor = runtimes.acumltors.get(3);
-        Accumulator acum_ifactor = runtimes.acumltors.get(4);
 
         Loss lossFunction = runtimes.lossFunction;
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
@@ -253,15 +244,12 @@ public class GLOMA extends FactorRecmmder {
                     double Fus = lref_ufactor.floatValue(s);
                     double Gis = lref_ifactor.floatValue(s);
 
-                    double update_uf = (-deriWRTpLuLi * Gis * tnW
-                                        - 0.01 * Regularizer.L2.reg(acum_ufactor, u, Fus));
-                    StatsOperator.updateVector(lref_ufactor, s, learningRate * update_uf,
-                        acum_ufactor, u, s);
+                    double newFus = Fus + learningRate * (-deriWRTpLuLi * Gis) * tnW;
+                    double newGis = Gis + learningRate * (-deriWRTpLuLi * Fus) * tnW;
 
-                    double update_if = (-deriWRTpLuLi * Fus * tnW
-                                        - 0.01 * Regularizer.L2.reg(acum_ifactor, i, Gis));
-                    StatsOperator.updateVector(lref_ifactor, s, learningRate * update_if,
-                        acum_ifactor, i, s);
+                    // DEFAULT: L2 Regularization
+                    StatsOperator.updateVector(lref_ufactor, s, 0.99 * newFus);
+                    StatsOperator.updateVector(lref_ifactor, s, 0.99 * newGis);
                 }
             }
         }

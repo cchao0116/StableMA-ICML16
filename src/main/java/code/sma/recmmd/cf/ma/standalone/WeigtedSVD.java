@@ -48,8 +48,7 @@ public class WeigtedSVD extends FactorRecmmder {
     @Override
     protected void update_each(DataElem e) {
         FactorModel factModel = (FactorModel) model;
-        double learningRate = runtimes.learningRate;
-        double regularizer = runtimes.regularizer;
+        double lr = runtimes.learningRate;
         short num_ifactor = e.getNum_ifacotr();
 
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
@@ -72,11 +71,13 @@ public class WeigtedSVD extends FactorRecmmder {
                 double Fus = ref_ufactor.floatValue(s);
                 double Gis = ref_ifactor.floatValue(s);
 
-                //global model updates
-                ref_ufactor.setValue(s,
-                    Fus + learningRate * (-deriWRTp * Gis * tnW - regularizer * Fus));
-                ref_ifactor.setValue(s,
-                    Gis + learningRate * (-deriWRTp * Fus * tnW - regularizer * Gis));
+                // perform gradient descent
+                double newFus = Fus + lr * (-deriWRTp * Gis * tnW);
+                double newGis = Gis + lr * (-deriWRTp * Fus * tnW);
+
+                // perform regularization
+                ref_ufactor.setValue(s, runtimes.regType.calcReg(newFus));
+                ref_ifactor.setValue(s, runtimes.regType.calcReg(newGis));
             }
         }
     }

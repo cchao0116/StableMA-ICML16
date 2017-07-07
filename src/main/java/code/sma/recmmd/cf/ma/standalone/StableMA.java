@@ -98,7 +98,6 @@ public class StableMA extends FactorRecmmder {
     protected void update_inner(AbstractIterator iDataElem) {
         FactorModel factModel = (FactorModel) model;
         double lr = runtimes.learningRate;
-        double reg = runtimes.regularizer;
 
         int num_hps = runtimes.ints.getInt(0);
         Accumulator[] acumltor = new Accumulator[num_hps + 1];
@@ -141,13 +140,13 @@ public class StableMA extends FactorRecmmder {
                     double Fus = ref_ufactor.floatValue(s);
                     double Gis = ref_ifactor.floatValue(s);
 
-                    //global model updates
-                    ref_ufactor.setValue(s,
-                        Fus + lr
-                              * (-deriWRTp * Gis * tnW - reg * runtimes.regType.reg(null, u, Fus)));
-                    ref_ifactor.setValue(s,
-                        Gis + lr
-                              * (-deriWRTp * Fus * tnW - reg * runtimes.regType.reg(null, i, Gis)));
+                    // perform gradient descent
+                    double newFus = Fus + lr * (-deriWRTp * Gis * tnW);
+                    double newGis = Gis + lr * (-deriWRTp * Fus * tnW);
+
+                    // perform regularization
+                    ref_ufactor.setValue(s, runtimes.regType.calcReg(newFus));
+                    ref_ifactor.setValue(s, runtimes.regType.calcReg(newGis));
                 }
 
                 rid++;

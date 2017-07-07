@@ -43,7 +43,6 @@ public class RegSVD extends FactorRecmmder {
     protected void update_each(DataElem e) {
         FactorModel factModel = (FactorModel) model;
         double lr = runtimes.learningRate;
-        double reg = runtimes.regularizer;
         short num_ifactor = e.getNum_ifacotr();
 
         int u = e.getIndex_user(0);
@@ -62,11 +61,13 @@ public class RegSVD extends FactorRecmmder {
                 double Fus = ref_ufactor.floatValue(s);
                 double Gis = ref_ifactor.floatValue(s);
 
-                //global model updates
-                ref_ufactor.setValue(s,
-                    Fus + lr * (-deriWRTp * Gis - reg * runtimes.regType.reg(null, u, Fus)));
-                ref_ifactor.setValue(s,
-                    Gis + lr * (-deriWRTp * Fus - reg * runtimes.regType.reg(null, i, Gis)));
+                // perform gradient descent
+                double newFus = Fus + lr * (-deriWRTp * Gis);
+                double newGis = Gis + lr * (-deriWRTp * Fus);
+
+                // perform regularization
+                ref_ufactor.setValue(s, runtimes.regType.calcReg(newFus));
+                ref_ifactor.setValue(s, runtimes.regType.calcReg(newGis));
             }
         }
     }

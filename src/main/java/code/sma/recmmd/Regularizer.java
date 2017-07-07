@@ -1,7 +1,5 @@
 package code.sma.recmmd;
 
-import code.sma.recmmd.cf.ma.stats.Accumulator;
-
 /**
  * regularizer
  * 
@@ -9,10 +7,10 @@ import code.sma.recmmd.cf.ma.stats.Accumulator;
  * @version $Id: Regularizer.java, v 0.1 2017年3月9日 下午1:55:44 Chao.Chen Exp $
  */
 public enum Regularizer {
-                         L1, //L1-norm
-                         L2, // L2-norm
-                         L12, // Group-sparse norm
-                         ELASTIC_NET; // Elastic net
+    L1, //L1-norm
+    L2, // L2-norm
+    L12, // Group-sparse norm
+    ELASTIC_NET; // Elastic net
     // regularization hyper-parameter
     private double reg_lambda;
 
@@ -29,16 +27,17 @@ public enum Regularizer {
      * @param factrVal      the value of the latent factor
      * @return
      */
-    public double reg(Accumulator accFactr, int accId, double factrVal) {
+    public double calcReg(double factrVal, double... param) {
         switch (this) {
             case L1:
-                return smoothed_L1(factrVal, 1000.0 * 1000.0);
+                return smoothed_L1(factrVal, reg_lambda, 1000.0 * 1000.0);
             case L2:
-                return factrVal;
+                return (1 - reg_lambda) * factrVal;
             case L12:
-                return factrVal / accFactr.rs(accId);
+                assert param.length >= 1 : "L12 of each row is required.";
+                return reg_lambda * factrVal * factrVal / param[0];
             default:
-                return 0.0d;
+                return factrVal;
         }
     }
 
@@ -82,9 +81,9 @@ public enum Regularizer {
         }
     }
 
-    protected double smoothed_L1(double fValue, double alpha) {
-        return 1.0 / (1.0 + Math.exp(-1.0 * alpha * fValue))
-               - 1.0 / (1.0 + Math.exp(1.0 * alpha * fValue));
+    protected double smoothed_L1(double fValue, double lambda, double alpha) {
+        return lambda * (1.0 / (1.0 + Math.exp(-1.0 * alpha * fValue))
+                         - 1.0 / (1.0 + Math.exp(1.0 * alpha * fValue)));
     }
 
     protected double threshold_L1(double w, double lambda) {
