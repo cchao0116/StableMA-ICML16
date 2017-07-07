@@ -15,6 +15,20 @@ public class Accumulator {
     public int cursor_vId;
     public int cursor_accId;
 
+    public Accumulator(int dimnsn) {
+        int num = 1;
+        accVal = new double[num];
+        accNum = new int[num];
+
+        indvdlVal = new float[num][dimnsn];
+        for (float[] iv : indvdlVal) {
+            Arrays.fill(iv, Float.NaN);
+        }
+
+        cursor_vId = 0;
+        cursor_accId = 0;
+    }
+
     public Accumulator(int num, int dimnsn) {
         accVal = new double[num];
         accNum = new int[num];
@@ -70,6 +84,24 @@ public class Accumulator {
         indvdlVal[accId][vId] = (float) value;
     }
 
+    /**
+     * update the value which exists in the accumulator
+     * 
+     * @param vId   the index of the updated value
+     * @param value the value to update
+     */
+    public void update(int vId, double value) {
+        int accId = 0;
+        if (Double.isNaN(indvdlVal[accId][vId])) {
+            accVal[accId] += value;
+            accNum[accId]++;
+        } else {
+            accVal[accId] += value - indvdlVal[accId][vId];
+        }
+
+        indvdlVal[accId][vId] = (float) value;
+    }
+
     /** 
      * get the root sum of the given accumulator's ID
      * 
@@ -78,6 +110,19 @@ public class Accumulator {
      */
     public double rs(int accId) {
         return Math.sqrt(accVal[accId]);
+    }
+
+    /** 
+     * get the root sum of overall data
+     * 
+     * @return
+     */
+    public double rs() {
+        double accV = 0.0d;
+        for (double acc : accVal) {
+            accV += acc;
+        }
+        return Math.sqrt(accV);
     }
 
     /**

@@ -45,7 +45,7 @@ public final class StatsOperator {
             for (Accumulator acr : acumltor) {
                 if (acr != null) {
                     for (int n = 0; n < shape[1]; n++) {
-                        acr.update(0, n, Math.pow(vec.floatValue(n), 2.0d));
+                        acr.update(n, Math.pow(vec.floatValue(n), 2.0d));
                     }
                 }
             }
@@ -108,7 +108,7 @@ public final class StatsOperator {
         if (acumltor != null) {
             for (Accumulator acr : acumltor) {
                 if (acr != null) {
-                    acr.update(0, f, fVal * fVal);
+                    acr.update(f, fVal * fVal);
                 }
             }
         }

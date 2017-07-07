@@ -72,12 +72,12 @@ public class GLOMA extends FactorRecmmder {
         runtimes.nnz = runtimes.itrain.get_num_global();
 
         runtimes.acumltors = new ArrayList<Accumulator>();
-        runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_global())); // accumulator to record difference between real and predicted value
-        runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_ufactor()));
-        runtimes.acumltors.add(new Accumulator(1, runtimes.itrain.get_num_ifactor()));
+        runtimes.acumltors.add(new Accumulator(runtimes.itrain.get_num_global())); // accumulator to record difference between real and predicted value
+        runtimes.acumltors.add(new Accumulator(runtimes.itrain.get_num_ufactor()));
+        runtimes.acumltors.add(new Accumulator(runtimes.itrain.get_num_ifactor()));
 
-        acum_ufactor = new Accumulator(1, runtimes.featureCount);
-        acum_ifactor = new Accumulator(1, runtimes.featureCount);
+        acum_ufactor = new Accumulator(runtimes.featureCount);
+        acum_ifactor = new Accumulator(runtimes.featureCount);
 
         Discretizer dctzr = (Discretizer) runtimes.plugins.get("DISCRETIZER");
         runtimes.tnWs = dctzr.cmpTrainWs(runtimes.itrain);
@@ -188,7 +188,7 @@ public class GLOMA extends FactorRecmmder {
                         double newFus = Fus + learningRate * update_uf;
 
                         StatsOperator.updateVector(lref_ufactor, s,
-                            runtimes.regType.calcReg(newFus, acum_ufactor.rs(s)));
+                            runtimes.regType.calcReg(newFus, acum_ufactor.rs()));
                     }
 
                     if (acc_ifi[i]) {
@@ -198,7 +198,7 @@ public class GLOMA extends FactorRecmmder {
                             : (-deriWRTpGuLi * fus * 0.8);
                         double newGis = Gis + learningRate * update_if;
                         StatsOperator.updateVector(lref_ifactor, s,
-                            runtimes.regType.calcReg(newGis, acum_ufactor.rs(s)));
+                            runtimes.regType.calcReg(newGis, acum_ufactor.rs()));
                     }
                 }
             }
