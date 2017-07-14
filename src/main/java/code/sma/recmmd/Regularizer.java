@@ -6,15 +6,60 @@ package code.sma.recmmd;
  * @author Chao.Chen
  * @version $Id: Regularizer.java, v 0.1 2017年3月9日 下午1:55:44 Chao.Chen Exp $
  */
-public enum Regularizer {
-    SMOOTH_L1, //L1-norm
-    THRESHOLD_L1, //L1-norm
-    L2, // L2-norm
-    L12, // Group-sparse norm
-    ELASTIC_NET; // Elastic net
-    // regularization hyper-parameter
-    private double reg_lambda;
+public final class Regularizer {
+    /** regularization hyper-parameter */
+    private double  reg_lambda;
+    /** regularization type*/
+    private RegEnum regEnum;
 
+    public static Regularizer valueOf(String regStr, double reg_lambda) {
+        Regularizer reg = new Regularizer();
+        reg.regEnum = RegEnum.valueOf(regStr);
+        reg.reg_lambda = reg_lambda;
+        return reg;
+    }
+
+    public static Regularizer SMOOTH_L1(double reg_lambda) {
+        Regularizer reg = new Regularizer();
+        reg.regEnum = RegEnum.SMOOTH_L1;
+        reg.reg_lambda = reg_lambda;
+        return reg;
+    }
+
+    public static Regularizer THRESHOLD_L1(double reg_lambda) {
+        Regularizer reg = new Regularizer();
+        reg.regEnum = RegEnum.THRESHOLD_L1;
+        reg.reg_lambda = reg_lambda;
+        return reg;
+    }
+
+    public static Regularizer L2(double reg_lambda) {
+        Regularizer reg = new Regularizer();
+        reg.regEnum = RegEnum.L2;
+        reg.reg_lambda = reg_lambda;
+        return reg;
+    }
+
+    public static Regularizer L12(double reg_lambda) {
+        Regularizer reg = new Regularizer();
+        reg.regEnum = RegEnum.L12;
+        reg.reg_lambda = reg_lambda;
+        return reg;
+    }
+
+    public static Regularizer ELASTIC_NET(double reg_lambda) {
+        Regularizer reg = new Regularizer();
+        reg.regEnum = RegEnum.ELASTIC_NET;
+        reg.reg_lambda = reg_lambda;
+        return reg;
+    }
+
+    /**
+     * builder: set hyper-parameter lambda
+     * 
+     * @param reg_lambda    lambda for regularization
+     * @return              regularization object
+     */
     public Regularizer lambda(double reg_lambda) {
         this.reg_lambda = reg_lambda;
         return this;
@@ -27,8 +72,9 @@ public enum Regularizer {
      * @param param         extension
      * @return
      */
+
     public double calcReg(double factrVal, double... param) {
-        switch (this) {
+        switch (regEnum) {
             case SMOOTH_L1:
                 return smoothed_L1(factrVal, reg_lambda, 1000.0 * 1000.0);
             case L2:
@@ -49,7 +95,7 @@ public enum Regularizer {
      * @return
      */
     public double afterReg(double factrVal, double... param) {
-        switch (this) {
+        switch (regEnum) {
             case THRESHOLD_L1:
                 return threshold_L1(factrVal, reg_lambda);
             default:
@@ -69,7 +115,7 @@ public enum Regularizer {
             return 0.0;
         } else {
             assert sum_hess > 1e-5 : "second order derivative too low";
-            switch (this) {
+            switch (regEnum) {
                 case THRESHOLD_L1:
                     return -threshold_L1(sum_grad, reg_lambda) / sum_hess;
                 case L2:
@@ -84,7 +130,7 @@ public enum Regularizer {
     }
 
     public double calcCost(double sum_grad, double sum_hess) {
-        switch (this) {
+        switch (regEnum) {
             case THRESHOLD_L1:
                 return Math.pow(threshold_L1(sum_grad, reg_lambda), 2.0d) / sum_hess;
             case L2:
@@ -110,4 +156,11 @@ public enum Regularizer {
         return 0.0;
     }
 
+    private enum RegEnum {
+                          SMOOTH_L1, //L1-norm
+                          THRESHOLD_L1, //L1-norm
+                          L2, // L2-norm
+                          L12, // Group-sparse norm
+                          ELASTIC_NET; // Elastic net
+    }
 }

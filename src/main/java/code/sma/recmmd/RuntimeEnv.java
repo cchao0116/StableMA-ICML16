@@ -131,8 +131,8 @@ public final class RuntimeEnv implements Serializable {
         this.lossFunction = conf.contains("LOSS_FUNCTION")
             ? Loss.valueOf(conf.getProperty("LOSS_FUNCTION")) : Loss.LOSS_RMSE;
         this.regType = conf.contains("REG_TYPE")
-            ? Regularizer.valueOf(conf.getProperty("REG_TYPE")).lambda(regularizer)
-            : Regularizer.L2.lambda(regularizer);
+            ? Regularizer.valueOf(conf.getProperty("REG_TYPE"), regularizer)
+            : Regularizer.L2(regularizer);
     }
 
     public String briefDesc() {
