@@ -9,27 +9,23 @@ import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.cf.ma.stats.StatsOperator;
 
-
 /**
- * This is a class implementing Regularized SVD (Singular Value Decomposition).
- * Technical detail of the algorithm can be found in
- * Arkadiusz Paterek, Improving Regularized Singular Value Decomposition Collaborative Filtering,
- * Proceedings of KDD Cup and Workshop, 2007.
+ * Advanced RegSVD
  * 
  * @author Chao Chen
- * @version $Id: RegSVD.java, v 0.1 Jan 28, 2016 1:05:24 PM Exp $
+ * @version $Id: BiasedMA.java, Dec 6, 2017 6:14:46 PM$
  */
-public class RegSVD extends FactorRecmmder {
+public class BiasedMA extends FactorRecmmder {
 
     /*========================================
      * Constructors
      *========================================*/
-    public RegSVD(Configures conf, Map<String, Plugin> plugins) {
+    public BiasedMA(Configures conf, Map<String, Plugin> plugins) {
         super(conf, plugins);
     }
 
-    public RegSVD(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
-                  Map<String, Plugin> plugins) {
+    public BiasedMA(Configures conf, boolean[] acc_ufi, boolean[] acc_ifi,
+                    Map<String, Plugin> plugins) {
         super(conf, acc_ufi, acc_ifi, plugins);
     }
 
@@ -51,12 +47,17 @@ public class RegSVD extends FactorRecmmder {
 
             DenseVector ref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u);
             DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i);
+            double bu = factModel.ubias.floatValue(u);
+            double bi = factModel.ibias.floatValue(i);
 
             double AuiReal = e.getValue_ifactor(f);
-            double AuiEst = ref_ufactor.innerProduct(ref_ifactor);
+            double AuiEst = factModel.base + factModel.ubias.floatValue(u) + bu + bi
+                            + ref_ufactor.innerProduct(ref_ifactor);
             runtimes.sumErr += runtimes.lossFunction.calcLoss(AuiReal, AuiEst);
 
             double deriWRTp = runtimes.lossFunction.calcGrad(AuiReal, AuiEst);
+
+            // update latent factors
             for (int s = 0; s < runtimes.featureCount; s++) {
                 double Fus = ref_ufactor.floatValue(s);
                 double Gis = ref_ifactor.floatValue(s);
@@ -69,6 +70,10 @@ public class RegSVD extends FactorRecmmder {
                 ref_ufactor.setValue(s, runtimes.regType.afterReg(newFus));
                 ref_ifactor.setValue(s, runtimes.regType.afterReg(newGis));
             }
+
+            // update biases
+            factModel.ubias.setValue(u, bu + lr * (-deriWRTp - runtimes.regType.calcReg(bu)));
+            factModel.ibias.setValue(i, bi + lr * (-deriWRTp - runtimes.regType.calcReg(bi)));
         }
     }
 
@@ -77,7 +82,7 @@ public class RegSVD extends FactorRecmmder {
      */
     @Override
     public String toString() {
-        return String.format("RSVD%s", runtimes.briefDesc());
+        return String.format("BiasedMA%s", runtimes.briefDesc());
     }
 
 }

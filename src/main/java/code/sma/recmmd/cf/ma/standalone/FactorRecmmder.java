@@ -21,9 +21,8 @@ import code.sma.util.SerializeUtil;
  * This is an abstract class implementing four matrix-factorization-based methods
  * including Regularized SVD, NMF, PMF, and Bayesian PMF.
  * 
- * @author Joonseok Lee
- * @since 2012. 4. 20
- * @version 1.1
+ * @author Chao Chen
+ * @version $Id: FactorRecmmder.java, v 0.1 Jan 28, 2016 1:05:24 PM Exp $
  */
 public abstract class FactorRecmmder extends Recommender {
     /** Resulting model */

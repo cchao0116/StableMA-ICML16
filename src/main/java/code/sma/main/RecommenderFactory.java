@@ -15,6 +15,7 @@ import code.sma.plugin.Plugin;
 import code.sma.recmmd.Recommender;
 import code.sma.recmmd.cf.ma.ensemble.MultTskREC;
 import code.sma.recmmd.cf.ma.ensemble.WEMAREC;
+import code.sma.recmmd.cf.ma.standalone.BiasedMA;
 import code.sma.recmmd.cf.ma.standalone.GSMF;
 import code.sma.recmmd.cf.ma.standalone.RegSVD;
 import code.sma.recmmd.cf.ma.standalone.StableMA;
@@ -82,6 +83,8 @@ public final class RecommenderFactory {
             return new MultTskREC(conf, plugins);
         } else if (StringUtil.equalsIgnoreCase(algName, "GBM")) {
             return new GBM(conf, null);
+        } else if (StringUtil.equalsIgnoreCase(algName, "BiasedMA")) {
+            return new BiasedMA(conf, null);
         } else {
             return null;
         }
