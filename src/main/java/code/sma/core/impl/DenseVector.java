@@ -50,9 +50,8 @@ public class DenseVector extends AbstractVector {
      */
     @Override
     public void setValue(int i, double value) {
-        if (i < N) {
-            vals[i] = (float) value;
-        }
+        assert i < N : "index should not be out of bounds.";
+        vals[i] = (float) value;
     }
 
     /** 

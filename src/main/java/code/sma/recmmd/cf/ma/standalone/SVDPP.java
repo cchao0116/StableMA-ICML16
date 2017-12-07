@@ -96,21 +96,22 @@ public class SVDPP extends FactorRecmmder {
                 double Yus = ref_yfactor.floatValue(s);
                 double Gis = ref_ifactor.floatValue(s);
 
+                double derivWRTUY = deriWRTp * Gis;
+                
                 // update explicit factors
                 {
-                    double newFus = Fus + lr * (-deriWRTp * Gis - runtimes.regType.calcReg(Fus));
-                    double newGis = Gis
-                                    + lr
-                                      * (-deriWRTp * (Fus + Yus) - runtimes.regType.calcReg(Gis));
+                    double newFus = Fus + lr * (-derivWRTUY - runtimes.regType.calcReg(Fus));
+                    double newGis = Gis + lr * (-deriWRTp * (Fus + Yus) - runtimes.regType.calcReg(Gis));
                     ref_ufactor.setValue(s, runtimes.regType.afterReg(newFus));
                     ref_ifactor.setValue(s, runtimes.regType.afterReg(newGis));
                 }
 
                 // update implicit factors
-                deriv_yus[s] = deriWRTp * Gis * scale_yfactors;
+                deriv_yus[s] = derivWRTUY;
+                derivWRTUY *= scale_yfactors;
                 for (int y = 0; y < num_ifactor; y++) {
                     double yus = ref_yfactors[y].floatValue(s);
-                    double newyus = yus + lr * (-deriv_yus[s] - runtimes.regType.calcReg(yus));
+                    double newyus = yus + lr * (-derivWRTUY - runtimes.regType.calcReg(yus));
                     ref_yfactors[y].setValue(s, runtimes.regType.afterReg(newyus));
                 }
             }
@@ -125,7 +126,7 @@ public class SVDPP extends FactorRecmmder {
             if (runtimes.regType.regEnum == RegEnum.L2) {
                 for (int s = 0; s < runtimes.featureCount; s++) {
                     double yus = ref_yfactor.floatValue(s);
-                    double newyus = yus + lr * (-deriv_yus[s] / scale_yfactors - runtimes.regType.calcReg(yus));
+                    double newyus = yus + lr * (-deriv_yus[s] - runtimes.regType.calcReg(yus));
                     ref_yfactor.setValue(s, newyus);
                 }
             } else {
