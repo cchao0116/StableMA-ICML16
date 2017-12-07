@@ -8,9 +8,9 @@ package code.sma.recmmd;
  */
 public final class Regularizer {
     /** regularization hyper-parameter */
-    private double  reg_lambda;
+    public double  reg_lambda;
     /** regularization type*/
-    private RegEnum regEnum;
+    public RegEnum regEnum;
 
     public static Regularizer valueOf(String regStr, double reg_lambda) {
         Regularizer reg = new Regularizer();
@@ -156,7 +156,7 @@ public final class Regularizer {
         return 0.0;
     }
 
-    private enum RegEnum {
+    public enum RegEnum {
                           SMOOTH_L1, //L1-norm
                           THRESHOLD_L1, //L1-norm
                           L2, // L2-norm
