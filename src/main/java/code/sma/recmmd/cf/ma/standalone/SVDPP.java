@@ -2,6 +2,8 @@ package code.sma.recmmd.cf.ma.standalone;
 
 import java.util.Map;
 
+import code.sma.core.AbstractIterator;
+import code.sma.core.AbstractMatrix;
 import code.sma.core.DataElem;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
@@ -31,6 +33,27 @@ public class SVDPP extends FactorRecmmder {
     /*========================================
      * Model Builder
      *========================================*/
+    /** 
+     * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#prepare_runtimes(code.sma.core.AbstractMatrix, code.sma.core.AbstractMatrix)
+     */
+    @Override
+    protected void prepare_runtimes(AbstractMatrix train, AbstractMatrix test) {
+        assert train != null : "Training data cannot be null.";
+
+        boolean[] acc_ufi = runtimes.acc_uf_indicator;
+        boolean[] acc_ifi = runtimes.acc_if_indicator;
+
+        runtimes.itrain = (acc_ufi == null && acc_ifi == null) ? (AbstractIterator) train.iterator()
+            : (AbstractIterator) train.iteratorJion(acc_ufi, acc_ifi);
+        runtimes.itest = (test == null) ? null
+            : ((acc_ufi == null && acc_ifi == null) ? (AbstractIterator) test.iterator()
+                : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
+        runtimes.nnz = runtimes.itrain.get_num_ifactor();
+
+        if (model == null) {
+            model = new SVDPPModel(runtimes.conf);
+        }
+    }
 
     /** 
      * @see code.sma.recmmd.cf.ma.standalone.FactorRecmmder#update_each(code.sma.core.DataElem)

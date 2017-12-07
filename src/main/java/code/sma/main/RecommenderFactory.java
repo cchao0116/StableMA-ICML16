@@ -18,6 +18,7 @@ import code.sma.recmmd.cf.ma.ensemble.WEMAREC;
 import code.sma.recmmd.cf.ma.standalone.BiasedMA;
 import code.sma.recmmd.cf.ma.standalone.GSMF;
 import code.sma.recmmd.cf.ma.standalone.RegSVD;
+import code.sma.recmmd.cf.ma.standalone.SVDPP;
 import code.sma.recmmd.cf.ma.standalone.StableMA;
 import code.sma.recmmd.fb.gbm.GBM;
 import code.sma.util.SerializeUtil;
@@ -85,6 +86,8 @@ public final class RecommenderFactory {
             return new GBM(conf, null);
         } else if (StringUtil.equalsIgnoreCase(algName, "BiasedMA")) {
             return new BiasedMA(conf, null);
+        } else if (StringUtil.equalsIgnoreCase(algName, "SVDPP")) {
+            return new SVDPP(conf, null);
         } else {
             return null;
         }
