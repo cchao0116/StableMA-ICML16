@@ -121,7 +121,7 @@ public class CRefVector extends AbstractVector {
      * @see code.sma.core.AbstractVector#innerProduct(code.sma.core.AbstractVector)
      */
     @Override
-    public double innerProduct(AbstractVector b) {
+    public double innerProduct(AbstractVector... b) {
         throw new RuntimeException("This method has not been implemented in CRefVector!");
     }
 
@@ -180,7 +180,7 @@ public class CRefVector extends AbstractVector {
      * @version $Id: CRefVector.java, v 0.1 2017年6月5日 下午12:43:22 Chao.Chen Exp $
      */
     protected enum CRefType {
-        Ints, Floats, Chars;
+                             Ints, Floats, Chars;
     }
 
 }

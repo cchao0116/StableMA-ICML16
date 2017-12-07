@@ -28,23 +28,20 @@ public class CollaFiltrMetrics extends EvaluationMetrics {
 
             DataElem e = idata.next();
             short num_ifactor = e.getNum_ifacotr();
+            nnz += num_ifactor;
 
-            int u = e.getIndex_user(0);
+            double[] preds = model.predict(e);
             for (int f = 0; f < num_ifactor; f++) {
-                int i = e.getIndex_item(f);
-
                 double realVal = e.getValue_ifactor(f);
-                double predVal = model.predict(u, i);
+                double predVal = preds[f];
 
                 mae += Math.abs(realVal - predVal);
                 mse += Math.pow(realVal - predVal, 2.0d);
-                nnz++;
             }
 
         }
         mae /= nnz;
         mse /= nnz;
-
     }
 
 }

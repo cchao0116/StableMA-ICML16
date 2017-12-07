@@ -28,7 +28,7 @@ public class FeatureBasedMetrics extends EvaluationMetrics {
             DataElem e = idata.next();
 
             double realVal = e.getLabel();
-            double predVal = model.predict(e);
+            double predVal = model.predict(e)[0];
 
             mae += Math.abs(realVal - predVal);
             mse += Math.pow(realVal - predVal, 2.0d);

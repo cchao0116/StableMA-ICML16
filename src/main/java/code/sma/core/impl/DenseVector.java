@@ -24,16 +24,10 @@ public class DenseVector extends AbstractVector {
         this.vals = new float[N];
     }
 
-    public DenseVector(int N, boolean needRanInit) {
+    public DenseVector(int N, float[] vals) {
         super();
         this.N = N;
-        this.vals = new float[N];
-
-        if (needRanInit) {
-            for (int n = 0; n < N; n++) {
-                vals[n] = (float) (Math.random() / N);
-            }
-        }
+        this.vals = vals;
     }
 
     // ======================================== 

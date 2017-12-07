@@ -97,7 +97,7 @@ public abstract class EnsembleFactorRecmmder extends FactorRecmmder
                         continue;
                     }
 
-                    double prediction = _m.predict(u, i);
+                    double prediction = _m.predict(u, i, e);
                     double weight = ensnblWeight(u, i, prediction);
 
                     double newCumPrediction = prediction * weight + cumPrediction.getValue(u, i);
@@ -124,10 +124,10 @@ public abstract class EnsembleFactorRecmmder extends FactorRecmmder
     }
 
     /**
-     * @see code.sma.model.Model#predict(int, int)
+     * @see code.sma.model.Model#predict(int, int, code.sma.core.DataElem[])
      */
     @Override
-    public double predict(int u, int i) {
+    public double predict(int u, int i, DataElem... e) {
         double maxValue = runtimes.maxValue;
         double minValue = runtimes.minValue;
 
@@ -140,7 +140,7 @@ public abstract class EnsembleFactorRecmmder extends FactorRecmmder
      * @see code.sma.model.Model#predict(code.sma.core.DataElem)
      */
     @Override
-    public double predict(DataElem e) {
+    public double[] predict(DataElem e) {
         throw new RuntimeException(
             "This method has not been implemented in EnsembleMFRecommender!");
     }

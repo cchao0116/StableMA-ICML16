@@ -32,13 +32,14 @@ public enum RandomVector {
                 return vec;
             case UNIFORM:
                 for (int n = 0; n < N; n++) {
-                    vec.setValue(n, ran.nextDouble() / params[0]);
+                    vec.setValue(n, ran.nextDouble() * params[0]);
                 }
                 return vec;
             case GAUSSIAN:
                 for (int n = 0; n < N; n++) {
                     vec.setValue(n, ran.nextGaussian() * params[0]);
                 }
+                return vec;
             default:
                 return null;
         }

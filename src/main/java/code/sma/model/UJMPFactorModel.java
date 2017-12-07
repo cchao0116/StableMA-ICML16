@@ -28,21 +28,31 @@ public class UJMPFactorModel extends AbstractModel {
         this.ifactors = new UJMPDenseMatrix(featureCount, itemCount);
     }
 
-    /** 
-     * @see code.sma.model.Model#predict(int, int)
+    /**
+     * @see code.sma.model.Model#predict(int, int, code.sma.core.DataElem[])
      */
     @Override
-    public double predict(int u, int i) {
+    public double predict(int u, int i, DataElem... e) {
         double prediction = ufactors.getRow(u).innerProduct(ifactors.getCol(i));
         return Math.max(minValue, Math.min(prediction, maxValue));
     }
 
     /** 
-     * @see code.sma.model.Model#predict(code.sma.core.DataElem)
+     * @see code.sma.model.AbstractModel#predict(code.sma.core.DataElem)
      */
     @Override
-    public double predict(DataElem e) {
-        throw new RuntimeException("This method has not been implemented in UJMPFactorModel!");
+    public double[] predict(DataElem e) {
+        assert (ufactors != null && ifactors != null) : "Feature matrix cannot be null";
+
+        short num_ifactor = e.getNum_ifacotr();
+        double[] preds = new double[num_ifactor];
+
+        int u = e.getIndex_user(0);
+        for (int p = 0; p < num_ifactor; p++) {
+            int i = e.getIndex_item(p);
+            preds[p] = predict(u, i);
+        }
+        return preds;
     }
 
 }

@@ -106,7 +106,7 @@ public class GBM extends FeatureBasedRecmmder {
             while (iDataElem.hasNext()) {
                 DataElem e = iDataElem.next();
                 double label = e.getLabel();
-                double pred = gbm.predict(e);
+                double pred = gbm.predict(e)[0];
 
                 double grad = runtimes.lossFunction.calcGrad(label, pred);
                 double hess = runtimes.lossFunction.calcHession(label, pred);

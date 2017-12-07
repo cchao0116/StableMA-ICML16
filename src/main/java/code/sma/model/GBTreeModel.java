@@ -60,10 +60,10 @@ public class GBTreeModel extends AbstractModel {
     }
 
     /**
-     * @see code.sma.model.AbstractModel#predict(int, int)
+     * @see code.sma.model.Model#predict(int, int, code.sma.core.DataElem[])
      */
     @Override
-    public double predict(int u, int i) {
+    public double predict(int u, int i, DataElem... e) {
         throw new RuntimeException("This method has not been implemented in TreeModel!");
     }
 
@@ -71,7 +71,7 @@ public class GBTreeModel extends AbstractModel {
      * @see code.sma.model.AbstractModel#predict(code.sma.core.DataElem)
      */
     @Override
-    public double predict(DataElem e) {
+    public double[] predict(DataElem e) {
         CRefVector index_user = e.getIndex_user();
         CRefVector value_ufactor = e.getValue_ufactor();
         assert index_user != null && value_ufactor != null : "Feature should not be null";
@@ -95,7 +95,10 @@ public class GBTreeModel extends AbstractModel {
                 n = nodes.get(n.right);
             }
         }
-        return n.getLeafValue();
+
+        double[] pred = new double[1];
+        pred[0] = n.getLeafValue();
+        return pred;
     }
 
     /**

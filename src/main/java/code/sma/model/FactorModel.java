@@ -43,10 +43,10 @@ public class FactorModel extends AbstractModel {
     }
 
     /** 
-     * @see code.sma.model.AbstractModel#predict(int, int)
+     * @see code.sma.model.Model#predict(int, int, code.sma.core.DataElem[])
      */
     @Override
-    public double predict(int u, int i) {
+    public double predict(int u, int i, DataElem... e) {
         assert (ufactors != null && ifactors != null) : "Feature matrix cannot be null";
         AbstractVector ufs = ufactors.getRowRef(u);
         AbstractVector ifs = ifactors.getRowRef(i);
@@ -60,14 +60,35 @@ public class FactorModel extends AbstractModel {
                                 + ufs.innerProduct(ifs);
             return Math.max(minValue, Math.min(prediction, maxValue));
         }
-
     }
 
     /** 
      * @see code.sma.model.AbstractModel#predict(code.sma.core.DataElem)
      */
     @Override
-    public double predict(DataElem e) {
-        throw new RuntimeException("This method has not been implemented in FactorModel!");
+    public double[] predict(DataElem e) {
+        assert (ufactors != null && ifactors != null) : "Feature matrix cannot be null";
+
+        short num_ifactor = e.getNum_ifacotr();
+        double[] preds = new double[num_ifactor];
+
+        int u = e.getIndex_user(0);
+        AbstractVector ufs = ufactors.getRowRef(u);
+        for (int p = 0; p < num_ifactor; p++) {
+            int i = e.getIndex_item(p);
+            AbstractVector ifs = ifactors.getRowRef(i);
+
+            if (ufs == null || ifs == null) {
+                LoggerUtil.debug(runningLogger,
+                    String.format("null latent factors for (%d,%d)-entry", u, i));
+                preds[p] = defaultValue;
+            } else {
+                double prediction = base + ubias.floatValue(u) + ibias.floatValue(i)
+                                    + ufs.innerProduct(ifs);
+                preds[p] = Math.max(minValue, Math.min(prediction, maxValue));
+            }
+        }
+        return preds;
     }
+
 }

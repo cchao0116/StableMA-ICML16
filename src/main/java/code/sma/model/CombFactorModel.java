@@ -1,6 +1,7 @@
 package code.sma.model;
 
 import code.sma.core.AbstractVector;
+import code.sma.core.DataElem;
 import code.sma.core.impl.DenseMatrix;
 import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
@@ -24,11 +25,7 @@ public class CombFactorModel extends FactorModel {
         g_ifactors = m.ifactors;
     }
 
-    /** 
-     * @see code.sma.model.FactorModel#predict(int, int)
-     */
-    @Override
-    public double predict(int u, int i) {
+    private double predict(int u, int i) {
         assert (ufactors != null && ifactors != null) : "Feature matrix cannot be null";
 
         //        double maxValue = runtimes.maxValue;
@@ -54,6 +51,24 @@ public class CombFactorModel extends FactorModel {
         }
 
         return Math.max(minValue, Math.min(prediction, maxValue));
+    }
+
+    /** 
+     * @see code.sma.model.AbstractModel#predict(code.sma.core.DataElem)
+     */
+    @Override
+    public double[] predict(DataElem e) {
+        assert (ufactors != null && ifactors != null) : "Feature matrix cannot be null";
+
+        short num_ifactor = e.getNum_ifacotr();
+        double[] preds = new double[num_ifactor];
+
+        int u = e.getIndex_user(0);
+        for (int p = 0; p < num_ifactor; p++) {
+            int i = e.getIndex_item(p);
+            preds[p] = predict(u, i);
+        }
+        return preds;
     }
 
 }

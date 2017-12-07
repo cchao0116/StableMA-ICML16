@@ -46,19 +46,26 @@ public abstract class AbstractVector implements Serializable {
     public abstract int length();
 
     /**
-     * Inner product of two vectors.
+     * The sum of the inner products.
      * 
-     * @param b The vector to be inner-producted with this vector.
+     * @param b The vectors to be inner-producted with this vector.
      * @return The inner-product value.
      */
-    public double innerProduct(AbstractVector b) {
+    public double innerProduct(AbstractVector... b) {
         assert (this != null && b != null) : "1D Tensor should not be null";
-        assert this.length() == b.length() : "The dimentions of two vector are inequate";
+        assert b.length != 0 : "b's length shoud be non-zero";
+        //        assert this.length() == b.length() : "The dimentions of two vector are inequate";
 
-        int len = this.length();
+        int L = b.length;
+        int N = this.length();
         double sum = 0.0d;
-        for (int i = 0; i < len; i++) {
-            sum += this.floatValue(i) * b.floatValue(i);
+        for (int i = 0; i < N; i++) {
+            double bs = 0.0d;
+            for (int l = 0; l < L; l++) {
+                bs += b[l].floatValue(i);
+            }
+
+            sum += this.floatValue(i) * bs;
         }
 
         return sum;

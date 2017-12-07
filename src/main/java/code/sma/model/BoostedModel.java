@@ -28,11 +28,11 @@ public class BoostedModel extends AbstractModel {
         learningRate = conf.getDouble("LEARNING_RATE_VALUE");
     }
 
-    /** 
-     * @see code.sma.model.Model#predict(int, int)
+    /**
+     * @see code.sma.model.Model#predict(int, int, code.sma.core.DataElem[])
      */
     @Override
-    public double predict(int u, int i) {
+    public double predict(int u, int i, DataElem... e) {
         double prediction = 0.0d;
         for (AbstractModel bster : boosters) {
             prediction += learningRate * bster.predict(u, i);
@@ -45,13 +45,15 @@ public class BoostedModel extends AbstractModel {
      * @see code.sma.model.Model#predict(code.sma.core.DataElem)
      */
     @Override
-    public double predict(DataElem e) {
+    public double[] predict(DataElem e) {
         double prediction = 0.0d;
         for (AbstractModel bster : boosters) {
-            prediction += learningRate * bster.predict(e);
+            prediction += learningRate * bster.predict(e)[0];
         }
 
-        return Math.max(minValue, Math.min(prediction, maxValue));
+        double[] pred = new double[1];
+        pred[0] = Math.max(minValue, Math.min(prediction, maxValue));
+        return pred;
     }
 
     public void add(AbstractModel booster) {
