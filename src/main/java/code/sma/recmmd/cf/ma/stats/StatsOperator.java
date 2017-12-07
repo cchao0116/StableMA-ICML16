@@ -25,6 +25,20 @@ public final class StatsOperator {
      * @return              the vector reference
      */
     public static DenseVector getVectorRef(DenseMatrix factor, int row, Accumulator... acumltor) {
+        return getVectorRef(factor, row, RandomVector.UNIFORM, acumltor);
+    }
+
+    /**
+     * get reference of row vector of DenseMatrix
+     * 
+     * @param factor        the dense matrix
+     * @param row           row Id
+     * @param rand          type of how to initialize a vector
+     * @param acumltor      option: accumulator to record the value of factors
+     * @return              the vector reference
+     */
+    public static DenseVector getVectorRef(DenseMatrix factor, int row, RandomVector rand,
+                                           Accumulator... acumltor) {
         assert factor != null : "Matrix should not be null";
 
         int[] shape = factor.shape();
@@ -32,11 +46,7 @@ public final class StatsOperator {
         DenseVector vec = factor.getRowRef(row);
 
         if (vec == null) {
-            vec = new DenseVector(shape[1]);
-            for (int n = 0; n < shape[1]; n++) {
-                float r = (float) (Math.random() / shape[1]);
-                vec.setValue(n, r);
-            }
+            vec = rand.create(shape[1], 1.0 / shape[1]);
             factor.setRowRef(row, vec);
         }
 

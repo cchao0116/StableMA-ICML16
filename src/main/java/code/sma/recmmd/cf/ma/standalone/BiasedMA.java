@@ -7,6 +7,7 @@ import code.sma.core.impl.DenseVector;
 import code.sma.main.Configures;
 import code.sma.model.FactorModel;
 import code.sma.plugin.Plugin;
+import code.sma.recmmd.cf.ma.stats.RandomVector;
 import code.sma.recmmd.cf.ma.stats.StatsOperator;
 
 /**
@@ -45,8 +46,10 @@ public class BiasedMA extends FactorRecmmder {
         for (int f = 0; f < num_ifactor; f++) {
             int i = e.getIndex_item(f);
 
-            DenseVector ref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u);
-            DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i);
+            DenseVector ref_ufactor = StatsOperator.getVectorRef(factModel.ufactors, u,
+                RandomVector.GAUSSIAN);
+            DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i,
+                RandomVector.GAUSSIAN);
             double bu = factModel.ubias.floatValue(u);
             double bi = factModel.ibias.floatValue(i);
 
