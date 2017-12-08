@@ -1,5 +1,6 @@
 package code.sma.recmmd.cf.ma.standalone;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import code.sma.core.AbstractIterator;
@@ -71,7 +72,8 @@ public class SVDPP extends FactorRecmmder {
             int i = e.getIndex_item(f);
             ref_yfactors[f] = StatsOperator.getVectorRef(factModel.yfactors, i);
         }
-        DenseVector ref_yfactor = factModel.calcImplicFeature(ref_yfactors);
+        double[] arr_yfactor = new double[runtimes.featureCount];
+        factModel.calcImplicFeature(ref_yfactors, arr_yfactor);
         double[] deriv_yus = new double[runtimes.featureCount];
 
         int u = e.getIndex_user(0);
@@ -93,25 +95,23 @@ public class SVDPP extends FactorRecmmder {
             // update latent factors
             for (int s = 0; s < runtimes.featureCount; s++) {
                 double Fus = ref_ufactor.floatValue(s);
-                double Yus = ref_yfactor.floatValue(s);
                 double Gis = ref_ifactor.floatValue(s);
+                double Yus = arr_yfactor[s];
 
-                double derivWRTUY = deriWRTp * Gis;
-                
                 // update explicit factors
                 {
-                    double newFus = Fus + lr * (-derivWRTUY - runtimes.regType.calcReg(Fus));
+                    double newFus = Fus + lr * (-deriWRTp * Gis - runtimes.regType.calcReg(Fus));
                     double newGis = Gis + lr * (-deriWRTp * (Fus + Yus) - runtimes.regType.calcReg(Gis));
                     ref_ufactor.setValue(s, runtimes.regType.afterReg(newFus));
                     ref_ifactor.setValue(s, runtimes.regType.afterReg(newGis));
                 }
 
                 // update implicit factors
-                deriv_yus[s] = derivWRTUY;
-                derivWRTUY *= scale_yfactors;
+                deriv_yus[s] = deriWRTp * Gis;
+                double derivy = deriv_yus[s] * scale_yfactors;
                 for (int y = 0; y < num_ifactor; y++) {
                     double yus = ref_yfactors[y].floatValue(s);
-                    double newyus = yus + lr * (-derivWRTUY - runtimes.regType.calcReg(yus));
+                    double newyus = yus + lr * (-derivy - runtimes.regType.calcReg(yus));
                     ref_yfactors[y].setValue(s, runtimes.regType.afterReg(newyus));
                 }
             }
@@ -123,14 +123,15 @@ public class SVDPP extends FactorRecmmder {
             factModel.ibias.setValue(i, runtimes.regType.afterReg(newbi));
 
             // tricks for implicit factors
-            if (runtimes.regType.regEnum == RegEnum.L2) {
-                for (int s = 0; s < runtimes.featureCount; s++) {
-                    double yus = ref_yfactor.floatValue(s);
-                    double newyus = yus + lr * (-deriv_yus[s] - runtimes.regType.calcReg(yus));
-                    ref_yfactor.setValue(s, newyus);
-                }
+            if (num_ifactor <= 100 || runtimes.regType.regEnum != RegEnum.L2) {
+                Arrays.fill(arr_yfactor, 0.0d);
+                factModel.calcImplicFeature(ref_yfactors, arr_yfactor);
             } else {
-                ref_yfactor = factModel.calcImplicFeature(ref_yfactors);
+                for (int s = 0; s < runtimes.featureCount; s++) {
+                    double yus = arr_yfactor[s];
+                    double newyus = yus + lr * (-deriv_yus[s] - runtimes.regType.calcReg(yus));
+                    arr_yfactor[s] = newyus;
+                }
             }
         }
     }

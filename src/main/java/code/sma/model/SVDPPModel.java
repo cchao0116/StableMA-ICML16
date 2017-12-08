@@ -57,6 +57,32 @@ public class SVDPPModel extends FactorModel {
         return new DenseVector(N, sums);
     }
 
+    /**
+     * calculate the implicit factors based on user's rated or viewed items
+     * 
+     * @param ref_yfactors  reference for user's implicit factors
+     * @return  implicit factor
+     */
+    public void calcImplicFeature(DenseVector[] ref_yfactors, double[] arr_yfactor) {
+        assert ref_yfactors != null
+               && ref_yfactors.length != 0 : "yfactors cannot be null or empty.";
+        int L = ref_yfactors.length;
+        int N = ref_yfactors[0].length();
+
+        // aggregate
+        for (int l = 0; l < L; l++) {
+            for (int f = 0; f < N; f++) {
+                arr_yfactor[f] += ref_yfactors[l].floatValue(f);
+            }
+        }
+
+        // normalized somehow
+        double scale = 1.0f / Math.sqrt(L);
+        for (int f = 0; f < N; f++) {
+            arr_yfactor[f] *= scale;
+        }
+    }
+
     /** 
      * @see code.sma.model.AbstractModel#predict(code.sma.core.DataElem)
      */
