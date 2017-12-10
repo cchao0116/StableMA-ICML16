@@ -40,6 +40,10 @@ public final class RuntimeEnv implements Serializable {
     public Loss                          lossFunction;
     public Regularizer                   regType;
 
+    // SAVE/LOAD
+    public String                        fo_format;
+    public int                           gap_save;
+
     // TREE
     public int                           maxDepth         = 6;     //maximum depth of a tree
     public int                           minChildNum      = 2;     //minimum amount of weight allowed in a child
@@ -114,6 +118,15 @@ public final class RuntimeEnv implements Serializable {
         if (conf.containsKey("VERBOSE_BOOLEAN"))
             this.showProgress = conf.getBoolean("VERBOSE_BOOLEAN");
 
+        // save or load model
+        if (conf.containsKey("INITIAL_ROUND_VALUE"))
+            this.round = conf.getInteger("INITIAL_ROUND_VALUE");
+
+        if (conf.containsKey("GAP_SAVE_VALUE") && conf.containsKey("FO_FORMAT")) {
+            this.gap_save = conf.getInteger("GAP_SAVE_VALUE");
+            this.fo_format = conf.getProperty("FO_FORMAT");
+        }
+
         // tree
         if (conf.containsKey("MAX_DEPTH_VALUE"))
             this.maxDepth = conf.getInteger("MAX_DEPTH_VALUE");
@@ -129,7 +142,8 @@ public final class RuntimeEnv implements Serializable {
 
         // loss and regularizer
         this.lossFunction = conf.contains("LOSS_FUNCTION")
-            ? Loss.valueOf(conf.getProperty("LOSS_FUNCTION")) : Loss.LOSS_RMSE;
+            ? Loss.valueOf(conf.getProperty("LOSS_FUNCTION"))
+            : Loss.LOSS_RMSE;
         this.regType = conf.contains("REG_TYPE")
             ? Regularizer.valueOf(conf.getProperty("REG_TYPE"), regularizer)
             : Regularizer.L2(regularizer);

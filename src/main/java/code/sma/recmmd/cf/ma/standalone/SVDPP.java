@@ -12,6 +12,7 @@ import code.sma.model.SVDPPModel;
 import code.sma.plugin.Plugin;
 import code.sma.recmmd.Regularizer.RegEnum;
 import code.sma.recmmd.cf.ma.stats.StatsOperator;
+import code.sma.util.StringUtil;
 
 /**
  * 
@@ -52,8 +53,13 @@ public class SVDPP extends FactorRecmmder {
                 : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
         runtimes.nnz = runtimes.itrain.get_num_ifactor();
 
-        if (model == null) {
+        if (StringUtil.isBlank(runtimes.fo_format) && runtimes.round == 0 && model == null) {
             model = new SVDPPModel(runtimes.conf);
+        } else {
+            assert StringUtil.isNotBlank(
+                runtimes.fo_format) : "load model from previously-saved file, config should contains FO_FORMAT, INITIAL_ROUND_VALUE, GAP_SAVE_VALUE";
+            String fo_file = String.format(runtimes.fo_format, this.toString(), runtimes.round);
+            this.loadModel(fo_file);
         }
     }
 
@@ -101,7 +107,9 @@ public class SVDPP extends FactorRecmmder {
                 // update explicit factors
                 {
                     double newFus = Fus + lr * (-deriWRTp * Gis - runtimes.regType.calcReg(Fus));
-                    double newGis = Gis + lr * (-deriWRTp * (Fus + Yus) - runtimes.regType.calcReg(Gis));
+                    double newGis = Gis
+                                    + lr
+                                      * (-deriWRTp * (Fus + Yus) - runtimes.regType.calcReg(Gis));
                     ref_ufactor.setValue(s, runtimes.regType.afterReg(newFus));
                     ref_ifactor.setValue(s, runtimes.regType.afterReg(newGis));
                 }

@@ -16,6 +16,7 @@ import code.sma.recmmd.Recommender;
 import code.sma.recmmd.RuntimeEnv;
 import code.sma.util.LoggerUtil;
 import code.sma.util.SerializeUtil;
+import code.sma.util.StringUtil;
 
 /**
  * This is an abstract class implementing four matrix-factorization-based methods
@@ -68,8 +69,13 @@ public abstract class FactorRecmmder extends Recommender {
                 : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
         runtimes.nnz = runtimes.itrain.get_num_ifactor();
 
-        if (model == null) {
+        if (StringUtil.isBlank(runtimes.fo_format) && runtimes.round == 0 && model == null) {
             model = new FactorModel(runtimes.conf);
+        } else {
+            assert StringUtil.isNotBlank(
+                runtimes.fo_format) : "load model from previously-saved file, config should contains FO_FORMAT, INITIAL_ROUND_VALUE, GAP_SAVE_VALUE";
+            String fo_file = String.format(runtimes.fo_format, this.toString(), runtimes.round);
+            this.loadModel(fo_file);
         }
     }
 
@@ -78,6 +84,7 @@ public abstract class FactorRecmmder extends Recommender {
      */
     @Override
     protected void finish_round() {
+        // measures operations
         runtimes.prevErr = runtimes.currErr;
         runtimes.currErr = Math.sqrt(runtimes.sumErr / runtimes.nnz);
         runtimes.round++;
@@ -95,6 +102,13 @@ public abstract class FactorRecmmder extends Recommender {
             LoggerUtil.info(runningLogger,
                 String.format("%d\t%.6f", runtimes.round, runtimes.currErr));
         }
+
+        // save model if condition is satisfied
+        if (StringUtil.isNotBlank(runtimes.fo_format) && runtimes.round != 0
+            && runtimes.round % runtimes.gap_save == 0) {
+            String fo_file = String.format(runtimes.fo_format, this.toString(), runtimes.round);
+            this.saveModel(fo_file);
+        }
     }
 
     /** 
@@ -102,7 +116,7 @@ public abstract class FactorRecmmder extends Recommender {
      */
     @Override
     public void loadModel(String fi) {
-        assert Files.exists((new File(fi)).toPath()) : "The path does not exist.";
+        assert !Files.exists((new File(fi)).toPath()) : "The path does not exist.";
         model = (FactorModel) SerializeUtil.readObject(fi);
     }
 

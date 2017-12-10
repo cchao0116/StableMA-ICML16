@@ -24,11 +24,11 @@ public final class Configures extends Properties {
     }
 
     public void setDouble(String key, Double val) {
-        put(key, val);
+        put(key.trim(), val);
     }
 
     public void setVector(String key, DenseVector val) {
-        put(key, val);
+        put(key.trim(), val);
     }
 
     public DenseVector getVector(String key) {

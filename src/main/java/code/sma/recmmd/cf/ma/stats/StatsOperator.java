@@ -46,7 +46,8 @@ public final class StatsOperator {
         DenseVector vec = factor.getRowRef(row);
 
         if (vec == null) {
-            vec = rand.create(shape[1], 1.0 / shape[1]);
+//            vec = rand.create(shape[1], 1.0 / shape[1]);
+            vec = rand.create(shape[1], 0.01); // seems 0.01 generally works well
             factor.setRowRef(row, vec);
         }
 
