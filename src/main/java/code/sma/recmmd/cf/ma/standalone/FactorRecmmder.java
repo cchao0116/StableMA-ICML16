@@ -69,7 +69,7 @@ public abstract class FactorRecmmder extends Recommender {
                 : (AbstractIterator) test.iteratorJion(acc_ufi, acc_ifi));
         runtimes.nnz = runtimes.itrain.get_num_ifactor();
 
-        if (StringUtil.isBlank(runtimes.fo_format) && runtimes.round == 0 && model == null) {
+        if (runtimes.round == 0) {
             model = new FactorModel(runtimes.conf);
         } else {
             assert StringUtil.isNotBlank(
