@@ -141,8 +141,16 @@ public abstract class EnsembleFactorRecmmder extends FactorRecmmder
      */
     @Override
     public double[] predict(DataElem e) {
-        throw new RuntimeException(
-            "This method has not been implemented in EnsembleMFRecommender!");
+        short num_ifactor = e.getNum_ifacotr();
+        double[] preds = new double[num_ifactor];
+
+        int u = e.getIndex_user(0);
+        for (int p = 0; p < num_ifactor; p++) {
+            int i = e.getIndex_item(p);
+            preds[p] = predict(u, i);
+        }
+
+        return preds;
     }
 
     /**

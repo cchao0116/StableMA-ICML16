@@ -89,14 +89,28 @@ public class SparseMatrix extends AbstractMatrix implements Serializable {
 
         Scanner scanner = new Scanner(line);
         scanner.skip("^(\\d+\\s+){1}");
-        this.num_global += scanner.nextInt();
-        this.num_ufactor += scanner.nextInt();
+        int num_global = scanner.nextInt();
+        this.num_global += num_global;
+
+        int num_ufactor = scanner.nextInt();
+        this.num_ufactor += num_ufactor;
+
         this.num_ifactor += scanner.nextInt();
 
         scanner.useDelimiter(":+|\\s+");
 
-        int uId = scanner.nextInt();
-        scanner.nextFloat();
+        // skip global features
+        for (int n = 0; n < num_global; n++) {
+            scanner.nextInt();
+            scanner.nextFloat();
+        }
+
+        // skip user factors
+        int uId = 0;
+        for (int n = 0; n < num_ufactor; n++) {
+            uId = scanner.nextInt();
+            scanner.nextFloat();
+        }
 
         while (scanner.hasNextInt()) {
             setValue(uId, scanner.nextInt(), scanner.nextFloat());

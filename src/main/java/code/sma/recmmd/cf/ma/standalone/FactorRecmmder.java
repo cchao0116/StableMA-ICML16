@@ -116,7 +116,7 @@ public abstract class FactorRecmmder extends Recommender {
      */
     @Override
     public void loadModel(String fi) {
-        assert !Files.exists((new File(fi)).toPath()) : "The path does not exist.";
+        assert Files.exists((new File(fi)).toPath()) : "The path does not exist.";
         model = (FactorModel) SerializeUtil.readObject(fi);
     }
 

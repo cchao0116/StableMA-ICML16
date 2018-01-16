@@ -51,9 +51,10 @@ public abstract class AbstractTest {
             Configures new_conf = new Configures(conf);
             String dconfFile = rootDir + "dConfig.properties";
             ConfigureUtil.addConfig(new_conf, dconfFile);
+            new_conf.put("FO_FORMAT", rootDir + new_conf.getProperty("FO_FORMAT"));
 
             String algName = new_conf.getProperty("ALG_NAME");
-            LoggerUtil.info(logger, "2. running " + algName);
+            LoggerUtil.info(logger, "2. loading data ");
 
             TaskMsgDispatcher stkmImpl = new SimpleTaskMsgDispatcherImpl(new_conf);
             int threadNum = new_conf.getInteger("THREAD_NUMBER_VALUE");
@@ -64,6 +65,7 @@ public abstract class AbstractTest {
             AbstractMatrix test = MatrixIOUtil.loadCSRMatrix(testFile,
                 new_conf.getInteger("TEST_ROW_NUM_VALUE"),
                 new_conf.getInteger("TEST_VAL_NUM_VALUE"));
+            LoggerUtil.info(logger, "3. running " + algName);
 
             try {
                 ExecutorService exec = Executors.newCachedThreadPool();
