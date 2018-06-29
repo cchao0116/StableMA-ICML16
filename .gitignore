@@ -1,2 +1,6 @@
 /target/
 /logs/
+.classpath
+
+# algorithm properties
+*.properties

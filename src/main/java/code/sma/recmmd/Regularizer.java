@@ -81,7 +81,7 @@ public final class Regularizer {
                 return reg_lambda * factrVal;
             case L12:
                 assert param.length >= 1 : "L12 of each row is required.";
-                return reg_lambda * factrVal * factrVal / param[0];
+                return reg_lambda * factrVal / param[0];
             default:
                 return 0.0d;
         }
@@ -157,10 +157,10 @@ public final class Regularizer {
     }
 
     public enum RegEnum {
-                          SMOOTH_L1, //L1-norm
-                          THRESHOLD_L1, //L1-norm
-                          L2, // L2-norm
-                          L12, // Group-sparse norm
-                          ELASTIC_NET; // Elastic net
+                         SMOOTH_L1, //L1-norm
+                         THRESHOLD_L1, //L1-norm
+                         L2, // L2-norm
+                         L12, // Group-sparse norm
+                         ELASTIC_NET; // Elastic net
     }
 }

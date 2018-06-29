@@ -53,7 +53,7 @@ public class RegSVD extends FactorRecmmder {
             DenseVector ref_ifactor = StatsOperator.getVectorRef(factModel.ifactors, i);
 
             double AuiReal = e.getValue_ifactor(f);
-            double AuiEst = ref_ufactor.innerProduct(ref_ifactor);
+            double AuiEst = model.predict(u, i);
             runtimes.sumErr += runtimes.lossFunction.calcLoss(AuiReal, AuiEst);
 
             double deriWRTp = runtimes.lossFunction.calcGrad(AuiReal, AuiEst);

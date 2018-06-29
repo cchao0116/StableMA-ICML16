@@ -50,7 +50,7 @@ public abstract class AbstractEnsTest {
             ConfigureUtil.addConfig(new_conf, dconfFile);
 
             String algName = new_conf.getProperty("ALG_NAME");
-            LoggerUtil.info(logger, "2. running " + algName);
+            LoggerUtil.info(logger, "2. loading data ");
 
             AbstractMatrix train = MatrixIOUtil.loadCSRMatrix(trainFile,
                 new_conf.getInteger("TRAIN_ROW_NUM_VALUE"),
@@ -58,6 +58,7 @@ public abstract class AbstractEnsTest {
             AbstractMatrix test = MatrixIOUtil.loadCSRMatrix(testFile,
                 new_conf.getInteger("TEST_ROW_NUM_VALUE"),
                 new_conf.getInteger("TEST_VAL_NUM_VALUE"));
+            LoggerUtil.info(logger, "3. running " + algName);
 
             EnsembleFactorRecmmder recmmd = (EnsembleFactorRecmmder) RecommenderFactory
                 .instance(algName, new_conf);
