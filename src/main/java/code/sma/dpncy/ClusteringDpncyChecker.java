@@ -58,7 +58,7 @@ public class ClusteringDpncyChecker extends AbstractDpncyChecker implements Task
             int threadNum = conf.getInteger("THREAD_NUMBER_VALUE");
             int rowCount = conf.getInteger("USER_COUNT_VALUE");
             int colCount = conf.getInteger("ITEM_COUNT_VALUE");
-            String trainFile = rootDir + "trainingset";
+            String trainFile = rootDir + "train.data";
             SparseMatrix rateMatrix = MatrixIOUtil.loadSparseMatrix(trainFile, rowCount, colCount);
 
             try {
