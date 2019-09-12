@@ -11,6 +11,7 @@ import code.sma.plugin.Plugin;
 import code.sma.recmmd.RuntimeEnv;
 import code.sma.util.LoggerDefineConstant;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * Booster
@@ -19,36 +20,55 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
  * @version $Id: Booster.java, v 0.1 Jun 29, 2017 5:37:22 PM Exp $
  */
 public abstract class Booster {
-    /** Runtime environment*/
-    public RuntimeEnv                       runtimes;
+	/** Runtime environment */
+	public RuntimeEnv runtimes;
 
-    /** the gradients of each training data*/
-    protected FloatArrayList                grad;
-    /** the hessians of each training data*/
-    protected FloatArrayList                hess;
+	/** the gradients of each training data */
+	protected FloatArrayList grad;
+	/** the hessians of each training data */
+	protected FloatArrayList hess;
 
-    /** logger */
-    protected final static transient Logger runningLogger = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_CORE);
-    protected final static transient Logger resultLogger  = Logger
-        .getLogger(LoggerDefineConstant.SERVICE_NORMAL);
+	/** logger */
+	protected final static transient Logger runningLogger = Logger.getLogger(LoggerDefineConstant.SERVICE_CORE);
+	protected final static transient Logger resultLogger = Logger.getLogger(LoggerDefineConstant.SERVICE_NORMAL);
 
-    public Booster(Configures conf, Map<String, Plugin> plugins) {
-        runtimes = new RuntimeEnv(conf);
-        runtimes.learningRate = conf.getDouble("BOOSTER_LR_VALUE");
-        runtimes.plugins = plugins;
-    }
+	public Booster(Configures conf, Map<String, Plugin> plugins) {
+		runtimes = new RuntimeEnv(conf);
+		runtimes.learningRate = conf.getDouble("BOOSTER_LR_VALUE");
+		runtimes.plugins = plugins;
+	}
 
-    /**
-     * train the booster
-     * 
-     * @param train     training data
-     * @param test      testing data
-     * @param grad      the gradients of each training data
-     * @param hess      the hessians of each training data
-     * @return      the resulting booster
-     */
-    public abstract AbstractModel doBoost(AbstractMatrix train, AbstractMatrix test,
-                                          FloatArrayList grad, FloatArrayList hess);
+	/**
+	 * train the booster
+	 * 
+	 * @param train
+	 *            training data
+	 * @param test
+	 *            testing data
+	 * @param grad
+	 *            the gradients of each training data
+	 * @param hess
+	 *            the hessians of each training data
+	 * @return the resulting booster
+	 */
+	public abstract AbstractModel doBoost(AbstractMatrix train, AbstractMatrix test, FloatArrayList grad,
+			FloatArrayList hess);
 
+	/**
+	 * training task, element of single task
+	 * 
+	 * @author Chao.Chen
+	 * @version $Id: CARTBooster.java, Jun 30, 2017 5:24:14 PM$
+	 */
+	protected class Task {
+		/** id of tree node */
+		public int nid;
+		/** the set of row IDs contained in one group, namely leaf */
+		public IntList idset;
+
+		public Task(int nid, IntList idset) {
+			this.nid = nid;
+			this.idset = idset;
+		}
+	}
 }

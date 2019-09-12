@@ -181,4 +181,10 @@ public class GBTreeModel extends AbstractModel {
         return depth;
     }
 
+	@Override
+	public int[] ranking(DataElem e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

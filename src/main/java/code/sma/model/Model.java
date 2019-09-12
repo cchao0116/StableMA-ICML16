@@ -26,4 +26,12 @@ public interface Model {
      * @return      the predicted labels
      */
     public double[] predict(DataElem e);
+    
+    /**
+     * predict the top-N recommendations
+     * 
+     * @param e		user/item features
+     * @return		the hitting results
+     */
+    public int[] ranking(DataElem e);
 }

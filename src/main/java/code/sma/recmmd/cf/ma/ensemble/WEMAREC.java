@@ -7,6 +7,7 @@ import java.util.Queue;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
 import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
@@ -122,5 +123,11 @@ public class WEMAREC extends EnsembleFactorRecmmder implements TaskMsgDispatcher
             Math.round(runtimes.doubles.getDouble(1) * 100),
             Math.round(runtimes.doubles.getDouble(2) * 100));
     }
+
+	@Override
+	public int[] ranking(DataElem e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

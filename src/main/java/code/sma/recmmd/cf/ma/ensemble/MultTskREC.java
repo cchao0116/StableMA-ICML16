@@ -7,6 +7,7 @@ import java.util.Random;
 
 import code.sma.core.AbstractIterator;
 import code.sma.core.AbstractMatrix;
+import code.sma.core.DataElem;
 import code.sma.main.Configures;
 import code.sma.plugin.Discretizer;
 import code.sma.plugin.Plugin;
@@ -128,5 +129,11 @@ public class MultTskREC extends EnsembleFactorRecmmder {
             Math.round(samplingRate * 100), (int) (runtimes.doubles.getDouble(0) * 100),
             Math.round(runtimes.doubles.getDouble(1) * 100));
     }
+
+	@Override
+	public int[] ranking(DataElem e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

@@ -43,7 +43,7 @@ public abstract class Recommender {
 
         // update model
         AbstractIterator iDataElem = runtimes.itrain;
-        while (runtimes.prevErr - runtimes.currErr > 0.0001 && runtimes.round < runtimes.maxIter) {
+        while (runtimes.round < runtimes.maxIter) {
             update_inner(iDataElem);
         }
     }

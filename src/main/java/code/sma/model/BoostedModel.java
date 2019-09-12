@@ -59,4 +59,10 @@ public class BoostedModel extends AbstractModel {
     public void add(AbstractModel booster) {
         boosters.add(booster);
     }
+
+	@Override
+	public int[] ranking(DataElem e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

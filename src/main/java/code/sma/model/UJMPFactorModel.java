@@ -55,4 +55,10 @@ public class UJMPFactorModel extends AbstractModel {
         return preds;
     }
 
+	@Override
+	public int[] ranking(DataElem e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
