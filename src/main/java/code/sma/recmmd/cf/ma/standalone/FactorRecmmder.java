@@ -30,8 +30,7 @@ public abstract class FactorRecmmder extends Recommender {
 	protected FactorModel model;
 
 	/*
-	 * ======================================== 
-	 * Constructors
+	 * ======================================== Constructors
 	 * ========================================
 	 */
 	protected FactorRecmmder() {
@@ -51,8 +50,7 @@ public abstract class FactorRecmmder extends Recommender {
 	}
 
 	/*
-	 * ======================================== 
-	 * Model Builder
+	 * ======================================== Model Builder
 	 * ========================================
 	 */
 	/**
@@ -96,9 +94,11 @@ public abstract class FactorRecmmder extends Recommender {
 
 		model.trainErr.add(runtimes.currErr);
 
-		if (runtimes.showProgress && (runtimes.round % runtimes.gap_save == 0) && runtimes.itest != null) {
-			EvaluationMetrics em = new CollaFiltrMetrics(runtimes.conf.getInteger("TOPN_VALUE"));
+		if (runtimes.showProgress && runtimes.itest != null) {
+			int topN = runtimes.conf.containsKey("TOPN_VALUE") ? runtimes.conf.getInteger("TOPN_VALUE") : 0;
+			EvaluationMetrics em = new CollaFiltrMetrics(topN);
 			em.evalRating(model, runtimes.itest);
+			
 			LoggerUtil.info(runningLogger,
 					String.format("%d\t%.6f [%s]", runtimes.round, runtimes.currErr, em.printOneLine()));
 			model.testErr.add(em.getRMSE());

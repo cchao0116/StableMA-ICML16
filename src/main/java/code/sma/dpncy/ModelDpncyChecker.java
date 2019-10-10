@@ -39,7 +39,7 @@ public class ModelDpncyChecker extends AbstractDpncyChecker {
             // failed in reading the object or these object doesn't exist
             LoggerUtil.info(normalLogger, "...check...missing: " + auxRcmmdPath);
             String rootDir = conf.getProperty("ROOT_DIR");
-            String trainFile = rootDir + "trainingset";
+            String trainFile = rootDir + "train.data";
             AbstractMatrix train = MatrixIOUtil.loadCSRMatrix(trainFile,
                 conf.getInteger("TRAIN_ROW_NUM_VALUE"), conf.getInteger("TRAIN_VAL_NUM_VALUE"));
             recmmd.buildModel(train, null);

@@ -13,7 +13,7 @@ import code.sma.model.Model;
  */
 public abstract class EvaluationMetrics {
 	/** Top-N recommendations */
-	protected int N = -1;
+	protected int N = 0;
 	/** Mean Absoulte Error (MAE) */
 	protected double mae;
 	/** Mean Squared Error (MSE) */

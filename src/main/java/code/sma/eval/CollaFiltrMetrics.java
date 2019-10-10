@@ -73,6 +73,7 @@ public class CollaFiltrMetrics extends EvaluationMetrics {
 				mse += Math.pow(realVal - predVal, 2.0d);
 			}
 
+			if(this.N <=0) continue;
 			// ranking related measures
 			nnu += 1;
 			int[] rankings = model.ranking(e);
@@ -93,10 +94,12 @@ public class CollaFiltrMetrics extends EvaluationMetrics {
 		mae /= nnz;
 		mse /= nnz;
 
-		precision /= nnu;
-		recall /= nnu;
-		hitrate /= nnu;
-		ndcg /= nnu;
+		if (this.N > 0) {
+			precision /= nnu;
+			recall /= nnu;
+			hitrate /= nnu;
+			ndcg /= nnu;
+		}
 	}
 
 }

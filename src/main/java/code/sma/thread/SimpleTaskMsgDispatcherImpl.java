@@ -131,7 +131,8 @@ public class SimpleTaskMsgDispatcherImpl implements TaskMsgDispatcher {
 		if (recmmd instanceof FeatureBasedRecmmder) {
 			em = new FeatureBasedMetrics();
 		} else {
-			em = new CollaFiltrMetrics(m.runtimes.conf.getInteger("TOPN_VALUE"));
+			int topN = m.runtimes.conf.containsKey("TOPN_VALUE") ? m.runtimes.conf.getInteger("TOPN_VALUE") : 0;
+			em = new CollaFiltrMetrics(topN);
 		}
 		em.evalRating(m.getModel(), m.runtimes.itest);
 

@@ -42,19 +42,22 @@ public class FactorModel extends AbstractModel {
 		int userCount = conf.getInteger("USER_COUNT_VALUE");
 		int itemCount = conf.getInteger("ITEM_COUNT_VALUE");
 		int featureCount = conf.getInteger("FEATURE_COUNT_VALUE");
-		this.topN = conf.getInteger("TOPN_VALUE");
-		this.top_pq = MinMaxPriorityQueue.orderedBy(new Comparator<Pair<Integer, Double>>() {
-			@Override
-			public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
-				return (int) Math.signum(o2.getRight() - o1.getRight());
-			}
-		}).maximumSize(this.topN).create();
 
 		this.ufactors = new DenseMatrix(userCount, featureCount);
 		this.ifactors = new DenseMatrix(itemCount, featureCount);
 		this.ubias = new DenseVector(userCount);
 		this.ibias = new DenseVector(itemCount);
 		this.base = conf.containsKey("BASE_PREDICTION_VALUE") ? conf.getFloat("BASE_PREDICTION_VALUE") : 0.0f;
+
+		if (conf.containsKey("TOPN_VALUE")) {
+			this.topN = conf.getInteger("TOPN_VALUE");
+			this.top_pq = MinMaxPriorityQueue.orderedBy(new Comparator<Pair<Integer, Double>>() {
+				@Override
+				public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
+					return (int) Math.signum(o2.getRight() - o1.getRight());
+				}
+			}).maximumSize(this.topN).create();
+		}
 	}
 
 	public FactorModel(Configures conf, DenseMatrix ufactors, DenseMatrix ifactors) {
